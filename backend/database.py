@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from urllib.parse import urlparse, urlunparse
 import os
 from dotenv import load_dotenv
 
@@ -12,20 +13,27 @@ if not db_url:
     print("FIGYELMEZTETÉS: DATABASE_URL hiányzik! Lokális módba váltás.")
     db_url = "postgresql://postgres:postgres@localhost:5432/edu_registrar"
 
-# Fix: postgres:// -> postgresql://
+# Fix 1: postgres:// -> postgresql://
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-# Fix: Supabase Pooler felhasználónév javítása (postgres.AZONOSITO kell)
-if "pooler.supabase.com" in db_url and "@postgres:" not in db_url:
-    if "/postgres:" in db_url and "postgres." not in db_url.split("@")[0]:
-        db_url = db_url.replace("//postgres:", "//postgres.upghcvosvrafiogfrxiq:", 1)
-        print("Supabase URL javítva: projekt azonosító hozzáadva.")
+# Fix 2: Supabase Pooler - javítjuk a felhasználónevet urlparse-szal
+if "pooler.supabase.com" in db_url:
+    parsed = urlparse(db_url)
+    username = parsed.username or ""
+    
+    # Ha a felhasználónév csak "postgres" (nincs benne pont), hozzáadjuk az azonosítót
+    if username == "postgres":
+        new_username = "postgres.upghcvosvrafiogfrxiq"
+        netloc = parsed.netloc.replace(f"{username}:", f"{new_username}:", 1)
+        parsed = parsed._replace(netloc=netloc)
+        db_url = urlunparse(parsed)
+        print(f"Supabase felhasználónév javítva: {new_username}")
 
-# Biztonságos napló (jelszó nélkül)
+# Biztonságos naplózás (jelszó nélkül)
 try:
-    masked = db_url.split("@")[1]
-    print(f"Adatbázis cél: {masked}")
+    parsed_log = urlparse(db_url)
+    print(f"Kapcsolódás: {parsed_log.hostname}:{parsed_log.port} (user: {parsed_log.username})")
 except Exception:
     pass
 
