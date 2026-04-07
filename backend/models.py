@@ -69,7 +69,7 @@ class AuditLog(Base):
     felhasznalo_id = Column(Integer, ForeignKey("felhasznalok.id"))
     esemeny = Column(Text)
     idopont = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    metadata = Column(JSON)
+    audit_data = Column("metadata", JSON)
 
 # Szükséges segédtáblák (üres de kellenek a Foreign Key-ekhez)
 class Profession(Base):
