@@ -18,3 +18,4 @@ python-jose[cryptography]
 playwright
 apscheduler
 httpx
+email-validator
