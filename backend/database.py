@@ -42,9 +42,9 @@ if "pooler.supabase.com" in db_url:
 # Biztonságos naplózás (jelszó nélkül)
 try:
     parsed_log = urlparse(db_url)
-    print(f"[DB] Kapcsolódás: {parsed_log.host}:{parsed_log.port}{parsed_log.path} (user: {parsed_log.username})")
-except Exception:
-    pass
+    print(f"[DB] Kapcsolódás: {parsed_log.hostname}:{parsed_log.port}{parsed_log.path} (user: {parsed_log.username})")
+except Exception as e:
+    print(f"[DB] Naplózási hiba (nem kritikus): {e}")
 
 engine = create_engine(
     db_url,
