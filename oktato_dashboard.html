@@ -55,10 +55,62 @@
             </div>
 
             <div class="content-grid" style="grid-template-columns: 1fr;">
-                <section class="form-section">
+                <section class="data-section">
                     <div class="card">
-                        <h3 style="margin-bottom: 20px;"><i class="fas fa-tools"></i> Fejlesztés alatt</h3>
-                        <p>Az oktatói felület részletes moduljai (jegybeírás, naplózás) hamarosan teljes funkcionalitással elérhetőek lesznek.</p>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3><i class="fas fa-list-ul"></i> Saját Osztályaim & Értékelések</h3>
+                            <div class="filters" style="display:flex; gap:10px;">
+                                <input type="text" placeholder="Keresés név alapján..." class="login-input" style="padding: 10px; border-radius: 8px;">
+                            </div>
+                        </div>
+
+                        <table style="width: 100%; text-align: left; border-collapse: collapse; color: white;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #333;">
+                                    <th style="padding: 15px;">Név</th>
+                                    <th style="padding: 15px;">Osztály</th>
+                                    <th style="padding: 15px;">Modul / Tantárgy</th>
+                                    <th style="padding: 15px;">Értékelés</th>
+                                    <th style="padding: 15px;">Hiányzás Állapota</th>
+                                    <th style="padding: 15px; text-align: right;">Jegybeírás</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom: 1px solid #333;">
+                                    <td style="padding: 15px;">Nagy Bence</td>
+                                    <td style="padding: 15px;">12.A</td>
+                                    <td style="padding: 15px;">Gyakorlati Műhely</td>
+                                    <td style="padding: 15px;">
+                                        <select class="login-input" style="padding: 5px; border-radius: 4px; background: rgba(30,30,47,0.8);">
+                                            <option>Nincs osztályzat</option>
+                                            <option selected>Megfelelt</option>
+                                            <option>Kiválóan megfelelt</option>
+                                        </select>
+                                    </td>
+                                    <td style="padding: 15px; color: #10b981;"><i class="fas fa-check-circle"></i> Rendben (12%)</td>
+                                    <td style="padding: 15px; text-align: right;">
+                                        <button class="btn-primary" style="padding: 5px 15px;">Mentés</button>
+                                    </td>
+                                </tr>
+                                <!-- Figyelmeztető sor -->
+                                <tr style="border-bottom: 1px solid #333; background: rgba(220, 38, 38, 0.05);">
+                                    <td style="padding: 15px; font-weight: bold; color: #fca5a5;"><i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i>Szabó Anna</td>
+                                    <td style="padding: 15px;">12.A</td>
+                                    <td style="padding: 15px;">Gyakorlati Műhely</td>
+                                    <td style="padding: 15px;">
+                                        <select class="login-input" style="padding: 5px; border-radius: 4px; background: rgba(30,30,47,0.8);">
+                                            <option selected>Nincs osztályzat</option>
+                                            <option>Megfelelt</option>
+                                            <option>Kiválóan megfelelt</option>
+                                        </select>
+                                    </td>
+                                    <td style="padding: 15px; color: #ef4444;"><strong>Veszélyeztetett (82%)</strong></td>
+                                    <td style="padding: 15px; text-align: right;">
+                                        <button class="btn-primary" style="padding: 5px 15px;">Mentés</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </section>
             </div>

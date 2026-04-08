@@ -42,7 +42,6 @@
                 <p>Üdvözöljük! Itt a duális képzés és az intézményi adminisztráció teljes áttekintése.</p>
             </header>
 
-            <!-- Dashboard Shortcuts / Stats -->
             <div class="dashboard-stats">
                 <div class="stat-card warning">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -51,11 +50,12 @@
                         <p>Munkavédelmi frissítés szükséges</p>
                     </div>
                 </div>
-                <div class="stat-card danger">
-                    <i class="fas fa-boxes"></i>
+                <!-- ÚJ: Hiányzási figyelmeztetések Statisztikája -->
+                <div class="stat-card danger" style="background: rgba(220, 38, 38, 0.1); border-color: rgba(220, 38, 38, 0.4);">
+                    <i class="fas fa-user-clock" style="color: #ef4444;"></i>
                     <div class="stat-info">
-                        <h3>Alacsony készlet</h3>
-                        <p>3 alapanyag elérte a minimum szintet</p>
+                        <h3 style="color: #ef4444;">12 Kritikus Hiányzó</h3>
+                        <p>Elérték a 80%-os hiányzási küszöböt</p>
                     </div>
                 </div>
                 <div class="stat-card success">
@@ -67,21 +67,124 @@
                 </div>
             </div>
 
-            <div class="content-grid">
-                <!-- Left Side: OCR Upload -->
-                <section class="ocr-section">
+            <div class="content-grid" style="grid-template-columns: 1fr;">
+                <!-- Új 1: Excel Import és Osztály Konfiguráció -->
+                <div class="grid-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    
+                    <section class="form-section">
+                        <div class="card">
+                            <h3><i class="fas fa-file-excel" style="color: #10b981;"></i> Adatok Importálása (Excel)</h3>
+                            <p style="margin-bottom: 20px;">Töltsd fel a Kréta vagy egyéb rendszerből kinyert Excel fájlokat tömeges adatbevitelhez.</p>
+                            
+                            <div class="import-zones" style="display:flex; gap:10px;">
+                                <div class="drop-zone" id="studentExcel" style="flex:1; padding: 20px;">
+                                    <i class="fas fa-user-graduate"></i>
+                                    <span>Tanulók (.xlsx)</span>
+                                </div>
+                                <div class="drop-zone" id="instructorExcel" style="flex:1; padding: 20px;">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                    <span>Oktatók (.xlsx)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="form-section">
+                        <div class="card">
+                            <h3><i class="fas fa-sliders-h"></i> Képzési Paraméterek (Osztály)</h3>
+                            <p>Osztályonkénti duális követelmények és hiányzási határok beállítása.</p>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Osztály kiválasztása</label>
+                                    <select><option>11.B (Informatika)</option><option>12.A (Gépészet)</option></select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group" style="flex:1;">
+                                    <label>Max. engedélyezett hiányzás (%)</label>
+                                    <input type="number" value="20" placeholder="%">
+                                </div>
+                                <div class="form-group" style="flex:1;">
+                                    <label>Heti napok száma</label>
+                                    <input type="number" value="3" placeholder="Nap/hét">
+                                </div>
+                                <div class="form-group" style="flex:1;">
+                                    <label>Napi óraszám</label>
+                                    <input type="number" value="7" placeholder="Óra/nap">
+                                </div>
+                            </div>
+                            <button class="btn-primary" style="width:100%; margin-top:10px;">Paraméterek Mentése</button>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Új 2: Bővített Adattábla (Szerkesztés, Szűrés, Hiányzás Riasztás) -->
+                <section class="data-section" style="margin-top: 2rem;">
                     <div class="card">
-                        <h3><i class="fas fa-magic"></i> OCR Intelligens Beolvasás</h3>
-                        <p>Húzd ide a diákigazolványt vagy a szerződést a gyors kitöltéshez.</p>
-                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3><i class="fas fa-database"></i> Tanulói Adatbázis & Szűrés</h3>
+                            <div class="filters" style="display:flex; gap:10px;">
+                                <input type="text" placeholder="Keresés név alapján..." class="login-input" style="padding: 10px; width: 200px; border-radius: 8px;">
+                                <select class="login-input" style="padding: 10px; border-radius: 8px; background: rgba(30,30,47,0.8);">
+                                    <option value="">-- Jegy szűrése --</option>
+                                    <option value="bukas">Bukásra állók</option>
+                                    <option value="kivalo">Kiválók</option>
+                                </select>
+                                <select class="login-input" style="padding: 10px; border-radius: 8px; background: rgba(30,30,47,0.8);">
+                                    <option value="">-- Hiányzás szűrése --</option>
+                                    <option value="kuszob">Küszöböt elérők (Kritikus)</option>
+                                    <option value="tiszta">Hiányzás nélkül</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <table style="width: 100%; text-align: left; border-collapse: collapse; color: white;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #333;">
+                                    <th style="padding: 15px;">Név</th>
+                                    <th style="padding: 15px;">Osztály</th>
+                                    <th style="padding: 15px;">Jegy átlag</th>
+                                    <th style="padding: 15px;">Hiányzás</th>
+                                    <th style="padding: 15px; text-align: right;">Műveletek</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="border-bottom: 1px solid #333;">
+                                    <td style="padding: 15px;">Kovács János</td>
+                                    <td style="padding: 15px;">11.B</td>
+                                    <td style="padding: 15px; color: #10b981;">4.5</td>
+                                    <td style="padding: 15px;">12 óra (Teljesítve: 98%)</td>
+                                    <td style="padding: 15px; text-align: right;">
+                                        <button class="btn-secondary" style="padding: 5px 10px;"><i class="fas fa-edit"></i></button>
+                                    </td>
+                                </tr>
+                                <!-- Figyelmeztető sor -->
+                                <tr style="border-bottom: 1px solid #333; background: rgba(220, 38, 38, 0.05);">
+                                    <td style="padding: 15px; font-weight: bold; color: #fca5a5;"><i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i>Szabó Anna</td>
+                                    <td style="padding: 15px;">12.A</td>
+                                    <td style="padding: 15px; color: #ef4444;">1.8</td>
+                                    <td style="padding: 15px; color: #ef4444;"><strong>54 óra (82% - Küszöb átlépve!)</strong></td>
+                                    <td style="padding: 15px; text-align: right;">
+                                        <button class="btn-secondary" style="padding: 5px 10px;"><i class="fas fa-edit"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                
+                <!-- OCR megőrzése alulra helyezve -->
+                <section class="ocr-section" style="margin-top: 2rem;">
+                    <div class="card">
+                        <h3><i class="fas fa-magic"></i> OCR Intelligens Beolvasás Kártyáról</h3>
+                        <p>Egyéni beolvasáshoz húzd ide a dokumentumot.</p>
                         <div class="drop-zone" id="dropZone">
                             <i class="fas fa-cloud-upload-alt"></i>
                             <span>Fájl kiválasztása vagy idehúzása</span>
-                            <small>Támogatott: JPG, PNG, PDF</small>
                             <input type="file" id="fileInput" hidden>
                         </div>
-
-                        <div class="ocr-status" id="ocrStatus">
+                         <div class="ocr-status" id="ocrStatus">
                             <div class="loader-container" id="ocrLoader" style="display:none;">
                                 <div class="loader"></div>
                                 <span id="ocrText">Elemzés folyamatban...</span>
@@ -90,81 +193,6 @@
                                 <i class="fas fa-check-circle"></i> Adatok sikeresen kinyerve!
                             </div>
                         </div>
-                        
-                        <div class="preview-container" id="previewContainer">
-                            <!-- Image preview will appear here -->
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Right Side: Manual Form -->
-                <section class="form-section">
-                    <div class="card">
-                        <h3><i class="fas fa-edit"></i> Személyes Adatok</h3>
-                        <form id="studentForm">
-                            <div class="form-group">
-                                <label for="nev">Teljes név</label>
-                                <input type="text" id="nev" placeholder="pl: Kovács János" required>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="email">E-mail cím</label>
-                                    <input type="email" id="email" placeholder="pelda@email.hu" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="telefon">Telefonszám</label>
-                                    <input type="tel" id="telefon" placeholder="+36 30 123 4567">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="lakhely">Lakhely</label>
-                                <input type="text" id="lakhely" placeholder="Város, Irányítószám, Utca házszám">
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="tagozat">Tagozat</label>
-                                    <select id="tagozat">
-                                        <option value="nappali">Nappali</option>
-                                        <option value="felnőtt">Felnőtt</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="osztaly">Osztály</label>
-                                    <input type="text" id="osztaly" placeholder="pl: 11.B">
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="szerzodes_kezdet">Szerződés kezdete</label>
-                                    <input type="date" id="szerzodes_kezdet">
-                                </div>
-                                <div class="form-group">
-                                    <label for="szerzodes_vege">Szerződés vége</label>
-                                    <input type="date" id="szerzodes_vege">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Kiegészítő adatok (Metadata - JSON)</label>
-                                <div class="metadata-tags" id="metadataTags">
-                                    <!-- Dynamic tags -->
-                                </div>
-                                <div class="metadata-input">
-                                    <input type="text" id="metaKey" placeholder="Kulcs (pl: allergia)">
-                                    <input type="text" id="metaValue" placeholder="Érték">
-                                    <button type="button" class="btn-secondary" id="addMeta"><i class="fas fa-plus"></i></button>
-                                </div>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="reset" class="btn-outline">Mégse</button>
-                                <button type="submit" class="btn-primary">Diák Mentése</button>
-                            </div>
-                        </form>
                     </div>
                 </section>
             </div>
