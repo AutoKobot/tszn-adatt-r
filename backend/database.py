@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from urllib.parse import urlparse, urlunparse
 import os
 from dotenv import load_dotenv
 
@@ -16,23 +17,40 @@ if not db_url:
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
-# Fix 2: Supabase Pooler - egyszerű szöveges felhasználónév javítás
+# Fix 2: Supabase Transaction Pooler (port 6543) megköveteli a projekt-specifikus felhasználónevet
+# Format: postgres.PROJECT_REF (nem csak "postgres")
 if "pooler.supabase.com" in db_url:
-    # A felhasználónév a :// és az első : között van
-    after_prefix = db_url[len("postgresql://"):]
-    username = after_prefix.split(":")[0]
-    if username == "postgres":
-        db_url = db_url.replace("://postgres:", "://postgres.upghcvosvrafiogfrxiq:", 1)
-        print("Supabase felhasználónév javítva: postgres.upghcvosvrafiogfrxiq")
+    parsed = urlparse(db_url)
+    username = parsed.username or ""
+    
+    print(f"[DB] Supabase pooler észlelve. Felhasználónév: '{username}'")
+    
+    # Ha a felhasználónév csak "postgres" (nincs projekt-ref), automatikusan javítjuk
+    if "." not in username:
+        project_ref = os.getenv("SUPABASE_PROJECT_REF", "upghcvosvrafiogfrxiq")
+        new_username = f"{username}.{project_ref}"
+        
+        # URL újraépítése a helyes felhasználónévvel
+        netloc = parsed.netloc.replace(
+            f"{username}:", f"{new_username}:", 1
+        )
+        db_url = urlunparse(parsed._replace(netloc=netloc))
+        print(f"[DB] Felhasználónév javítva: '{username}' -> '{new_username}'")
+    else:
+        print(f"[DB] Felhasználónév már megfelelő formátumú (tartalmaz '.').")
 
 # Biztonságos naplózás (jelszó nélkül)
 try:
-    host_part = db_url.split("@")[1]
-    user_part = db_url.split("//")[1].split(":")[0]
-    print(f"Kapcsolódás: {host_part} (user: {user_part})")
+    parsed_log = urlparse(db_url)
+    print(f"[DB] Kapcsolódás: {parsed_log.host}:{parsed_log.port}{parsed_log.path} (user: {parsed_log.username})")
 except Exception:
     pass
 
-engine = create_engine(db_url)
+engine = create_engine(
+    db_url,
+    pool_pre_ping=True,        # Hallott kapcsolatok ellenőrzése
+    pool_recycle=300,          # 5 percenként megújítja a kapcsolatokat
+    connect_args={"connect_timeout": 10}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
