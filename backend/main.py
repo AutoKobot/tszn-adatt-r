@@ -109,6 +109,60 @@ async def process_document(file: UploadFile = File(...)):
             "error": str(e)
         }
 
+# --- EXCEL IMPORTÁLÁS ---
+from .excel_service import excel_service
+
+@app.post("/import/students")
+async def import_students_excel(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    content = await file.read()
+    parsed_students = excel_service.parse_students(content)
+    
+    saved_count = 0
+    for s_data in parsed_students:
+        exists = db.query(models.Student).filter(models.Student.nev == s_data["nev"]).first()
+        if not exists:
+            new_student = models.Student(
+                nev=s_data["nev"],
+                email=s_data["email"],
+                metadata_json={"iskola": s_data["iskola"], "szakma": s_data["szakma"], "evfolyam": s_data["evfolyam"]}
+            )
+            db.add(new_student)
+            saved_count += 1
+            
+    db.commit()
+    return {"status": "success", "message": f"{saved_count} db új tanuló importálva a {len(parsed_students)} sorból."}
+
+@app.post("/import/instructors")
+async def import_instructors_excel(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    content = await file.read()
+    parsed_instructors = excel_service.parse_instructors(content)
+    
+    saved_count = 0
+    for i_data in parsed_instructors:
+        exists = db.query(models.Instructor).filter(models.Instructor.nev == i_data["nev"]).first()
+        if not exists:
+            new_instructor = models.Instructor(
+                nev=i_data["nev"],
+                email=i_data["email"],
+                szakterulet=i_data["szakterulet"],
+                telefon=i_data["telefon"]
+            )
+            db.add(new_instructor)
+            saved_count += 1
+            
+    db.commit()
+    return {"status": "success", "message": f"{saved_count} db új oktató importálva a {len(parsed_instructors)} sorból."}
+
+# --- TEMPLATE FELTÖLTÉS ---
+@app.post("/templates/upload")
+async def upload_template(type: str, file: UploadFile = File(...)):
+    # type: dualis_nappali, dualis_felnott, oktatoi_megbizasi
+    file_path = os.path.join("backend/templates", f"{type}.docx")
+    os.makedirs("backend/templates", exist_ok=True)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    return {"status": "success", "message": f"{type} sablon sikeresen feltöltve."}
+
 # --- HITELESÍTÉS ÉS LOGIN ---
 from . import auth
 from fastapi.security import OAuth2PasswordRequestForm
