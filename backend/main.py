@@ -1,22 +1,41 @@
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from contextlib import asynccontextmanager
+import asyncio
 import shutil
 import os
 from . import models, schemas, database, sync_service
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
-app = FastAPI(title="EduRegistrar ÁKK Backend", version="1.0.0")
+# --- ÜTEMEZETT FELADATOK (asyncio alapú, APScheduler nélkül) ---
 
-# --- ÜTEMEZETT FELADATOK (Sync) ---
-scheduler = AsyncIOScheduler()
+async def nightly_sync_loop():
+    """Minden nap este 22:00-kor futtatja a szinkront."""
+    import datetime
+    while True:
+        now = datetime.datetime.now()
+        # Kiszámítjuk, mennyi idő van a következő 22:00-ig
+        next_run = now.replace(hour=22, minute=0, second=0, microsecond=0)
+        if now >= next_run:
+            next_run += datetime.timedelta(days=1)
+        wait_seconds = (next_run - now).total_seconds()
+        print(f"Éjszakai szinkron ütemezve: {next_run.strftime('%Y-%m-%d %H:%M')}")
+        await asyncio.sleep(wait_seconds)
+        try:
+            await sync_service.sync_service.sync_external_data()
+        except Exception as e:
+            print(f"Szinkron hiba: {e}")
 
-@app.on_event("startup")
-async def start_scheduler():
-    # Minden nap este 22:00-kor futtatjuk a szinkront a külső naplóból
-    scheduler.add_job(sync_service.sync_service.sync_external_data, "cron", hour=22, minute=0)
-    scheduler.start()
-    print("Éjszakai szinkron ütemezve: 22:00")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Indításkor: háttérfeladat elindítása
+    task = asyncio.create_task(nightly_sync_loop())
+    print("Éjszakai szinkron háttérfeladat elindítva.")
+    yield
+    # Leállításkor: feladat törlése
+    task.cancel()
+
+app = FastAPI(title="EduRegistrar ÁKK Backend", version="1.0.0", lifespan=lifespan)
 
 # CORS beállítások a React frontendhez
 app.add_middleware(
