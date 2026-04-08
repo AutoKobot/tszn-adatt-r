@@ -26,8 +26,29 @@ async def nightly_sync_loop():
         except Exception as e:
             print(f"Szinkron hiba: {e}")
 
+# --- ADATBÁZIS INICIALIZÁLÁS ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Háttérfeladatok helyett itt futtatjuk az adatbázis generálást indításkor
+    print("Alkalmazás indítása... Adatbázis táblák létrehozása.")
+    try:
+        database.Base.metadata.create_all(bind=database.engine)
+        
+        # Alapértelmezett tesztfiókok létrehozása (Titkárság és Oktató)
+        db = database.SessionLocal()
+        from . import auth
+        if not db.query(models.User).filter(models.User.username == "admin").first():
+            admin_user = models.User(username="admin", hashed_password=auth.get_password_hash("admin"), role="admin", full_name="Adminisztrátor")
+            db.add(admin_user)
+        if not db.query(models.User).filter(models.User.username == "oktato").first():
+            oktato_user = models.User(username="oktato", hashed_password=auth.get_password_hash("oktato"), role="oktato", full_name="Teszt Oktató")
+            db.add(oktato_user)
+        db.commit()
+        db.close()
+        print("Teszfiókok ellenőrizve: admin/admin, oktato/oktato.")
+    except Exception as e:
+        print(f"Hiba az adatbázis indításakor: {e}")
+    
     # Indításkor: háttérfeladat elindítása
     task = asyncio.create_task(nightly_sync_loop())
     print("Éjszakai szinkron háttérfeladat elindítva.")

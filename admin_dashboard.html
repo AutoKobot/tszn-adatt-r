@@ -191,27 +191,65 @@
                     </div>
                 </section>
                 
-                <!-- OCR megőrzése alulra helyezve -->
-                <section class="ocr-section" style="margin-top: 2rem;">
-                    <div class="card">
-                        <h3><i class="fas fa-magic"></i> OCR Intelligens Beolvasás Kártyáról</h3>
-                        <p>Egyéni beolvasáshoz húzd ide a dokumentumot.</p>
-                        <div class="drop-zone" id="dropZone">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <span>Fájl kiválasztása vagy idehúzása</span>
-                            <input type="file" id="fileInput" hidden>
+                <!-- Új 3: Felhasználókezelés és Archívum (Oktatói fiókok és osztályzárás) -->
+                <div class="grid-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                    
+                    <section class="form-section">
+                        <div class="card" style="border-left: 4px solid #3b82f6;">
+                            <h3><i class="fas fa-user-plus" style="color: #3b82f6;"></i> Oktatói Hozzáférés Kiosztása</h3>
+                            <p>Új oktatói profil és belépési jelszó generálása az adatbázisban szereplő oktatókhoz.</p>
+                            
+                            <form id="createInstructorAcc">
+                                <div class="form-group">
+                                    <label>Oktató kiválasztása</label>
+                                    <select class="login-input" style="width: 100%; border-radius: 8px;">
+                                        <option>Kovács Péter (Informatika)</option>
+                                        <option>Nagy Éva (Gépészet)</option>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group" style="flex:1;">
+                                        <label>Felhasználónév</label>
+                                        <input type="text" value="kovacs.peter" class="login-input" style="border-radius: 8px;">
+                                    </div>
+                                    <div class="form-group" style="flex:1;">
+                                        <label>Ideiglenes Jelszó</label>
+                                        <input type="text" value="Oktato2024!" class="login-input" style="border-radius: 8px;">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-primary" style="width: 100%; background: #3b82f6;"><i class="fas fa-key"></i> Fiók Létrehozása és Kiküldése</button>
+                            </form>
                         </div>
-                         <div class="ocr-status" id="ocrStatus">
-                            <div class="loader-container" id="ocrLoader" style="display:none;">
-                                <div class="loader"></div>
-                                <span id="ocrText">Elemzés folyamatban...</span>
+                    </section>
+
+                    <section class="form-section">
+                        <div class="card" style="border-left: 4px solid #ef4444;">
+                            <h3><i class="fas fa-graduation-cap" style="color: #ef4444;"></i> Kiléptetés & Osztályzárás</h3>
+                            <p>Tanulók tanulmányi idejének lezárása (végzés, kicsapás vagy osztály archiválás).</p>
+                            
+                            <div class="form-group">
+                                <label>Egyéni tanuló kiléptetése / Archiválása</label>
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="text" placeholder="Tanuló neve..." class="login-input" style="flex: 1; border-radius: 8px;">
+                                    <button class="btn-primary" style="background: #ef4444;"><i class="fas fa-user-minus"></i> Kiléptetés</button>
+                                </div>
                             </div>
-                            <div class="success-msg" id="ocrSuccess" style="display:none;">
-                                <i class="fas fa-check-circle"></i> Adatok sikeresen kinyerve!
+                            
+                            <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+                            
+                            <div class="form-group">
+                                <label>Teljes Osztály Végeztetése (Archiválás)</label>
+                                <div style="display: flex; gap: 10px;">
+                                    <select class="login-input" style="flex: 1; border-radius: 8px;">
+                                        <option>12.A (Végzősök)</option>
+                                        <option>12.B</option>
+                                    </select>
+                                    <button class="btn-primary" style="background: #ef4444;"><i class="fas fa-archive"></i> Osztály Lezárása</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                </div>
             </div>
         </main>
     </div>
