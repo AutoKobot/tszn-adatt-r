@@ -315,22 +315,36 @@
                     <div class="grid-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
                         <section class="form-section">
                             <div class="card" style="border-left: 4px solid #10b981;">
-                                <h3><i class="fas fa-file-export" style="color: #10b981;"></i> Hatósági és Kamarai Export (Jelenlét)</h3>
-                                <p style="margin-bottom: 20px;">Havi hiányzási és jelenléti összesítők generálása az MKIK / KRÉTA felé Ösztöndíj számításhoz.</p>
+                                <h3><i class="fas fa-file-invoice-dollar" style="color: #10b981;"></i> Jelenléti Bérfeladó Előkészítése</h3>
+                                <p style="margin-bottom: 20px;">Havi jelenléti igazolások és (pre-kalkulált) bérfeladók generálása a partnercégek könyvelőinek (Duális ösztöndíjak).</p>
                                 
                                 <div class="form-row">
                                     <div class="form-group" style="flex: 1;">
-                                        <label>Jelentési Hónap</label>
+                                        <label>Érintett Cég / Képzőhely</label>
+                                        <select class="login-input" style="border-radius: 8px;">
+                                            <option>Összes Partnercég (Tömeges)</option>
+                                            <option>Vasvári Gépészeti Kft.</option>
+                                            <option>Kovács Szerviz Bt.</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label>Tárgyhó</label>
                                         <input type="month" class="login-input" value="2026-03" style="border-radius: 8px;">
                                     </div>
                                 </div>
                                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                                    <button class="btn-primary" style="flex: 1; background: #10b981;"><i class="fas fa-file-excel"></i> Excel Exportálása</button>
-                                    <button class="btn-primary" style="flex: 1; background: #ef4444;"><i class="fas fa-file-pdf"></i> PDF Igazolás</button>
+                                    <button class="btn-primary" style="flex: 1; background: #10b981;" onclick="alert('Bérfeladó Excel (Kulcs-Soft barát formátumban) letöltése folyamatban...')"><i class="fas fa-file-excel"></i> Könyvelői Export (.xlsx)</button>
+                                    <button class="btn-primary" style="flex: 1; background: #ef4444;" onclick="alert('Hivatalos, pecsételhető Jelenléti Igazolás PDF letöltése folyamatban...')"><i class="fas fa-file-pdf"></i> Jelenléti Igazolás (.pdf)</button>
                                 </div>
                                 
-                                <div style="margin-top: 30px; background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 8px;">
-                                    <i class="fas fa-info-circle" style="color: #10b981;"></i> Az export automatikusan levonja az igazolatlan hiányzásokat a kalkulált duális juttatási alapból.
+                                <div style="margin-top: 30px; background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981; padding: 15px; border-radius: 8px;">
+                                    <strong style="color: #10b981;"><i class="fas fa-info-circle"></i> Az exportált lista tartalmazza:</strong>
+                                    <ul style="margin: 10px 0 0 20px; font-size: 0.9rem; line-height: 1.5; color: rgba(255,255,255,0.8);">
+                                        <li>Cégnél letöltött (igazolt) gyakorlati órák.</li>
+                                        <li>Iskolában letöltött (igazolt) elméleti órák.</li>
+                                        <li><strong>Igazolatlan hiányzások részletezve</strong> (Törvényi levonáshoz).</li>
+                                        <li>Automatikus tájékoztató kalkuláció az arányosított duális jutattásról, hogy a munkaügyes élete könnyebb legyen!</li>
+                                    </ul>
                                 </div>
                             </div>
                         </section>
