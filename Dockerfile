@@ -24,5 +24,5 @@ RUN playwright install-deps chromium
 # 6. Forráskód másolása
 COPY . .
 
-# 7. Alkalmazás indítása
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "10000"]
+# 7. Alkalmazás indítása (Docker beépített env változókkal támogatva)
+CMD uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-10000}

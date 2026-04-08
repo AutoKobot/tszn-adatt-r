@@ -20,8 +20,7 @@ class Student(StudentBase):
     id: int
     letrehozva: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
 
 # --- SZERZŐDÉSEK ---
 class ContractCreate(BaseModel):
