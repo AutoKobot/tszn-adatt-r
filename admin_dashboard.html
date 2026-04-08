@@ -50,7 +50,6 @@
                         <p>Munkavédelmi frissítés szükséges</p>
                     </div>
                 </div>
-                <!-- ÚJ: Hiányzási figyelmeztetések Statisztikája -->
                 <div class="stat-card danger" style="background: rgba(220, 38, 38, 0.1); border-color: rgba(220, 38, 38, 0.4);">
                     <i class="fas fa-user-clock" style="color: #ef4444;"></i>
                     <div class="stat-info">
@@ -68,192 +67,326 @@
             </div>
 
             <div class="content-grid" style="grid-template-columns: 1fr;">
-                <!-- Új 1: Excel Import és Osztály Konfiguráció -->
-                <div class="grid-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                    
-                    <section class="form-section">
+                
+                <!-- Tab Navigáció -->
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-top: 20px; overflow-x: auto;">
+                    <button class="btn-primary admin-tab-btn" data-target="admin-tab-db" style="background: #4f46e5; border-radius: 8px; white-space: nowrap;"><i class="fas fa-database"></i> Adatbázis & Szerződések</button>
+                    <button class="btn-secondary admin-tab-btn" data-target="admin-tab-mgmt" style="border-radius: 8px; white-space: nowrap;"><i class="fas fa-cogs"></i> Rendszer & Importálás</button>
+                    <button class="btn-secondary admin-tab-btn" data-target="admin-tab-safety" style="border-radius: 8px; white-space: nowrap;"><i class="fas fa-hard-hat"></i> Biztonság & Eszközök</button>
+                    <button class="btn-secondary admin-tab-btn" data-target="admin-tab-reports" style="border-radius: 8px; white-space: nowrap;"><i class="fas fa-chart-line"></i> Jelentések & Audit</button>
+                </div>
+
+                <!-- TAB 1: Adatbázis & Szerződések -->
+                <div id="admin-tab-db" class="admin-tab-content">
+                    <section class="data-section">
                         <div class="card">
-                            <h3><i class="fas fa-file-excel" style="color: #10b981;"></i> Adatok Importálása (Excel)</h3>
-                            <p style="margin-bottom: 20px;">Töltsd fel a Kréta vagy egyéb rendszerből kinyert Excel fájlokat tömeges adatbevitelhez.</p>
-                            
-                            <div class="import-zones" style="display:flex; gap:10px; margin-bottom: 20px;">
-                                <div class="drop-zone" id="studentExcel" style="flex:1; padding: 20px;">
-                                    <i class="fas fa-user-graduate"></i>
-                                    <span>Tanulók (.xlsx)</span>
-                                </div>
-                                <div class="drop-zone" id="instructorExcel" style="flex:1; padding: 20px;">
-                                    <i class="fas fa-chalkboard-teacher"></i>
-                                    <span>Oktatók (.xlsx)</span>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                                <h3><i class="fas fa-users"></i> Tanulói Adatbázis & Ügyintézés</h3>
+                                <div class="filters" style="display:flex; gap:10px;">
+                                    <input type="text" placeholder="Keresés név alapján..." class="login-input" style="padding: 10px; width: 250px; border-radius: 8px;">
+                                    <select class="login-input" style="padding: 10px; border-radius: 8px; background: rgba(30,30,47,0.8);">
+                                        <option value="">-- Képzés szűrése --</option>
+                                        <option value="dualis">Duális</option>
+                                        <option value="felnott">Felnőttképzés</option>
+                                    </select>
                                 </div>
                             </div>
-
-                            <hr style="border-color: rgba(255,255,255,0.1); margin-bottom: 20px;">
-
-                            <h3><i class="fas fa-file-word" style="color: #3b82f6;"></i> Szerződésminták Feltöltése</h3>
-                            <p style="margin-bottom: 20px;">Tölts fel alapértelmezett Word (.docx) sablonokat a diák, felnőttképzési és oktatói szerződésekhez.</p>
-                            
-                            <div class="import-zones" style="display:flex; gap:10px;">
-                                <div class="drop-zone" id="templateUpload" style="flex:1; padding: 20px;">
-                                    <i class="fas fa-upload"></i>
-                                    <span>Sablon fájl (.docx)</span>
-                                </div>
-                                <select class="login-input" style="flex:1; padding: 10px; border-radius: 8px; background: rgba(30,30,47,0.8);">
-                                    <option value="dualis_nappali">Duális szerződés (Nappali)</option>
-                                    <option value="dualis_felnott">Felnőttképzési Szerződés</option>
-                                    <option value="oktatoi_megbizasi">Oktatói Megbízási Szerződés</option>
-                                </select>
+    
+                            <div style="overflow-x: auto;">
+                                <table style="width: 100%; text-align: left; border-collapse: collapse; color: white; min-width: 900px;">
+                                    <thead>
+                                        <tr style="border-bottom: 2px solid #333;">
+                                            <th style="padding: 15px;">Név & Osztály</th>
+                                            <th style="padding: 15px;">Jegy átlag</th>
+                                            <th style="padding: 15px;">Hiányzás</th>
+                                            <th style="padding: 15px;">Szerződés Státusz</th>
+                                            <th style="padding: 15px; text-align: right;">Műveletek</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                            <td style="padding: 15px;">
+                                                <strong>Kovács János</strong><br>
+                                                <small style="color: gray;">11.B (Duális Szerelő)</small>
+                                            </td>
+                                            <td style="padding: 15px; color: #10b981;">4.50</td>
+                                            <td style="padding: 15px;">12 óra (Ok)</td>
+                                            <td style="padding: 15px;">
+                                                <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;"><i class="fas fa-check"></i> Aláírva</span>
+                                            </td>
+                                            <td style="padding: 15px; text-align: right;">
+                                                <div style="display: flex; gap: 5px; justify-content: flex-end;">
+                                                    <button class="btn-primary" style="padding: 5px 10px; background: #3b82f6;" title="Szerződés Generálása"><i class="fas fa-file-word"></i> Generálás</button>
+                                                    <button class="btn-secondary" style="padding: 5px 10px;"><i class="fas fa-user-minus"></i></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <!-- Figyelmeztető sor -->
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(220, 38, 38, 0.05);">
+                                            <td style="padding: 15px; color: #fca5a5;">
+                                                <strong><i class="fas fa-exclamation-triangle" style="margin-right:5px;"></i>Szabó Anna</strong><br>
+                                                <small style="color: rgba(252, 165, 165, 0.7);">12.A (Felnőttképzés)</small>
+                                            </td>
+                                            <td style="padding: 15px; color: #ef4444;">1.80</td>
+                                            <td style="padding: 15px; color: #ef4444;"><strong>54 óra (82%)</strong></td>
+                                            <td style="padding: 15px;">
+                                                <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;"><i class="fas fa-clock"></i> Nincs feltöltve</span>
+                                            </td>
+                                            <td style="padding: 15px; text-align: right;">
+                                                <div style="display: flex; gap: 5px; justify-content: flex-end;">
+                                                    <button class="btn-primary" style="padding: 5px 10px; background: #3b82f6;" title="Szerződés Generálása" onclick="alert('Sablon kitöltése és letöltése folyamatban...')"><i class="fas fa-file-word"></i> Generálás</button>
+                                                    <button class="btn-primary" style="padding: 5px 10px; background: #ef4444;" title="Diák Kicsapása/Kiléptetése"><i class="fas fa-user-minus"></i></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                    </section>
 
-                    <section class="form-section">
-                        <div class="card">
-                            <h3><i class="fas fa-sliders-h"></i> Képzési Paraméterek (Osztály)</h3>
-                            <p>Osztályonkénti duális követelmények és hiányzási határok beállítása.</p>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label>Osztály kiválasztása</label>
-                                    <select><option>11.B (Informatika)</option><option>12.A (Gépészet)</option></select>
+                        <div class="card" style="margin-top: 2rem; border-left: 4px solid #ef4444;">
+                            <h3><i class="fas fa-graduation-cap" style="color: #ef4444;"></i> Osztályok Lezárása / Archívum</h3>
+                            <p>Teljes osztályok vizsgáinak lezárása és áthelyezése az irattárba.</p>
+                            <div class="form-group" style="margin-top: 15px;">
+                                <div style="display: flex; gap: 10px; max-width: 500px;">
+                                    <select class="login-input" style="flex: 1; border-radius: 8px;">
+                                        <option>12.A (Végzősök - 2026)</option>
+                                        <option>11.B (Keresztféléves)</option>
+                                    </select>
+                                    <button class="btn-primary" style="background: #ef4444;"><i class="fas fa-archive"></i> Osztály Véglegesítése</button>
                                 </div>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group" style="flex:1;">
-                                    <label>Max. engedélyezett hiányzás (%)</label>
-                                    <input type="number" value="20" placeholder="%">
-                                </div>
-                                <div class="form-group" style="flex:1;">
-                                    <label>Heti napok száma</label>
-                                    <input type="number" value="3" placeholder="Nap/hét">
-                                </div>
-                                <div class="form-group" style="flex:1;">
-                                    <label>Napi óraszám</label>
-                                    <input type="number" value="7" placeholder="Óra/nap">
-                                </div>
-                            </div>
-                            <button class="btn-primary" style="width:100%; margin-top:10px;">Paraméterek Mentése</button>
                         </div>
                     </section>
                 </div>
 
-                <!-- Új 2: Bővített Adattábla (Szerkesztés, Szűrés, Hiányzás Riasztás) -->
-                <section class="data-section" style="margin-top: 2rem;">
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h3><i class="fas fa-database"></i> Tanulói Adatbázis & Szűrés</h3>
-                            <div class="filters" style="display:flex; gap:10px;">
-                                <input type="text" placeholder="Keresés név alapján..." class="login-input" style="padding: 10px; width: 200px; border-radius: 8px;">
-                                <select class="login-input" style="padding: 10px; border-radius: 8px; background: rgba(30,30,47,0.8);">
-                                    <option value="">-- Jegy szűrése --</option>
-                                    <option value="bukas">Bukásra állók</option>
-                                    <option value="kivalo">Kiválók</option>
-                                </select>
-                                <select class="login-input" style="padding: 10px; border-radius: 8px; background: rgba(30,30,47,0.8);">
-                                    <option value="">-- Hiányzás szűrése --</option>
-                                    <option value="kuszob">Küszöböt elérők (Kritikus)</option>
-                                    <option value="tiszta">Hiányzás nélkül</option>
-                                </select>
+                <!-- TAB 2: Rendszer & Importálás -->
+                <div id="admin-tab-mgmt" class="admin-tab-content" style="display: none;">
+                    <div class="grid-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <section class="form-section">
+                            <div class="card">
+                                <h3><i class="fas fa-file-excel" style="color: #10b981;"></i> Adatok Importálása (Kréta / Excel)</h3>
+                                <p style="margin-bottom: 20px;">Intelligens import adatbázis frissítéshez oszlopsorrendtől függetlenül.</p>
+                                
+                                <div class="import-zones" style="display:flex; gap:10px; margin-bottom: 20px;">
+                                    <div class="drop-zone" style="flex:1; padding: 15px;">
+                                        <i class="fas fa-user-graduate"></i>
+                                        <span>Tanulók CSV/XLSX</span>
+                                    </div>
+                                    <div class="drop-zone" style="flex:1; padding: 15px;">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                        <span>Oktatók CSV/XLSX</span>
+                                    </div>
+                                </div>
+    
+                                <hr style="border-color: rgba(255,255,255,0.1); margin-bottom: 20px;">
+    
+                                <h3><i class="fas fa-file-word" style="color: #3b82f6;"></i> Szerződésminták (Sablon) Feltöltése</h3>
+                                <p style="margin-bottom: 20px;">Tölts fel alapértelmezett Word sablonokat a generátorhoz.</p>
+                                
+                                <div class="import-zones" style="display:flex; gap:10px;">
+                                    <div class="drop-zone" style="flex:1; padding: 15px;">
+                                        <i class="fas fa-upload"></i>
+                                        <span>Sablon (.docx)</span>
+                                    </div>
+                                    <select class="login-input" style="flex:1; padding: 10px; border-radius: 8px;">
+                                        <option value="dualis_nappali">Duális szerződés</option>
+                                        <option value="dualis_felnott">Felnőttképzési</option>
+                                    </select>
+                                </div>
                             </div>
-                        </div>
+                        </section>
+    
+                        <section class="form-section" style="display: flex; flex-direction: column; gap: 2rem;">
+                            <!-- Paraméterek -->
+                            <div class="card">
+                                <h3><i class="fas fa-sliders-h"></i> Képzési Paraméterek (Osztály szintű)</h3>
+                                <div class="form-row" style="margin-top: 15px;">
+                                    <div class="form-group" style="flex:1;">
+                                        <label>Osztály</label>
+                                        <select class="login-input"><option>11.B</option><option>12.A</option></select>
+                                    </div>
+                                    <div class="form-group" style="flex:1;">
+                                        <label>Max. hiányzás (%)</label>
+                                        <input type="number" class="login-input" value="20">
+                                    </div>
+                                    <div class="form-group" style="flex:1;">
+                                        <label>Heti napok</label>
+                                        <input type="number" class="login-input" value="3">
+                                    </div>
+                                </div>
+                                <button class="btn-primary" style="width:100%; margin-top:10px;">Mentés</button>
+                            </div>
 
-                        <table style="width: 100%; text-align: left; border-collapse: collapse; color: white;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid #333;">
-                                    <th style="padding: 15px;">Név</th>
-                                    <th style="padding: 15px;">Osztály</th>
-                                    <th style="padding: 15px;">Jegy átlag</th>
-                                    <th style="padding: 15px;">Hiányzás</th>
-                                    <th style="padding: 15px; text-align: right;">Műveletek</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr style="border-bottom: 1px solid #333;">
-                                    <td style="padding: 15px;">Kovács János</td>
-                                    <td style="padding: 15px;">11.B</td>
-                                    <td style="padding: 15px; color: #10b981;">4.5</td>
-                                    <td style="padding: 15px;">12 óra (Teljesítve: 98%)</td>
-                                    <td style="padding: 15px; text-align: right;">
-                                        <button class="btn-secondary" style="padding: 5px 10px;"><i class="fas fa-edit"></i></button>
-                                    </td>
-                                </tr>
-                                <!-- Figyelmeztető sor -->
-                                <tr style="border-bottom: 1px solid #333; background: rgba(220, 38, 38, 0.05);">
-                                    <td style="padding: 15px; font-weight: bold; color: #fca5a5;"><i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i>Szabó Anna</td>
-                                    <td style="padding: 15px;">12.A</td>
-                                    <td style="padding: 15px; color: #ef4444;">1.8</td>
-                                    <td style="padding: 15px; color: #ef4444;"><strong>54 óra (82% - Küszöb átlépve!)</strong></td>
-                                    <td style="padding: 15px; text-align: right;">
-                                        <button class="btn-secondary" style="padding: 5px 10px;"><i class="fas fa-edit"></i></button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-                
-                <!-- Új 3: Felhasználókezelés és Archívum (Oktatói fiókok és osztályzárás) -->
-                <div class="grid-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
-                    
-                    <section class="form-section">
-                        <div class="card" style="border-left: 4px solid #3b82f6;">
-                            <h3><i class="fas fa-user-plus" style="color: #3b82f6;"></i> Oktatói Hozzáférés Kiosztása</h3>
-                            <p>Új oktatói profil és belépési jelszó generálása az adatbázisban szereplő oktatókhoz.</p>
-                            
-                            <form id="createInstructorAcc">
-                                <div class="form-group">
-                                    <label>Oktató kiválasztása</label>
+                            <!-- Oktatói Fiókok -->
+                            <div class="card" style="border-left: 4px solid #3b82f6;">
+                                <h3><i class="fas fa-user-plus" style="color: #3b82f6;"></i> Oktatói Hozzáférés Kiosztása</h3>
+                                <div class="form-group" style="margin-top: 15px;">
+                                    <label>Oktató kiválasztása listából</label>
                                     <select class="login-input" style="width: 100%; border-radius: 8px;">
                                         <option>Kovács Péter (Informatika)</option>
-                                        <option>Nagy Éva (Gépészet)</option>
                                     </select>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group" style="flex:1;">
                                         <label>Felhasználónév</label>
-                                        <input type="text" value="kovacs.peter" class="login-input" style="border-radius: 8px;">
+                                        <input type="text" value="kovacs.peter" class="login-input">
                                     </div>
                                     <div class="form-group" style="flex:1;">
-                                        <label>Ideiglenes Jelszó</label>
-                                        <input type="text" value="Oktato2024!" class="login-input" style="border-radius: 8px;">
+                                        <label>Jelszó generálás</label>
+                                        <input type="text" value="Oktato2024!" class="login-input">
                                     </div>
                                 </div>
-                                <button type="button" class="btn-primary" style="width: 100%; background: #3b82f6;"><i class="fas fa-key"></i> Fiók Létrehozása és Kiküldése</button>
-                            </form>
-                        </div>
-                    </section>
-
-                    <section class="form-section">
-                        <div class="card" style="border-left: 4px solid #ef4444;">
-                            <h3><i class="fas fa-graduation-cap" style="color: #ef4444;"></i> Kiléptetés & Osztályzárás</h3>
-                            <p>Tanulók tanulmányi idejének lezárása (végzés, kicsapás vagy osztály archiválás).</p>
-                            
-                            <div class="form-group">
-                                <label>Egyéni tanuló kiléptetése / Archiválása</label>
-                                <div style="display: flex; gap: 10px;">
-                                    <input type="text" placeholder="Tanuló neve..." class="login-input" style="flex: 1; border-radius: 8px;">
-                                    <button class="btn-primary" style="background: #ef4444;"><i class="fas fa-user-minus"></i> Kiléptetés</button>
-                                </div>
+                                <button type="button" class="btn-primary" style="width: 100%; background: #3b82f6;"><i class="fas fa-key"></i> Fiók Kiosztása</button>
                             </div>
-                            
-                            <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
-                            
-                            <div class="form-group">
-                                <label>Teljes Osztály Végeztetése (Archiválás)</label>
-                                <div style="display: flex; gap: 10px;">
-                                    <select class="login-input" style="flex: 1; border-radius: 8px;">
-                                        <option>12.A (Végzősök)</option>
-                                        <option>12.B</option>
-                                    </select>
-                                    <button class="btn-primary" style="background: #ef4444;"><i class="fas fa-archive"></i> Osztály Lezárása</button>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+                        </section>
+                    </div>
                 </div>
+
+                <!-- TAB 3: Biztonság & Eszközök -->
+                <div id="admin-tab-safety" class="admin-tab-content" style="display: none;">
+                    <div class="grid-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <section class="form-section">
+                            <div class="card" style="border-left: 4px solid #f59e0b;">
+                                <h3><i class="fas fa-hard-hat" style="color: #f59e0b;"></i> Biztonsági és Munkavédelmi Oktatás</h3>
+                                <p style="margin-bottom: 20px;">Vizsgák és törvényi megfelelőség nyilvántartása határidőkkel.</p>
+                                
+                                <div class="form-row">
+                                    <div class="form-group" style="flex: 2;">
+                                        <label>Célcsoport (Osztály / Személy)</label>
+                                        <select class="login-input" style="border-radius: 8px;">
+                                            <option>Teljes 11.B Osztály</option>
+                                            <option>Új belépő: Nagy Bence</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label>Lejárat (1 év)</label>
+                                        <input type="date" class="login-input" style="border-radius: 8px;" value="2027-04-08">
+                                    </div>
+                                </div>
+                                <button class="btn-primary" style="width: 100%; background: #f59e0b; margin-top: 5px;"><i class="fas fa-stamp"></i> Oktatás Megtörténtként Rögzítése</button>
+
+                                <h4 style="margin-top: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Lejáró oktatások (Figyelmeztetés)</h4>
+                                <div style="background: rgba(220, 38, 38, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; border-left: 3px solid #ef4444;">
+                                    <span><strong>Papp László</strong> (12.A)</span>
+                                    <span style="color: #fca5a5;">Lejárt: 3 napja!</span>
+                                </div>
+                                <div style="background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; border-left: 3px solid #f59e0b;">
+                                    <span><strong>Teljes 10.C osztály</strong></span>
+                                    <span style="color: #fcd34d;">Lejár: 14 nap múlva</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="form-section">
+                            <div class="card" style="border-left: 4px solid #8b5cf6;">
+                                <h3><i class="fas fa-boxes" style="color: #8b5cf6;"></i> Munkaruházat és Eszköznyilvántartó</h3>
+                                <p style="margin-bottom: 20px;">Gyakorlati műszerek és formaruha kiadásának adminisztrációja.</p>
+                                
+                                <div class="form-row">
+                                    <div class="form-group" style="flex: 1;">
+                                        <label>Tanuló Neve</label>
+                                        <input type="text" class="login-input" placeholder="Név keresése..." style="border-radius: 8px;">
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label>Kiadott eszköz / ruha</label>
+                                        <input type="text" class="login-input" placeholder="pl: 42-es bakancs" style="border-radius: 8px;">
+                                    </div>
+                                </div>
+                                <button class="btn-primary" style="width: 100%; background: #8b5cf6;"><i class="fas fa-hand-holding-box"></i> Eszköz Átadása</button>
+
+                                <div style="margin-top: 25px;">
+                                    <h4 style="margin-bottom: 10px; color: gray;">Kintlévő Eszközök</h4>
+                                    <table style="width: 100%; text-align: left; background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden;">
+                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 5px;">
+                                            <td style="padding: 10px;">Szabó Anna</td>
+                                            <td style="padding: 10px;">Védőszemüveg</td>
+                                            <td style="padding: 10px; text-align: right;"><button class="btn-secondary" style="padding: 3px 10px; font-size: 0.8rem;">Visszavétel</button></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- TAB 4: Jelentések & Audit -->
+                <div id="admin-tab-reports" class="admin-tab-content" style="display: none;">
+                    <div class="grid-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <section class="form-section">
+                            <div class="card" style="border-left: 4px solid #10b981;">
+                                <h3><i class="fas fa-file-export" style="color: #10b981;"></i> Hatósági és Kamarai Export (Jelenlét)</h3>
+                                <p style="margin-bottom: 20px;">Havi hiányzási és jelenléti összesítők generálása az MKIK / KRÉTA felé Ösztöndíj számításhoz.</p>
+                                
+                                <div class="form-row">
+                                    <div class="form-group" style="flex: 1;">
+                                        <label>Jelentési Hónap</label>
+                                        <input type="month" class="login-input" value="2026-03" style="border-radius: 8px;">
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                    <button class="btn-primary" style="flex: 1; background: #10b981;"><i class="fas fa-file-excel"></i> Excel Exportálása</button>
+                                    <button class="btn-primary" style="flex: 1; background: #ef4444;"><i class="fas fa-file-pdf"></i> PDF Igazolás</button>
+                                </div>
+                                
+                                <div style="margin-top: 30px; background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 8px;">
+                                    <i class="fas fa-info-circle" style="color: #10b981;"></i> Az export automatikusan levonja az igazolatlan hiányzásokat a kalkulált duális juttatási alapból.
+                                </div>
+                            </div>
+                        </section>
+
+                        <section class="form-section">
+                            <div class="card" style="border-left: 4px solid #64748b;">
+                                <h3><i class="fas fa-list-alt" style="color: #64748b;"></i> Rendszernapló (Audit Log)</h3>
+                                <p style="margin-bottom: 20px;">Intézményi szintű tevékenységek követése (GDPR megfelelőség).</p>
+                                
+                                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; max-height: 250px; overflow-y: auto;">
+                                    <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem;">
+                                        <span style="color: gray;">Ma 14:12</span> - <strong>Kovács Péter (Oktató)</strong> módosította Nagy Bence érdemjegyét (Elmélet: 4 -> 5).
+                                    </div>
+                                    <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem;">
+                                        <span style="color: gray;">Ma 09:30</span> - <strong>Rendszergazda</strong> importált 24 új diákot (12.A_lista.xlsx).
+                                    </div>
+                                    <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem;">
+                                        <span style="color: gray;">Tegnap 16:45</span> - <strong>Rendszergazda</strong> archiválta a 13. C Osztályt.
+                                    </div>
+                                    <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; color: #fca5a5;">
+                                        <span style="color: gray;">Tegnap 08:15</span> - <strong>Szabó Éva (Oktató)</strong> Sikertelen bejelentkezési kísérlet.
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // Tab Váltó Logika az Admin felülethez
+        const adminTabs = document.querySelectorAll('.admin-tab-btn');
+        const adminContents = document.querySelectorAll('.admin-tab-content');
+        
+        adminTabs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Gombok alapállapota
+                adminTabs.forEach(b => {
+                    b.className = 'btn-secondary admin-tab-btn';
+                    b.style.background = '';
+                });
+                // Aktív gomb styling
+                btn.className = 'btn-primary admin-tab-btn';
+                btn.style.background = '#4f46e5';
+                
+                // Tartalom elrejtése
+                adminContents.forEach(content => content.style.display = 'none');
+                
+                // Aktív tartalom mutatása
+                const targetId = btn.getAttribute('data-target');
+                document.getElementById(targetId).style.display = 'block';
+            });
+        });
+    </script>
 </body>
 </html>
