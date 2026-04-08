@@ -3,173 +3,303 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iskolai Nyilvántartó - Adatbevitel</title>
+    <title>EduRegistrar - Iskolai Nyilvántartó Rendszer</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Landing Page Specifikus Stílusok */
+        body.landing-page {
+            background: linear-gradient(135deg, #1e1e2f 0%, #0d0d16 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            position: relative;
+        }
+
+        /* Dekoratív Háttér Elemek */
+        .landing-page::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            animation: pulse-glow 8s infinite alternate;
+        }
+
+        .landing-page::after {
+            content: '';
+            position: absolute;
+            bottom: -20%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            animation: pulse-glow 12s infinite alternate reverse;
+        }
+
+        @keyframes pulse-glow {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .landing-container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .landing-header {
+            text-align: center;
+            margin-bottom: 4rem;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        .landing-header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, #ffffff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .landing-header p {
+            font-size: 1.2rem;
+            color: #9ca3af;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .login-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            animation: slideUp 0.8s ease-out 0.2s both;
+        }
+
+        .login-card {
+            background: rgba(30, 30, 47, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .login-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .login-card:hover::before {
+            transform: translateX(100%);
+        }
+
+        .login-icon-wrapper {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .instructor-card .login-icon-wrapper {
+            background: linear-gradient(135deg, #3b82f6, #4f46e5);
+            color: white;
+        }
+
+        .admin-card .login-icon-wrapper {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .login-card h2 {
+            color: #ffffff;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-card p {
+            color: #9ca3af;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6b7280;
+            transition: color 0.3s;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: rgba(15, 15, 22, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #6366f1;
+            background: rgba(15, 15, 22, 0.8);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .login-input:focus + i {
+            color: #6366f1;
+        }
+
+        .login-btn {
+            margin-top: 1rem;
+            padding: 1rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .instructor-card .login-btn {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .instructor-card .login-btn:hover {
+            background: #4338ca;
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+        }
+
+        .admin-card .login-btn {
+            background: #059669;
+            color: white;
+        }
+
+        .admin-card .login-btn:hover {
+            background: #047857;
+            box-shadow: 0 5px 15px rgba(5, 150, 105, 0.4);
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
 </head>
-<body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo">
-                <i class="fas fa-graduation-cap"></i>
-                <span>EduRegistrar</span>
-            </div>
-            <nav>
-                <a href="#" class="active"><i class="fas fa-plus-circle"></i> Új diák</a>
-                <a href="#"><i class="fas fa-file-contract"></i> Duális szerződések</a>
-                <a href="#"><i class="fas fa-book-open"></i> Képzési napló</a>
-                <a href="#"><i class="fas fa-shield-alt"></i> Biztonsági oktatás</a>
-                <a href="#"><i class="fas fa-boxes"></i> Eszköz & Anyag</a>
-                <a href="#"><i class="fas fa-history"></i> GDPR Audit</a>
-                <a href="#"><i class="fas fa-cog"></i> Beállítások</a>
-            </nav>
-            <div class="user-profile">
-                <div class="avatar">A</div>
-                <div class="info">
-                    <span class="name">Adminisztrátor</span>
-                    <span class="role">Rendszergazda</span>
-                </div>
-            </div>
-        </aside>
+<body class="landing-page">
+    <div class="landing-container">
+        <header class="landing-header">
+            <h1>EduRegistrar</h1>
+            <p>Intelligens Duális Képzési és Iskolai Nyilvántartó Rendszer. Kérjük jelentkezzen be a megfelelő felületen.</p>
+        </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <header>
-                <h1>ÁKK Rendszervezérlő</h1>
-                <p>Üdvözöljük! Itt a duális képzés és az intézményi adminisztráció teljes áttekintése.</p>
-            </header>
-
-            <!-- Dashboard Shortcuts / Stats -->
-            <div class="dashboard-stats">
-                <div class="stat-card warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <div class="stat-info">
-                        <h3>8 Lejáró oktatás</h3>
-                        <p>Munkavédelmi frissítés szükséges</p>
-                    </div>
+        <div class="login-grid">
+            <!-- Oktatói Belépés -->
+            <div class="login-card instructor-card">
+                <div class="login-icon-wrapper">
+                    <i class="fas fa-chalkboard-teacher"></i>
                 </div>
-                <div class="stat-card danger">
-                    <i class="fas fa-boxes"></i>
-                    <div class="stat-info">
-                        <h3>Alacsony készlet</h3>
-                        <p>3 alapanyag elérte a minimum szintet</p>
+                <h2>Oktatói Portál</h2>
+                <p>Értékelések, képzési naplók és diákok haladásának követése.</p>
+                <form class="login-form" action="oktato_dashboard.html">
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" class="login-input" placeholder="Oktatói azonosító / Email" required>
                     </div>
-                </div>
-                <div class="stat-card success">
-                    <i class="fas fa-file-contract"></i>
-                    <div class="stat-info">
-                        <h3>12 Aktív szerződés</h3>
-                        <p>Duális partnerekkel kötve</p>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" class="login-input" placeholder="Jelszó" required>
                     </div>
-                </div>
+                    <button type="submit" class="login-btn">Belépés Oktatóként</button>
+                </form>
             </div>
 
-            <div class="content-grid">
-                <!-- Left Side: OCR Upload -->
-                <section class="ocr-section">
-                    <div class="card">
-                        <h3><i class="fas fa-magic"></i> OCR Intelligens Beolvasás</h3>
-                        <p>Húzd ide a diákigazolványt vagy a szerződést a gyors kitöltéshez.</p>
-                        
-                        <div class="drop-zone" id="dropZone">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <span>Fájl kiválasztása vagy idehúzása</span>
-                            <small>Támogatott: JPG, PNG, PDF</small>
-                            <input type="file" id="fileInput" hidden>
-                        </div>
-
-                        <div class="ocr-status" id="ocrStatus">
-                            <div class="loader-container" id="ocrLoader" style="display:none;">
-                                <div class="loader"></div>
-                                <span id="ocrText">Elemzés folyamatban...</span>
-                            </div>
-                            <div class="success-msg" id="ocrSuccess" style="display:none;">
-                                <i class="fas fa-check-circle"></i> Adatok sikeresen kinyerve!
-                            </div>
-                        </div>
-                        
-                        <div class="preview-container" id="previewContainer">
-                            <!-- Image preview will appear here -->
-                        </div>
+            <!-- Adminisztrátori Belépés -->
+            <div class="login-card admin-card">
+                <div class="login-icon-wrapper">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <h2>Titkárság & Admin</h2>
+                <p>Szerződések, OCR beolvasás, rendszerbeállítások és teljes körű menedzsment.</p>
+                <form class="login-form" action="admin_dashboard.html">
+                    <div class="input-group">
+                        <i class="fas fa-user-tie"></i>
+                        <input type="text" class="login-input" placeholder="Admin azonosító" required>
                     </div>
-                </section>
-
-                <!-- Right Side: Manual Form -->
-                <section class="form-section">
-                    <div class="card">
-                        <h3><i class="fas fa-edit"></i> Személyes Adatok</h3>
-                        <form id="studentForm">
-                            <div class="form-group">
-                                <label for="nev">Teljes név</label>
-                                <input type="text" id="nev" placeholder="pl: Kovács János" required>
-                            </div>
-                            
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="email">E-mail cím</label>
-                                    <input type="email" id="email" placeholder="pelda@email.hu" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="telefon">Telefonszám</label>
-                                    <input type="tel" id="telefon" placeholder="+36 30 123 4567">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="lakhely">Lakhely</label>
-                                <input type="text" id="lakhely" placeholder="Város, Irányítószám, Utca házszám">
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="tagozat">Tagozat</label>
-                                    <select id="tagozat">
-                                        <option value="nappali">Nappali</option>
-                                        <option value="felnőtt">Felnőtt</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="osztaly">Osztály</label>
-                                    <input type="text" id="osztaly" placeholder="pl: 11.B">
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="szerzodes_kezdet">Szerződés kezdete</label>
-                                    <input type="date" id="szerzodes_kezdet">
-                                </div>
-                                <div class="form-group">
-                                    <label for="szerzodes_vege">Szerződés vége</label>
-                                    <input type="date" id="szerzodes_vege">
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Kiegészítő adatok (Metadata - JSON)</label>
-                                <div class="metadata-tags" id="metadataTags">
-                                    <!-- Dynamic tags -->
-                                </div>
-                                <div class="metadata-input">
-                                    <input type="text" id="metaKey" placeholder="Kulcs (pl: allergia)">
-                                    <input type="text" id="metaValue" placeholder="Érték">
-                                    <button type="button" class="btn-secondary" id="addMeta"><i class="fas fa-plus"></i></button>
-                                </div>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="reset" class="btn-outline">Mégse</button>
-                                <button type="submit" class="btn-primary">Diák Mentése</button>
-                            </div>
-                        </form>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" class="login-input" placeholder="Jelszó" required>
                     </div>
-                </section>
+                    <button type="submit" class="login-btn">Belépés Adminként</button>
+                </form>
             </div>
-        </main>
+        </div>
     </div>
-
-    <script src="script.js"></script>
 </body>
 </html>

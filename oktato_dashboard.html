@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oktatói Portál - EduRegistrar</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span>EduOktató</span>
+            </div>
+            <nav>
+                <a href="#" class="active"><i class="fas fa-users"></i> Osztályaim</a>
+                <a href="#"><i class="fas fa-clipboard-list"></i> Értékelések</a>
+                <a href="#"><i class="fas fa-book"></i> Haladási napló</a>
+                <a href="index.html" style="margin-top: auto;"><i class="fas fa-sign-out-alt"></i> Kijelentkezés</a>
+            </nav>
+            <div class="user-profile">
+                <div class="avatar" style="background:#4f46e5;">O</div>
+                <div class="info">
+                    <span class="name">Kovács Péter</span>
+                    <span class="role">Szakoktató</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <h1>Oktatói Vezérlőpult</h1>
+                <p>Üdvözlöm! Itt kezelheti a diákok értékeléseit és a haladási naplókat.</p>
+            </header>
+
+            <div class="dashboard-stats">
+                <div class="stat-card success">
+                    <i class="fas fa-users"></i>
+                    <div class="stat-info">
+                        <h3>42 Diák</h3>
+                        <p>Idei tanévben hozzám rendelve</p>
+                    </div>
+                </div>
+                <div class="stat-card warning">
+                    <i class="fas fa-star-half-alt"></i>
+                    <div class="stat-info">
+                        <h3>5 Értékelés hiányzik</h3>
+                        <p>Gyakorlati vizsga modulból</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-grid" style="grid-template-columns: 1fr;">
+                <section class="form-section">
+                    <div class="card">
+                        <h3 style="margin-bottom: 20px;"><i class="fas fa-tools"></i> Fejlesztés alatt</h3>
+                        <p>Az oktatói felület részletes moduljai (jegybeírás, naplózás) hamarosan teljes funkcionalitással elérhetőek lesznek.</p>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

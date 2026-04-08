@@ -36,3 +36,18 @@ class GradeCreate(BaseModel):
     tantargy: str
     ertek: int
     datum: Optional[datetime] = None
+
+# --- OKTATÓK ---
+class InstructorBase(BaseModel):
+    nev: str
+    email: Optional[EmailStr] = None
+    telefon: Optional[str] = None
+    szakterulet: Optional[str] = None
+    metadata_json: Optional[dict] = {}
+
+class InstructorCreate(InstructorBase):
+    pass
+
+class Instructor(InstructorBase):
+    id: int
+    model_config = {"from_attributes": True}

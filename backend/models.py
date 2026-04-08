@@ -79,3 +79,12 @@ class ClassRoom(Base):
     __tablename__ = "osztalyok"
     id = Column(Integer, primary_key=True, index=True)
     megnevezes = Column(String(50))
+
+class Instructor(Base):
+    __tablename__ = "oktatok"
+    id = Column(Integer, primary_key=True, index=True)
+    nev = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True)
+    telefon = Column(String(20))
+    szakterulet = Column(String(255))
+    metadata_json = Column("metadata", JSON, default={})

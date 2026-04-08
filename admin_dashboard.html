@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iskolai Nyilvántartó - Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span>EduRegistrar</span>
+            </div>
+            <nav>
+                <a href="#" class="active"><i class="fas fa-plus-circle"></i> Új diák</a>
+                <a href="#"><i class="fas fa-file-contract"></i> Duális szerződések</a>
+                <a href="#"><i class="fas fa-book-open"></i> Képzési napló</a>
+                <a href="#"><i class="fas fa-shield-alt"></i> Biztonsági oktatás</a>
+                <a href="#"><i class="fas fa-boxes"></i> Eszköz & Anyag</a>
+                <a href="#"><i class="fas fa-chalkboard-teacher"></i> Oktatók kezelése</a>
+                <a href="#"><i class="fas fa-history"></i> GDPR Audit</a>
+                <a href="#"><i class="fas fa-cog"></i> Beállítások</a>
+            </nav>
+            <div class="user-profile">
+                <div class="avatar">A</div>
+                <div class="info">
+                    <span class="name">Adminisztrátor</span>
+                    <span class="role">Rendszergazda</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header>
+                <h1>ÁKK Rendszervezérlő</h1>
+                <p>Üdvözöljük! Itt a duális képzés és az intézményi adminisztráció teljes áttekintése.</p>
+            </header>
+
+            <!-- Dashboard Shortcuts / Stats -->
+            <div class="dashboard-stats">
+                <div class="stat-card warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div class="stat-info">
+                        <h3>8 Lejáró oktatás</h3>
+                        <p>Munkavédelmi frissítés szükséges</p>
+                    </div>
+                </div>
+                <div class="stat-card danger">
+                    <i class="fas fa-boxes"></i>
+                    <div class="stat-info">
+                        <h3>Alacsony készlet</h3>
+                        <p>3 alapanyag elérte a minimum szintet</p>
+                    </div>
+                </div>
+                <div class="stat-card success">
+                    <i class="fas fa-file-contract"></i>
+                    <div class="stat-info">
+                        <h3>12 Aktív szerződés</h3>
+                        <p>Duális partnerekkel kötve</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Left Side: OCR Upload -->
+                <section class="ocr-section">
+                    <div class="card">
+                        <h3><i class="fas fa-magic"></i> OCR Intelligens Beolvasás</h3>
+                        <p>Húzd ide a diákigazolványt vagy a szerződést a gyors kitöltéshez.</p>
+                        
+                        <div class="drop-zone" id="dropZone">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <span>Fájl kiválasztása vagy idehúzása</span>
+                            <small>Támogatott: JPG, PNG, PDF</small>
+                            <input type="file" id="fileInput" hidden>
+                        </div>
+
+                        <div class="ocr-status" id="ocrStatus">
+                            <div class="loader-container" id="ocrLoader" style="display:none;">
+                                <div class="loader"></div>
+                                <span id="ocrText">Elemzés folyamatban...</span>
+                            </div>
+                            <div class="success-msg" id="ocrSuccess" style="display:none;">
+                                <i class="fas fa-check-circle"></i> Adatok sikeresen kinyerve!
+                            </div>
+                        </div>
+                        
+                        <div class="preview-container" id="previewContainer">
+                            <!-- Image preview will appear here -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Right Side: Manual Form -->
+                <section class="form-section">
+                    <div class="card">
+                        <h3><i class="fas fa-edit"></i> Személyes Adatok</h3>
+                        <form id="studentForm">
+                            <div class="form-group">
+                                <label for="nev">Teljes név</label>
+                                <input type="text" id="nev" placeholder="pl: Kovács János" required>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="email">E-mail cím</label>
+                                    <input type="email" id="email" placeholder="pelda@email.hu" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="telefon">Telefonszám</label>
+                                    <input type="tel" id="telefon" placeholder="+36 30 123 4567">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="lakhely">Lakhely</label>
+                                <input type="text" id="lakhely" placeholder="Város, Irányítószám, Utca házszám">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="tagozat">Tagozat</label>
+                                    <select id="tagozat">
+                                        <option value="nappali">Nappali</option>
+                                        <option value="felnőtt">Felnőtt</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="osztaly">Osztály</label>
+                                    <input type="text" id="osztaly" placeholder="pl: 11.B">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="szerzodes_kezdet">Szerződés kezdete</label>
+                                    <input type="date" id="szerzodes_kezdet">
+                                </div>
+                                <div class="form-group">
+                                    <label for="szerzodes_vege">Szerződés vége</label>
+                                    <input type="date" id="szerzodes_vege">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Kiegészítő adatok (Metadata - JSON)</label>
+                                <div class="metadata-tags" id="metadataTags">
+                                    <!-- Dynamic tags -->
+                                </div>
+                                <div class="metadata-input">
+                                    <input type="text" id="metaKey" placeholder="Kulcs (pl: allergia)">
+                                    <input type="text" id="metaValue" placeholder="Érték">
+                                    <button type="button" class="btn-secondary" id="addMeta"><i class="fas fa-plus"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="reset" class="btn-outline">Mégse</button>
+                                <button type="submit" class="btn-primary">Diák Mentése</button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
