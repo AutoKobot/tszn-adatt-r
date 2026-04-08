@@ -493,9 +493,13 @@
             const formData = new FormData();
             formData.append('file', file);
             
+            // Éles (Render) környezet és Lokális fejlesztés megkülönböztetése
+            const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
+                ? 'http://localhost:8000'
+                : 'https://edu-registrar-backend.onrender.com'; // Cseréld meg ha más a backend render címed!
+
             try {
-                // Relatív hívás vagy localhost, de élesben a tényleges backend címet használja
-                const response = await fetch(`http://localhost:8000${endpoint}`, {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
                     method: 'POST',
                     body: formData
                 });
