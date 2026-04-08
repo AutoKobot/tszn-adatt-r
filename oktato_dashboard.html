@@ -34,23 +34,23 @@
         <main class="main-content">
             <header>
                 <h1>Oktatói Vezérlőpult</h1>
-                <p>Üdvözlöm! Itt kezelheti a diákok értékeléseit és a haladási naplókat.</p>
+                <p>Üdvözlöm! Itt kezelheti a hozzárendelt osztályokat és a diákok értékeléseit.</p>
             </header>
 
-            <div class="dashboard-stats">
-                <div class="stat-card success">
-                    <i class="fas fa-users"></i>
-                    <div class="stat-info">
-                        <h3>42 Diák</h3>
-                        <p>Idei tanévben hozzám rendelve</p>
-                    </div>
+            <!-- Osztály Választó Kártyák -->
+            <div class="content-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); margin-bottom: 2rem;">
+                <!-- 1. Osztály -->
+                <div class="card" style="border-left: 4px solid #10b981; cursor: pointer; transition: transform 0.2s;">
+                    <h3><i class="fas fa-users" style="color: #10b981;"></i> 12.A (Gyakorlati Műhely)</h3>
+                    <p style="margin: 10px 0;">Létszám: 24 fő</p>
+                    <button class="btn-primary" style="width: 100%; background: #10b981;">Megnyitás</button>
                 </div>
-                <div class="stat-card warning">
-                    <i class="fas fa-star-half-alt"></i>
-                    <div class="stat-info">
-                        <h3>5 Értékelés hiányzik</h3>
-                        <p>Gyakorlati vizsga modulból</p>
-                    </div>
+                
+                <!-- 2. Osztály -->
+                <div class="card" style="border-left: 4px solid #3b82f6; cursor: pointer; transition: transform 0.2s;">
+                    <h3><i class="fas fa-users" style="color: #3b82f6;"></i> 11.B (Elméleti Képzés)</h3>
+                    <p style="margin: 10px 0;">Létszám: 18 fő</p>
+                    <button class="btn-secondary" style="width: 100%;">Megnyitás</button>
                 </div>
             </div>
 
@@ -58,59 +58,97 @@
                 <section class="data-section">
                     <div class="card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h3><i class="fas fa-list-ul"></i> Saját Osztályaim & Értékelések</h3>
+                            <h3><i class="fas fa-folder-open"></i> Aktuális Osztály: 12.A</h3>
                             <div class="filters" style="display:flex; gap:10px;">
                                 <input type="text" placeholder="Keresés név alapján..." class="login-input" style="padding: 10px; border-radius: 8px;">
                             </div>
                         </div>
 
-                        <table style="width: 100%; text-align: left; border-collapse: collapse; color: white;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid #333;">
-                                    <th style="padding: 15px;">Név</th>
-                                    <th style="padding: 15px;">Osztály</th>
-                                    <th style="padding: 15px;">Modul / Tantárgy</th>
-                                    <th style="padding: 15px;">Értékelés</th>
-                                    <th style="padding: 15px;">Hiányzás Állapota</th>
-                                    <th style="padding: 15px; text-align: right;">Jegybeírás</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr style="border-bottom: 1px solid #333;">
-                                    <td style="padding: 15px;">Nagy Bence</td>
-                                    <td style="padding: 15px;">12.A</td>
-                                    <td style="padding: 15px;">Gyakorlati Műhely</td>
-                                    <td style="padding: 15px;">
-                                        <select class="login-input" style="padding: 5px; border-radius: 4px; background: rgba(30,30,47,0.8);">
-                                            <option>Nincs osztályzat</option>
-                                            <option selected>Megfelelt</option>
-                                            <option>Kiválóan megfelelt</option>
-                                        </select>
-                                    </td>
-                                    <td style="padding: 15px; color: #10b981;"><i class="fas fa-check-circle"></i> Rendben (12%)</td>
-                                    <td style="padding: 15px; text-align: right;">
-                                        <button class="btn-primary" style="padding: 5px 15px;">Mentés</button>
-                                    </td>
-                                </tr>
-                                <!-- Figyelmeztető sor -->
-                                <tr style="border-bottom: 1px solid #333; background: rgba(220, 38, 38, 0.05);">
-                                    <td style="padding: 15px; font-weight: bold; color: #fca5a5;"><i class="fas fa-exclamation-triangle" style="margin-right:8px;"></i>Szabó Anna</td>
-                                    <td style="padding: 15px;">12.A</td>
-                                    <td style="padding: 15px;">Gyakorlati Műhely</td>
-                                    <td style="padding: 15px;">
-                                        <select class="login-input" style="padding: 5px; border-radius: 4px; background: rgba(30,30,47,0.8);">
-                                            <option selected>Nincs osztályzat</option>
-                                            <option>Megfelelt</option>
-                                            <option>Kiválóan megfelelt</option>
-                                        </select>
-                                    </td>
-                                    <td style="padding: 15px; color: #ef4444;"><strong>Veszélyeztetett (82%)</strong></td>
-                                    <td style="padding: 15px; text-align: right;">
-                                        <button class="btn-primary" style="padding: 5px 15px;">Mentés</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; text-align: left; border-collapse: collapse; color: white; min-width: 800px;">
+                                <thead>
+                                    <tr style="border-bottom: 2px solid #4f46e5;">
+                                        <th style="padding: 15px;">Név</th>
+                                        <th style="padding: 15px;">Hiányzás</th>
+                                        <th style="padding: 15px; border-left: 1px solid rgba(255,255,255,0.1);">Elmélet (Jegyek & Átlag)</th>
+                                        <th style="padding: 15px; border-left: 1px solid rgba(255,255,255,0.1);">Gyakorlat (Jegyek & Átlag)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="border-bottom: 1px solid #333;">
+                                        <td style="padding: 15px; font-weight: 600;">Nagy Bence</td>
+                                        <td style="padding: 15px; color: #10b981;"><i class="fas fa-check-circle"></i> 12%</td>
+                                        
+                                        <!-- Elmélet Blokk -->
+                                        <td style="padding: 15px; border-left: 1px solid rgba(255,255,255,0.1);">
+                                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                                <span style="background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px;">4</span>
+                                                <span style="background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px;">5</span>
+                                                <span style="background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px;">4</span>
+                                                <strong style="color: #60a5fa; margin-left: auto;">Átlag: 4.33</strong>
+                                            </div>
+                                            <div style="display: flex; gap: 5px;">
+                                                <select class="login-input" style="padding: 5px; flex: 1;">
+                                                    <option value="">-- Új jegy --</option>
+                                                    <option>5</option><option>4</option><option>3</option><option>2</option><option>1</option>
+                                                </select>
+                                                <button class="btn-primary" style="padding: 5px 10px;">+</button>
+                                            </div>
+                                        </td>
+                                        
+                                        <!-- Gyakorlat Blokk -->
+                                        <td style="padding: 15px; border-left: 1px solid rgba(255,255,255,0.1);">
+                                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                                <span style="background: rgba(255,255,255,0.1); padding: 3px 8px; border-radius: 4px;">4</span>
+                                                <strong style="color: #60a5fa; margin-left: auto;">Átlag: 4.00</strong>
+                                            </div>
+                                            <div style="display: flex; gap: 5px;">
+                                                <select class="login-input" style="padding: 5px; flex: 1;">
+                                                    <option value="">-- Új jegy --</option>
+                                                    <option>5</option><option>4</option><option>3</option><option>2</option><option>1</option>
+                                                </select>
+                                                <button class="btn-primary" style="padding: 5px 10px;">+</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Figyelmeztető sor -->
+                                    <tr style="border-bottom: 1px solid #333; background: rgba(220, 38, 38, 0.05);">
+                                        <td style="padding: 15px; font-weight: bold; color: #fca5a5;">Szabó Anna</td>
+                                        <td style="padding: 15px; color: #ef4444;"><i class="fas fa-exclamation-triangle"></i> 82% (Kritikus)</td>
+                                        
+                                        <td style="padding: 15px; border-left: 1px solid rgba(255,255,255,0.1);">
+                                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                                <span style="background: rgba(239, 68, 68, 0.2); padding: 3px 8px; border-radius: 4px; color: #fca5a5;">2</span>
+                                                <span style="background: rgba(239, 68, 68, 0.2); padding: 3px 8px; border-radius: 4px; color: #fca5a5;">1</span>
+                                                <strong style="color: #ef4444; margin-left: auto;">Átlag: 1.50</strong>
+                                            </div>
+                                            <div style="display: flex; gap: 5px;">
+                                                <select class="login-input" style="padding: 5px; flex: 1;">
+                                                    <option value="">-- Új jegy --</option>
+                                                    <option>5</option><option>4</option><option>3</option><option>2</option><option>1</option>
+                                                </select>
+                                                <button class="btn-primary" style="padding: 5px 10px;">+</button>
+                                            </div>
+                                        </td>
+
+                                        <td style="padding: 15px; border-left: 1px solid rgba(255,255,255,0.1);">
+                                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                                <span style="color: gray; font-style: italic;">Nincs értékelés</span>
+                                                <strong style="color: gray; margin-left: auto;">Átlag: -</strong>
+                                            </div>
+                                            <div style="display: flex; gap: 5px;">
+                                                <select class="login-input" style="padding: 5px; flex: 1;">
+                                                    <option value="">-- Új jegy --</option>
+                                                    <option>5</option><option>4</option><option>3</option><option>2</option><option>1</option>
+                                                </select>
+                                                <button class="btn-primary" style="padding: 5px 10px;">+</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </section>
             </div>

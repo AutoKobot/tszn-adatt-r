@@ -57,8 +57,9 @@ class ExternalGrade(Base):
     diak_id = Column(Integer, ForeignKey("diakok.id"))
     tantargy = Column(String(100), nullable=False)
     ertek = Column(Integer, nullable=False)
+    tipus = Column(String(20), default="elmélet", comment="Pl: gyakorlat, elmélet")
     datum = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    forras = Column(String(50), default="Kréta")
+    forras = Column(String(50), default="EduRegistrar")
     kulso_azonosito = Column(String(100))
 
 class AuditLog(Base):
