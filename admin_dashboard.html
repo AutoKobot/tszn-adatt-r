@@ -78,18 +78,44 @@
                 <!-- TAB 1: Adatbázis & Szerződések -->
                 <div id="admin-tab-db" class="admin-tab-content">
                     <section class="data-section">
-                        <div class="card">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
-                                <h3><i class="fas fa-users"></i> Tanulói Adatbázis & Ügyintézés</h3>
-                                <div class="filters" style="display:flex; gap:10px;">
-                                    <input type="text" placeholder="Keresés név alapján..." class="login-input" style="padding: 10px; width: 250px; border-radius: 8px;">
-                                    <select class="login-input" style="padding: 10px; border-radius: 8px; background: rgba(30,30,47,0.8);">
-                                        <option value="">-- Képzés szűrése --</option>
-                                        <option value="dualis">Duális</option>
-                                        <option value="felnott">Felnőttképzés</option>
-                                    </select>
-                                </div>
+                        <!-- Intelligens Kereső és Szűrőközpont -->
+                        <div style="background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);">
+                            <h4 style="margin-top: 0; margin-bottom: 15px; color: #60a5fa;"><i class="fas fa-filter"></i> Intelligens Szűrőközpont</h4>
+                            
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                <!-- 1. Alap Keresés -->
+                                <input type="text" placeholder="Keresés név (tanuló/oktató) alapján..." class="login-input" style="flex: 1; min-width: 250px; border-radius: 8px;">
+                                
+                                <!-- 2. Kategóriák és Szerepkörök -->
+                                <select class="login-input" style="border-radius: 8px; background: rgba(30,30,47,0.9); flex: 1; min-width: 150px;">
+                                    <option value="">Mindenki (Kategória)</option>
+                                    <option value="tanulok">Csak Tanulók</option>
+                                    <option value="oktatok">Csak Oktatók</option>
+                                    <option value="vegzosok">Végzős Osztályok</option>
+                                    <option value="oktato_tanuloi">Egy adott oktató diákjai...</option>
+                                </select>
+                                
+                                <!-- 3. Osztályok -->
+                                <select class="login-input" style="border-radius: 8px; background: rgba(30,30,47,0.9); flex: 1; min-width: 150px;">
+                                    <option value="">Összes Osztály</option>
+                                    <option value="11B">11.B (Gépészet)</option>
+                                    <option value="12A">12.A (Informatika)</option>
+                                </select>
+
+                                <!-- 4. Riasztások és Hiányosságok (CRITICAL) -->
+                                <select class="login-input" style="border-radius: 8px; background: rgba(220, 38, 38, 0.1); border-color: #ef4444; color: #fca5a5; flex: 1.5; min-width: 200px; font-weight: bold;">
+                                    <option value="">-- Figyelmeztetések (Riasztások) --</option>
+                                    <option value="kritikus_hianyzas">⚠️ Kritikus hiányzás (Napi/Havi limit felett)</option>
+                                    <option value="lejart_oktatas">🔥 Lejárt / 30 napon belül lejáró Bizt. Oktatás</option>
+                                    <option value="hianyo_szerzodes">📄 Hiányzó Duális Szerződés</option>
+                                    <option value="hianyzo_ruha">👕 Kintlévő/Hiányzó Munkaeszköz</option>
+                                    <option value="hianyzo_adat">❓ Hiányzó Személyes Adat (Import hiba)</option>
+                                </select>
+                                
+                                <button class="btn-primary" style="background: #3b82f6;"><i class="fas fa-search"></i> Szűrés</button>
+                                <button class="btn-secondary" title="Szűrők törlése"><i class="fas fa-times"></i></button>
                             </div>
+                        </div>
     
                             <div style="overflow-x: auto;">
                                 <table style="width: 100%; text-align: left; border-collapse: collapse; color: white; min-width: 900px;">
