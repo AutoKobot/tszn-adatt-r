@@ -17,14 +17,13 @@
                 <span>EduRegistrar</span>
             </div>
             <nav>
-                <a href="#" class="active"><i class="fas fa-plus-circle"></i> Új diák</a>
-                <a href="#"><i class="fas fa-file-contract"></i> Duális szerződések</a>
-                <a href="#"><i class="fas fa-book-open"></i> Képzési napló</a>
-                <a href="#"><i class="fas fa-shield-alt"></i> Biztonsági oktatás</a>
-                <a href="#"><i class="fas fa-boxes"></i> Eszköz & Anyag</a>
-                <a href="#"><i class="fas fa-chalkboard-teacher"></i> Oktatók kezelése</a>
-                <a href="#"><i class="fas fa-history"></i> GDPR Audit</a>
-                <a href="#"><i class="fas fa-cog"></i> Beállítások</a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-db\']').click()" class="active"><i class="fas fa-database"></i> Adatbázis Kezelő</a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-db\']').click()"><i class="fas fa-file-contract"></i> Felhasználók & Szerződések</a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-mgmt\']').click()"><i class="fas fa-building"></i> Cégek & Paraméterek</a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-safety\']').click()"><i class="fas fa-shield-alt"></i> Biztonsági oktatás</a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-safety\']').click()"><i class="fas fa-boxes"></i> Eszköz & Anyag</a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-reports\']').click()"><i class="fas fa-chart-line"></i> Bérfeladó & Jelentések</a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-reports\']').click()"><i class="fas fa-history"></i> Rendszer (Audit) Log</a>
             </nav>
             <div class="user-profile">
                 <div class="avatar">A</div>
@@ -198,6 +197,27 @@
                         </section>
     
                         <section class="form-section" style="display: flex; flex-direction: column; gap: 2rem;">
+                            <!-- ÚJ: Parnercég Felvitele -->
+                            <div class="card" style="border-left: 4px solid #f59e0b;">
+                                <h3><i class="fas fa-industry" style="color: #f59e0b;"></i> Új Partnercég (Képzőhely) Rögzítése</h3>
+                                <p style="margin-bottom: 20px;">Duális partnercégek adatbázisának építése.</p>
+                                <div class="form-group">
+                                    <label>Cégjegyzéknév</label>
+                                    <input type="text" class="login-input" placeholder="pl: Vasvári Gépészeti Kft." style="border-radius: 8px;">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group" style="flex:1;">
+                                        <label>Adószám</label>
+                                        <input type="text" class="login-input" placeholder="12345678-2-12" style="border-radius: 8px;">
+                                    </div>
+                                    <div class="form-group" style="flex:1;">
+                                        <label>Kapcsolattartó Email</label>
+                                        <input type="email" class="login-input" placeholder="iroda@ceg.hu" style="border-radius: 8px;">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-primary" style="width: 100%; background: #f59e0b;"><i class="fas fa-save"></i> Partnercég Rögzítése</button>
+                            </div>
+
                             <!-- Paraméterek -->
                             <div class="card">
                                 <h3><i class="fas fa-sliders-h"></i> Képzési Paraméterek (Osztály szintű)</h3>
