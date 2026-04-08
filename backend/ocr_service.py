@@ -1,17 +1,18 @@
-import easyocr
+import pytesseract
 import re
 from PIL import Image
 import io
 
 class OCRService:
     def __init__(self):
-        # Magyar és Angol nyelvű támogatás
-        self.reader = easyocr.Reader(['hu', 'en'])
+        # A Tesseract végrehajtó fájlhoz a rendszer útvonal (Render Docker-ben alapértelmezett)
+        pass
 
     async def process_image(self, image_bytes):
-        # 1. OCR végrehajtása
-        results = self.reader.readtext(image_bytes, detail=0)
-        full_text = " ".join(results)
+        # 1. OCR végrehajtása Pytesseract használatával (Memóriabarát módszer)
+        image = Image.open(io.BytesIO(image_bytes))
+        full_text = pytesseract.image_to_string(image, lang="hun+eng")
+
         
         # 2. Adatok kinyerése Regex segítségével (Magyar kártyákhoz optimalizálva)
         data = {
