@@ -195,14 +195,17 @@
                                 <p style="margin-bottom: 20px;">Intelligens import adatbázis frissítéshez oszlopsorrendtől függetlenül.</p>
                                 
                                 <div class="import-zones" style="display:flex; gap:10px; margin-bottom: 20px;">
-                                    <div class="drop-zone" style="flex:1; padding: 15px;">
+                                    <div class="drop-zone" id="studentExcelZone" style="flex:1; padding: 15px; cursor: pointer;">
                                         <i class="fas fa-user-graduate"></i>
                                         <span>Tanulók CSV/XLSX</span>
                                     </div>
-                                    <div class="drop-zone" style="flex:1; padding: 15px;">
+                                    <input type="file" id="studentExcelInput" style="display: none;" accept=".xlsx, .xls, .csv">
+                                    
+                                    <div class="drop-zone" id="instructorExcelZone" style="flex:1; padding: 15px; cursor: pointer;">
                                         <i class="fas fa-chalkboard-teacher"></i>
                                         <span>Oktatók CSV/XLSX</span>
                                     </div>
+                                    <input type="file" id="instructorExcelInput" style="display: none;" accept=".xlsx, .xls, .csv">
                                 </div>
     
                                 <hr style="border-color: rgba(255,255,255,0.1); margin-bottom: 20px;">
@@ -448,6 +451,80 @@
                 document.getElementById(targetId).style.display = 'block';
             });
         });
+
+        // Tényleges Excel Import Logika (FastAPI Backend hívás)
+        function setupDropZone(zoneId, inputId, endpoint) {
+            const zone = document.getElementById(zoneId);
+            const input = document.getElementById(inputId);
+            
+            if(!zone || !input) return;
+
+            // Kattintásra nyissa meg a fájlkezelőt
+            zone.addEventListener('click', () => input.click());
+
+            // Fájl kiválasztása esetén
+            input.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) await uploadExcelTask(file, endpoint, zone);
+                input.value = ''; // Reset
+            });
+
+            // Drag and Drop események
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.style.background = 'rgba(16, 185, 129, 0.2)'; // Zöldes kiemelés
+            });
+            zone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                zone.style.background = ''; // Visszaállás
+            });
+            zone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                zone.style.background = '';
+                const file = e.dataTransfer.files[0];
+                if (file) await uploadExcelTask(file, endpoint, zone);
+            });
+        }
+
+        async function uploadExcelTask(file, endpoint, zone) {
+            const originalText = zone.querySelector('span').innerText;
+            zone.querySelector('span').innerText = 'Feltöltés folyamatban...';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                // Relatív hívás vagy localhost, de élesben a tényleges backend címet használja
+                const response = await fetch(`http://localhost:8000${endpoint}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if(response.ok) {
+                    alert(`Sikeres importálás!\nBeküldve: ${result.beolvasott_sorok || result.uzenet || 'OK'}`);
+                    zone.querySelector('span').innerText = 'Sikeres Feltöltés! ✅';
+                } else {
+                    alert(`Hiba történt: ${result.detail || 'Szerver hiba'}`);
+                    zone.querySelector('span').innerText = 'Hiba történt ❌';
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Hálózati hiba: Nem sikerült elérni a szervert.");
+                zone.querySelector('span').innerText = 'Hiba történt ❌';
+            }
+            
+            // 3 másodperc múlva visszaáll eredetire
+            setTimeout(() => {
+                zone.querySelector('span').innerText = originalText;
+            }, 3000);
+        }
+
+        // Init zónák
+        setupDropZone('studentExcelZone', 'studentExcelInput', '/import/students');
+        setupDropZone('instructorExcelZone', 'instructorExcelInput', '/import/instructors');
+
     </script>
 </body>
 </html>
