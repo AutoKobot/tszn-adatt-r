@@ -4,12 +4,12 @@ services:
     name: edu-registrar-backend
     env: docker
     plan: free
-    # A buildCommand és startCommand már a Dockerfile-ban van
     envVars:
+      # DATABASE_URL-t a Render dashboardon kell manuálisan beállítani
+      # Supabase Transaction Pooler URL-je (port 6543)
+      # Formátum: postgresql://postgres.PROJECT_REF:JELSZÓ@aws-1-eu-central-1.pooler.supabase.com:6543/postgres
       - key: DATABASE_URL
-        fromDatabase:
-          name: edu-registrar-db
-          property: connectionString
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: PYTHON_VERSION
@@ -24,8 +24,4 @@ services:
         name: Access-Control-Allow-Origin
         value: "*"
 
-databases:
-  # 3. PostgreSQL Adatbázis
-  - name: edu-registrar-db
-    plan: free
-    region: frankfurt
+# MEGJEGYZÉS: Render-belső PostgreSQL eltávolítva - az alkalmazás Supabase-t használ
