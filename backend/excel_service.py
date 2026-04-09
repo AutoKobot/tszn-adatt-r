@@ -38,9 +38,32 @@ class ExcelService:
         return re.sub(r'[^a-z0-9_]', '', name.replace(' ', '_'))
 
 
+    def _normalize_accent(self, text):
+        """Ékezetek eltávolítása összehasonlításhoz"""
+        return text.replace('á','a').replace('é','e').replace('í','i')\
+                   .replace('ó','o').replace('ö','o').replace('ő','o')\
+                   .replace('ú','u').replace('ü','u').replace('ű','u')
+
+    def _find_header_row(self, file_bytes, sheet=0):
+        """Megkeresi, hogy melyik sorban vannak a fejlécek (0-indexelt).
+        Végigpásztázza az első 10 sort, és azt választja, ahol a legtöbb
+        ismert kulcsszót találja (pl. 'nev', 'mail', 'iskol', 'szakma')."""
+        df_raw = pd.read_excel(io.BytesIO(file_bytes), sheet_name=sheet, header=None)
+        keywords = ['nev', 'mail', 'iskol', 'szakma', 'oktat', 'evfolyam', 'tanu', 'szerz']
+        best_row = 0
+        best_score = 0
+        for i in range(min(10, len(df_raw))):
+            row_str = ' '.join([self._normalize_accent(str(v).lower()) for v in df_raw.iloc[i].values if pd.notna(v)])
+            score = sum(1 for kw in keywords if kw in row_str)
+            if score > best_score:
+                best_score = score
+                best_row = i
+        return best_row
+
     def parse_instructors(self, file_bytes):
         """Oktatói Excel feldolgozása Intelligensen"""
-        df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=0)
+        header_row = self._find_header_row(file_bytes)
+        df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=0, header=header_row)
         
         # Normalize headers
         df.columns = [self._normalize_column_name(col) for col in df.columns]
@@ -64,7 +87,8 @@ class ExcelService:
 
     def parse_students(self, file_bytes):
         """Tanulói Excel feldolgozása, támogatva a felnőtt/nappali keveredést nyitott módon"""
-        df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=0)
+        header_row = self._find_header_row(file_bytes)
+        df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=0, header=header_row)
         df.columns = [self._normalize_column_name(col) for col in df.columns]
         
         students = []
