@@ -82,8 +82,11 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Adatbázis inicializálás
-database.Base.metadata.create_all(bind=database.engine)
+# Adatbázis inicializálás (hibatűrő - ha Supabase átmenetileg nem elérhető, folytatja)
+try:
+    database.Base.metadata.create_all(bind=database.engine)
+except Exception as db_init_err:
+    print(f"[FIGYELMEZTETÉS] Adatbázis inicializálás sikertelen (átmeneti hiba, folytatás): {db_init_err}")
 
 # Dependency: DB munkamenet lekérése
 def get_db():
