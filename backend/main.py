@@ -94,7 +94,14 @@ def get_db():
 
 @app.get("/")
 def read_root():
-    return {"status": "EduRegistrar Backend Running"}
+    return {"status": "Az EduRegistrar háttérrendszer fut"}
+
+@app.get("/ping")
+def keepalive_ping():
+    """Keepalive végpont: a frontend rendszeresen hívja, hogy a
+    Render ingyenes szerver ne aludjon el tétlenség miatt."""
+    import datetime
+    return {"pong": True, "time": datetime.datetime.utcnow().isoformat()}
 
 # --- DIÁKOK KEZELÉSE ---
 @app.get("/students/", response_model=list[schemas.Student])

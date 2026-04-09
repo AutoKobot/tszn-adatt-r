@@ -629,10 +629,28 @@
             }
         }
 
+        // --- KEEPALIVE: Szerver ébresztőóra ---
+        const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
+            ? 'http://localhost:8000'
+            : 'https://tszn.onrender.com';
+
+        async function pingBackend() {
+            try {
+                await fetch(`${API_BASE_URL}/ping`);
+                console.log('[Keepalive] Szerver él, ping elküldve.');
+            } catch (e) {
+                console.warn('[Keepalive] Szerver nem válaszolt:', e);
+            }
+        }
+
         // Adatok lekérése induláskor
         document.addEventListener('DOMContentLoaded', () => {
             fetchAndDisplayStudents();
             loadClasses();
+
+            // Azonnal pingeljük, majd 10 percenként ismételten, hogy a szerver ne aludjon el
+            pingBackend();
+            setInterval(pingBackend, 10 * 60 * 1000); // 10 perc
         });
     </script>
 </body>
