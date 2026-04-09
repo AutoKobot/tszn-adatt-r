@@ -46,21 +46,21 @@
                 <div class="stat-card warning">
                     <i class="fas fa-exclamation-triangle"></i>
                     <div class="stat-info">
-                        <h3>8 Lejáró oktatás</h3>
+                        <h3 id="stat-expired-training">0 Lejáró oktatás</h3>
                         <p>Munkavédelmi frissítés szükséges</p>
                     </div>
                 </div>
                 <div class="stat-card danger" style="background: rgba(220, 38, 38, 0.1); border-color: rgba(220, 38, 38, 0.4);">
                     <i class="fas fa-user-clock" style="color: #ef4444;"></i>
                     <div class="stat-info">
-                        <h3 style="color: #ef4444;">12 Kritikus Hiányzó</h3>
+                        <h3 id="stat-critical-absence" style="color: #ef4444;">0 Kritikus Hiányzó</h3>
                         <p>Elérték a 80%-os hiányzási küszöböt</p>
                     </div>
                 </div>
                 <div class="stat-card success">
                     <i class="fas fa-file-contract"></i>
                     <div class="stat-info">
-                        <h3>12 Aktív szerződés</h3>
+                        <h3 id="stat-active-contracts">0 Aktív szerződés</h3>
                         <p>Duális partnerekkel kötve</p>
                     </div>
                 </div>
@@ -93,28 +93,19 @@
                                     <option value="tanulok">Csak Tanulók</option>
                                     <option value="oktatok">Csak Oktatók</option>
                                     <option value="vegzosok">Végzős Osztályok</option>
-                                    <option value="oktato_tanuloi">Egy adott oktató diákjai...</option>
                                 </select>
                                 
                                 <!-- 3. Osztályok -->
                                 <select class="login-input" style="border-radius: 8px; background: rgba(30,30,47,0.9); flex: 1; min-width: 150px;">
                                     <option value="">Összes Osztály</option>
-                                    <option value="11B">11.B (Gépészet)</option>
-                                    <option value="12A">12.A (Informatika)</option>
                                 </select>
 
-                                <!-- 4. Riasztások és Hiányosságok (CRITICAL) -->
+                                <!-- 4. Riasztások és Hiányosságok -->
                                 <select class="login-input" style="border-radius: 8px; background: rgba(220, 38, 38, 0.1); border-color: #ef4444; color: #fca5a5; flex: 1.5; min-width: 200px; font-weight: bold;">
                                     <option value="">-- Figyelmeztetések (Riasztások) --</option>
-                                    <option value="kritikus_hianyzas">⚠️ Kritikus hiányzás (Napi/Havi limit felett)</option>
-                                    <option value="lejart_oktatas">🔥 Lejárt / 30 napon belül lejáró Bizt. Oktatás</option>
-                                    <option value="hianyo_szerzodes">📄 Hiányzó Duális Szerződés</option>
-                                    <option value="hianyzo_ruha">👕 Kintlévő/Hiányzó Munkaeszköz</option>
-                                    <option value="hianyzo_adat">❓ Hiányzó Személyes Adat (Import hiba)</option>
                                 </select>
                                 
-                                <button class="btn-primary" style="background: #3b82f6;"><i class="fas fa-search"></i> Szűrés</button>
-                                <button class="btn-secondary" title="Szűrők törlése"><i class="fas fa-times"></i></button>
+                                <button class="btn-primary" style="background: #3b82f6;" onclick="fetchAndDisplayStudents()"><i class="fas fa-sync"></i> Frissítés</button>
                             </div>
                         </div>
     
@@ -122,47 +113,18 @@
                                 <table style="width: 100%; text-align: left; border-collapse: collapse; color: white; min-width: 900px;">
                                     <thead>
                                         <tr style="border-bottom: 2px solid #333;">
-                                            <th style="padding: 15px;">Név & Osztály</th>
-                                            <th style="padding: 15px;">Jegy átlag</th>
-                                            <th style="padding: 15px;">Hiányzás</th>
-                                            <th style="padding: 15px;">Szerződés Státusz</th>
+                                            <th style="padding: 15px;">Név & Azonosítók</th>
+                                            <th style="padding: 15px;">Email / Kapcsolat</th>
+                                            <th style="padding: 15px;">Szakma / Évf.</th>
+                                            <th style="padding: 15px;">Státusz</th>
                                             <th style="padding: 15px; text-align: right;">Műveletek</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
-                                            <td style="padding: 15px;">
-                                                <strong>Kovács János</strong><br>
-                                                <small style="color: gray;">11.B (Duális Szerelő)</small>
-                                            </td>
-                                            <td style="padding: 15px; color: #10b981;">4.50</td>
-                                            <td style="padding: 15px;">12 óra (Ok)</td>
-                                            <td style="padding: 15px;">
-                                                <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;"><i class="fas fa-check"></i> Aláírva</span>
-                                            </td>
-                                            <td style="padding: 15px; text-align: right;">
-                                                <div style="display: flex; gap: 5px; justify-content: flex-end;">
-                                                    <button class="btn-primary" style="padding: 5px 10px; background: #3b82f6;" title="Szerződés Generálása"><i class="fas fa-file-word"></i> Generálás</button>
-                                                    <button class="btn-secondary" style="padding: 5px 10px;"><i class="fas fa-user-minus"></i></button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <!-- Figyelmeztető sor -->
-                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(220, 38, 38, 0.05);">
-                                            <td style="padding: 15px; color: #fca5a5;">
-                                                <strong><i class="fas fa-exclamation-triangle" style="margin-right:5px;"></i>Szabó Anna</strong><br>
-                                                <small style="color: rgba(252, 165, 165, 0.7);">12.A (Felnőttképzés)</small>
-                                            </td>
-                                            <td style="padding: 15px; color: #ef4444;">1.80</td>
-                                            <td style="padding: 15px; color: #ef4444;"><strong>54 óra (82%)</strong></td>
-                                            <td style="padding: 15px;">
-                                                <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;"><i class="fas fa-clock"></i> Nincs feltöltve</span>
-                                            </td>
-                                            <td style="padding: 15px; text-align: right;">
-                                                <div style="display: flex; gap: 5px; justify-content: flex-end;">
-                                                    <button class="btn-primary" style="padding: 5px 10px; background: #3b82f6;" title="Szerződés Generálása" onclick="alert('Sablon kitöltése és letöltése folyamatban...')"><i class="fas fa-file-word"></i> Generálás</button>
-                                                    <button class="btn-primary" style="padding: 5px 10px; background: #ef4444;" title="Diák Kicsapása/Kiléptetése"><i class="fas fa-user-minus"></i></button>
-                                                </div>
+                                    <tbody id="studentTableBody">
+                                        <!-- IDE TÖLTI BE A JAVASCRIPT A VALÓS DIÁKOKAT -->
+                                        <tr>
+                                            <td colspan="5" style="text-align: center; padding: 30px; color: gray;">
+                                                <i class="fas fa-spinner fa-spin" style="margin-right: 10px;"></i> Adatok betöltése a szerverről...
                                             </td>
                                         </tr>
                                     </tbody>
@@ -509,6 +471,9 @@
                 if(response.ok) {
                     alert(`Sikeres importálás!\nBeküldve: ${result.beolvasott_sorok || result.uzenet || 'OK'}`);
                     zone.querySelector('span').innerText = 'Sikeres Feltöltés! ✅';
+                    
+                    // Automatikus frissítés az Adatbázis fülön
+                    fetchAndDisplayStudents();
                 } else {
                     alert(`Hiba történt: ${result.detail || 'Szerver hiba'}`);
                     zone.querySelector('span').innerText = 'Hiba történt ❌';
@@ -525,10 +490,66 @@
             }, 3000);
         }
 
+        async function fetchAndDisplayStudents() {
+            const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
+                ? 'http://localhost:8000'
+                : 'https://tszn.onrender.com';
+                
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: gray;"><i class="fas fa-spinner fa-spin" style="margin-right: 10px;"></i> Adatok letöltése folyamatban...</td></tr>`;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/students/`);
+                if (!response.ok) throw new Error("Network response was not ok");
+                const students = await response.json();
+                
+                // Statisztikák frissítése
+                document.getElementById('stat-active-contracts').innerText = `${students.length} Nyilvántartott Diák`;
+                
+                if (students.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #fca5a5;"><i class="fas fa-search" style="margin-right: 10px;"></i> Az adatbázis jelenleg üres. Tölts fel egy Excelt a 'Rendszer & Importálás' fülön.</td></tr>`;
+                    return;
+                }
+                
+                tbody.innerHTML = '';
+                students.forEach(s => {
+                    const meta = s.metadata_json || {};
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+                    
+                    // OM azonosító vagy diákigazolvány ha nincs, akkor hiányzik
+                    const azonosito = s.oktatasi_azonosito || s.diakigazolvany_szam || '<span style="color:#fca5a5;">Nincs azonosító</span>';
+                    
+                    tr.innerHTML = `
+                        <td style="padding: 15px;">
+                            <strong>${s.nev}</strong><br>
+                            <small style="color: gray;">Azonosító: ${azonosito}</small>
+                        </td>
+                        <td style="padding: 15px; color: #60a5fa;">${s.email || '-'}</td>
+                        <td style="padding: 15px;">${meta.szakma || 'Ismeretlen szakma'} <br> <small style="color:gray;">${meta.evfolyam || ''}</small></td>
+                        <td style="padding: 15px;">
+                            <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem;"><i class="fas fa-check"></i> Aktív</span>
+                        </td>
+                        <td style="padding: 15px; text-align: right;">
+                            <div style="display: flex; gap: 5px; justify-content: flex-end;">
+                                <button class="btn-primary" style="padding: 5px 10px; background: #3b82f6;" title="Profil megtekintése"><i class="fas fa-user-edit"></i></button>
+                                <button class="btn-secondary" style="padding: 5px 10px;"><i class="fas fa-user-minus"></i></button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error("Hiba a diákok lekérésekor:", error);
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #ef4444;"><i class="fas fa-wifi" style="margin-right: 10px;"></i> Nem sikerült kapcsolódni az adatbázishoz. Próbáld újra később.</td></tr>`;
+            }
+        }
+
         // Init zónák
         setupDropZone('studentExcelZone', 'studentExcelInput', '/import/students');
         setupDropZone('instructorExcelZone', 'instructorExcelInput', '/import/instructors');
 
-    </script>
+        // Adatok lekérése induláskor
+        document.addEventListener('DOMContentLoaded', fetchAndDisplayStudents);
 </body>
 </html>
