@@ -72,11 +72,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="EduRegistrar ÁKK Backend", version="1.0.0", lifespan=lifespan)
 
-# CORS beállítások a React frontendhez
+# CORS beállítások a felülethez
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Élesben szigorítani kell!
-    allow_credentials=True,
+    allow_origins=["http://localhost:8000", "https://tszn-adattar.onrender.com", "*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
