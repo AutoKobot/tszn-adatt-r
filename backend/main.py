@@ -140,12 +140,31 @@ async def import_students_excel(file: UploadFile = File(...), db: Session = Depe
     
     saved_count = 0
     for s_data in parsed_students:
-        exists = db.query(models.Student).filter(models.Student.nev == s_data["nev"]).first()
-        if not exists:
+        s_nev = s_data["nev"]
+        s_email = s_data["email"]
+        s_szakma = s_data["szakma"]
+        
+        # Lekérjük az összes azonos nevű diákot
+        existing_students = db.query(models.Student).filter(models.Student.nev == s_nev).all()
+        
+        is_duplicate = False
+        for ex in existing_students:
+            # 1. Ha az email is 100% egyezik (és nem üres) -> Biztos duplikáció
+            if s_email and ex.email == s_email:
+                is_duplicate = True
+                break
+                
+            # 2. Ha az email üres, de a név ÉS a betartott szakma is ugyanaz -> Valószínűleg duplikáció
+            # Ellenőrizzük a JSON metadata tartalmat
+            if not s_email and ex.metadata_json and ex.metadata_json.get("szakma") == s_szakma:
+                 is_duplicate = True
+                 break
+
+        if not is_duplicate:
             new_student = models.Student(
-                nev=s_data["nev"],
-                email=s_data["email"],
-                metadata_json={"iskola": s_data["iskola"], "szakma": s_data["szakma"], "evfolyam": s_data["evfolyam"]}
+                nev=s_nev,
+                email=s_email,
+                metadata_json={"iskola": s_data["iskola"], "szakma": s_szakma, "evfolyam": s_data["evfolyam"]}
             )
             db.add(new_student)
             saved_count += 1
@@ -160,13 +179,27 @@ async def import_instructors_excel(file: UploadFile = File(...), db: Session = D
     
     saved_count = 0
     for i_data in parsed_instructors:
-        exists = db.query(models.Instructor).filter(models.Instructor.nev == i_data["nev"]).first()
-        if not exists:
+        # Hasonló okos szűrés az oktatókra is (Név + Email vagy Telefon alapú)
+        i_nev, i_email, i_telefon = i_data["nev"], i_data["email"], i_data["telefon"]
+        
+        existing_insts = db.query(models.Instructor).filter(models.Instructor.nev == i_nev).all()
+        is_duplicate = False
+        
+        for ex in existing_insts:
+            if (i_email and ex.email == i_email) or (i_telefon and ex.telefon == i_telefon):
+                is_duplicate = True
+                break
+            # Ha nincs email/telefon, de a név azonos, feltételezzük a duplikációt egyelőre
+            if not i_email and not i_telefon:
+                is_duplicate = True
+                break
+                
+        if not is_duplicate:
             new_instructor = models.Instructor(
-                nev=i_data["nev"],
-                email=i_data["email"],
+                nev=i_nev,
+                email=i_email,
                 szakterulet=i_data["szakterulet"],
-                telefon=i_data["telefon"]
+                telefon=i_telefon
             )
             db.add(new_instructor)
             saved_count += 1
