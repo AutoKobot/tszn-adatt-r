@@ -75,10 +75,11 @@ app = FastAPI(title="EduRegistrar ÁKK Backend", version="1.0.0", lifespan=lifes
 # CORS beállítások a felülethez
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8000", "https://tszn-adattar.onrender.com", "*"],
+    allow_origins=["*"],
     allow_credentials=False,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Adatbázis inicializálás
