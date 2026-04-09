@@ -4,6 +4,8 @@ from datetime import date, datetime
 
 # --- DIÁK SÉMÁK ---
 class StudentBase(BaseModel):
+    oktatasi_azonosito: Optional[str] = None
+    diakigazolvany_szam: Optional[str] = None
     nev: str
     email: Optional[EmailStr] = None
     telefon: Optional[str] = None
@@ -20,6 +22,20 @@ class Student(StudentBase):
     id: int
     letrehozva: datetime
 
+    model_config = {"from_attributes": True}
+
+# --- OSZTÁLYOK / PARAMÉTEREK ---
+class ClassRoomBase(BaseModel):
+    megnevezes: str
+    elvart_szakiranyu_oraszam: Optional[int] = 400
+    max_hianyzas_szazalek: Optional[int] = 20
+
+class ClassRoomUpdate(BaseModel):
+    elvart_szakiranyu_oraszam: Optional[int] = None
+    max_hianyzas_szazalek: Optional[int] = None
+
+class ClassRoom(ClassRoomBase):
+    id: int
     model_config = {"from_attributes": True}
 
 # --- SZERZŐDÉSEK ---

@@ -216,18 +216,18 @@
                                 <div class="form-row" style="margin-top: 15px;">
                                     <div class="form-group" style="flex:1;">
                                         <label>Osztály</label>
-                                        <select class="login-input"><option>11.B</option><option>12.A</option></select>
+                                        <select id="param-class-select" class="login-input"><option>Betöltés...</option></select>
                                     </div>
                                     <div class="form-group" style="flex:1;">
                                         <label>Max. hiányzás (%)</label>
-                                        <input type="number" class="login-input" value="20">
+                                        <input type="number" id="param-max-absence" class="login-input" value="20" title="Kritikus hiányzási riasztási határ">
                                     </div>
                                     <div class="form-group" style="flex:1;">
-                                        <label>Heti napok</label>
-                                        <input type="number" class="login-input" value="3">
+                                        <label>Éves Elvárt Óra</label>
+                                        <input type="number" id="param-expected-hours" class="login-input" value="400" title="Félévi vagy éves elvárt gyakorlati kinttöltött óra">
                                     </div>
                                 </div>
-                                <button class="btn-primary" style="width:100%; margin-top:10px;">Mentés</button>
+                                <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="saveClassParameters()">Paraméterek Mentése</button>
                             </div>
 
                             <!-- Oktatói Fiókok -->
@@ -549,7 +549,90 @@
         setupDropZone('studentExcelZone', 'studentExcelInput', '/import/students');
         setupDropZone('instructorExcelZone', 'instructorExcelInput', '/import/instructors');
 
+        async function loadClasses() {
+            const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
+                ? 'http://localhost:8000'
+                : 'https://tszn.onrender.com';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/classes/`);
+                if (response.ok) {
+                    const classes = await response.json();
+                    
+                    // Frissítjük a paraméter űrlap legördülőjét
+                    const select = document.getElementById('param-class-select');
+                    select.innerHTML = '';
+                    
+                    window.currentClasses = classes; // globális állapotba mentjük az értékeket beállításhoz
+                    
+                    classes.forEach(c => {
+                        const option = document.createElement('option');
+                        option.value = c.id;
+                        option.textContent = c.megnevezes;
+                        select.appendChild(option);
+                    });
+                    
+                    // Ha változik az osztály, töltsük be az ő mentett értékét a dobozokba
+                    select.addEventListener('change', (e) => {
+                        const classData = window.currentClasses.find(x => x.id == e.target.value);
+                        if (classData) {
+                            document.getElementById('param-expected-hours').value = classData.elvart_szakiranyu_oraszam || 400;
+                            document.getElementById('param-max-absence').value = classData.max_hianyzas_szazalek || 20;
+                        }
+                    });
+                    
+                    // Kezdeti trigger
+                    if(classes.length > 0) {
+                        select.dispatchEvent(new Event('change'));
+                    }
+                }
+            } catch (err) {
+                console.warn('Osztályok lekérése sikertelen:', err);
+            }
+        }
+
+        async function saveClassParameters() {
+            const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
+                ? 'http://localhost:8000'
+                : 'https://tszn.onrender.com';
+                
+            const classId = document.getElementById('param-class-select').value;
+            const maxAbsence = document.getElementById('param-max-absence').value;
+            const expectedHours = document.getElementById('param-expected-hours').value;
+            
+            if (!classId) return alert('Nincs kiválasztva osztály!');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/classes/${classId}/parameters`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        max_hianyzas_szazalek: parseInt(maxAbsence),
+                        elvart_szakiranyu_oraszam: parseInt(expectedHours)
+                    })
+                });
+                
+                if (response.ok) {
+                    alert('Képzési paraméterek sikeresen elmentve!');
+                    // Frissítjük a memóriában lévő cache-t
+                    const index = window.currentClasses.findIndex(c => c.id == classId);
+                    if(index !== -1) {
+                        window.currentClasses[index].elvart_szakiranyu_oraszam = expectedHours;
+                        window.currentClasses[index].max_hianyzas_szazalek = maxAbsence;
+                    }
+                } else {
+                    alert('Hiba történt a mentés során.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Nem sikerült kapcsolódni a szerverhez.');
+            }
+        }
+
         // Adatok lekérése induláskor
-        document.addEventListener('DOMContentLoaded', fetchAndDisplayStudents);
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndDisplayStudents();
+            loadClasses();
+        });
 </body>
 </html>

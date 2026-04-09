@@ -96,6 +96,36 @@ def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)
     db.refresh(db_student)
     return db_student
 
+# --- OSZTÁLYOK / KÉPZÉSI PARAMÉTEREK ---
+@app.get("/classes/", response_model=list[schemas.ClassRoom])
+def read_classes(db: Session = Depends(get_db)):
+    classes = db.query(models.ClassRoom).all()
+    # Dummy data provision if empty for demonstration
+    if not classes:
+        demo_class1 = models.ClassRoom(megnevezes="11.B (Gépészet)", elvart_szakiranyu_oraszam=400, max_hianyzas_szazalek=20)
+        demo_class2 = models.ClassRoom(megnevezes="12.A (Informatika)", elvart_szakiranyu_oraszam=350, max_hianyzas_szazalek=20)
+        db.add_all([demo_class1, demo_class2])
+        db.commit()
+        classes = db.query(models.ClassRoom).all()
+    return classes
+
+from fastapi import HTTPException
+
+@app.put("/classes/{class_id}/parameters", response_model=schemas.ClassRoom)
+def update_class_parameters(class_id: int, params: schemas.ClassRoomUpdate, db: Session = Depends(get_db)):
+    db_class = db.query(models.ClassRoom).filter(models.ClassRoom.id == class_id).first()
+    if not db_class:
+        raise HTTPException(status_code=404, detail="Osztály nem található")
+    
+    if params.elvart_szakiranyu_oraszam is not None:
+        db_class.elvart_szakiranyu_oraszam = params.elvart_szakiranyu_oraszam
+    if params.max_hianyzas_szazalek is not None:
+        db_class.max_hianyzas_szazalek = params.max_hianyzas_szazalek
+        
+    db.commit()
+    db.refresh(db_class)
+    return db_class
+
 # --- OCR ÉS DOKUMENTUM GENERÁLÁS ---
 from .ocr_service import ocr_service
 from .document_service import DocumentService
