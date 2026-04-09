@@ -7,31 +7,36 @@ class ExcelService:
         pass
 
     def _normalize_column_name(self, name):
-        """Oszlopnevek egységesítése a sorrendiség és elnevezések rugalmassága érdekében"""
+        """Oszlopnevek egységesítése - rugalmas, széles körű felismerés"""
         if pd.isna(name): return ""
         name = str(name).lower().strip()
+        # Ékezetek normalizálása
+        name = name.replace('á','a').replace('é','e').replace('í','i').replace('ó','o').replace('ö','o').replace('ő','o').replace('ú','u').replace('ü','u').replace('ű','u')
         
-        # Kis okos térkép a gyakori elnevezésekhez
-        if "név" in name or "nev" in name or "oktatók" in name:
-            return "nev"
+        if any(x in name for x in ["nev", "oktat", "tanu", "diak", "nev"]):
+            if "iskol" not in name:  # Ne keverjük az iskolával
+                return "nev"
         if "mail" in name:
             return "email"
-        if "szakma" in name:
+        if "szakma" in name or "kepzes" in name or "szakir" in name:
             return "szakma"
-        if "szerz" in name and "kezdet" in name:
+        if ("szerz" in name and "kezd" in name) or "idoszak" in name or "erven" in name:
             return "szerzodes_idoszak"
-        if "iskola" in name:
+        if "iskol" in name:
             return "iskola"
-        if "évfolyam" in name or "evfolyam" in name:
+        if "evfolyam" in name or "evf" in name or "osztaly" in name or "csoport" in name:
             return "evfolyam"
-        if "telefon" in name:
+        if "telefon" in name or "tel" in name or "mobil" in name:
             return "telefon"
-        if "om" in name or "oktatasi" in name or "azonosito" in name:
+        if "om" == name.strip() or "om_" in name or ("oktat" in name and "azonos" in name) or "om azon" in name:
             return "om_azonosito"
-        if "igazolvany" in name:
+        if "igazolv" in name or "diakig" in name:
             return "diakigazolvany"
+        if "szam" in name and len(name) < 8:  # pl. "sorszám"
+            return "sorszam"
         
         return re.sub(r'[^a-z0-9_]', '', name.replace(' ', '_'))
+
 
     def parse_instructors(self, file_bytes):
         """Oktatói Excel feldolgozása Intelligensen"""
