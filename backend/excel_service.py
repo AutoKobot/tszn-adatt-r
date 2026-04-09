@@ -26,6 +26,10 @@ class ExcelService:
             return "evfolyam"
         if "telefon" in name:
             return "telefon"
+        if "om" in name or "oktatasi" in name or "azonosito" in name:
+            return "om_azonosito"
+        if "igazolvany" in name:
+            return "diakigazolvany"
         
         return re.sub(r'[^a-z0-9_]', '', name.replace(' ', '_'))
 
@@ -72,6 +76,8 @@ class ExcelService:
                 vege = parts[1].replace('.', '-').strip()
                 
             student_data = {
+                "om_azonosito": str(row.get('om_azonosito', '')).strip() if pd.notna(row.get('om_azonosito')) else None,
+                "diakigazolvany_szam": str(row.get('diakigazolvany', '')).strip() if pd.notna(row.get('diakigazolvany')) else None,
                 "nev": str(row.get('nev', '')).strip(),
                 "email": str(row.get('email', '')).strip() if pd.notna(row.get('email')) else None,
                 "iskola": str(row.get('iskola', '')).strip() if pd.notna(row.get('iskola')) else None,

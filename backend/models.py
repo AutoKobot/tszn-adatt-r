@@ -17,7 +17,8 @@ class User(Base):
 class Student(Base):
     __tablename__ = "diakok"
     id = Column(Integer, primary_key=True, index=True)
-    oktatasi_azonosito = Column(String(11), unique=True)
+    oktatasi_azonosito = Column(String(11), unique=True, index=True)
+    diakigazolvany_szam = Column(String(50), unique=True, index=True)
     nev = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, index=True)
     telefon = Column(String(20))

@@ -140,28 +140,37 @@ async def import_students_excel(file: UploadFile = File(...), db: Session = Depe
     
     saved_count = 0
     for s_data in parsed_students:
+        s_om = s_data.get("om_azonosito")
+        s_igaz = s_data.get("diakigazolvany_szam")
         s_nev = s_data["nev"]
         s_email = s_data["email"]
         s_szakma = s_data["szakma"]
         
-        # Lekérjük az összes azonos nevű diákot
-        existing_students = db.query(models.Student).filter(models.Student.nev == s_nev).all()
-        
         is_duplicate = False
-        for ex in existing_students:
-            # 1. Ha az email is 100% egyezik (és nem üres) -> Biztos duplikáció
-            if s_email and ex.email == s_email:
+        
+        # 0. Ha Van OM azonosító, ELSŐDLEGESEN azzal szűrünk (a legpontosabb!)
+        if s_om:
+            if db.query(models.Student).filter(models.Student.oktatasi_azonosito == s_om).first():
                 is_duplicate = True
-                break
-                
-            # 2. Ha az email üres, de a név ÉS a betartott szakma is ugyanaz -> Valószínűleg duplikáció
-            # Ellenőrizzük a JSON metadata tartalmat
-            if not s_email and ex.metadata_json and ex.metadata_json.get("szakma") == s_szakma:
-                 is_duplicate = True
-                 break
+        
+        if not is_duplicate:
+            # Lekérjük az összes azonos nevű diákot, ha az OM nem hozott eredményt (vagy nincs OM)
+            existing_students = db.query(models.Student).filter(models.Student.nev == s_nev).all()
+            for ex in existing_students:
+                # 1. Ha az email is 100% egyezik (és nem üres) -> Biztos duplikáció
+                if s_email and ex.email == s_email:
+                    is_duplicate = True
+                    break
+                    
+                # 2. Ha az email üres, de a név ÉS a betartott szakma is ugyanaz -> Valószínűleg duplikáció
+                if not s_email and ex.metadata_json and ex.metadata_json.get("szakma") == s_szakma:
+                     is_duplicate = True
+                     break
 
         if not is_duplicate:
             new_student = models.Student(
+                oktatasi_azonosito=s_om,
+                diakigazolvany_szam=s_igaz,
                 nev=s_nev,
                 email=s_email,
                 metadata_json={"iskola": s_data["iskola"], "szakma": s_szakma, "evfolyam": s_data["evfolyam"]}
