@@ -43,6 +43,20 @@ async def lifespan(app: FastAPI):
         if not db.query(models.User).filter(models.User.username == "oktato").first():
             oktato_user = models.User(username="oktato", hashed_password=auth.get_password_hash("oktato"), role="oktato", full_name="Teszt Oktató")
             db.add(oktato_user)
+            
+        # Adatbázis sémák frissítése (Migráció meglévő táblákon)
+        from sqlalchemy import text
+        try:
+            db.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS oktatasi_azonosito VARCHAR(11) UNIQUE;"))
+            db.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS diakigazolvany_szam VARCHAR(50) UNIQUE;"))
+            db.execute(text("ALTER TABLE osztalyok ADD COLUMN IF NOT EXISTS elvart_szakiranyu_oraszam INTEGER DEFAULT 400;"))
+            db.execute(text("ALTER TABLE osztalyok ADD COLUMN IF NOT EXISTS max_hianyzas_szazalek INTEGER DEFAULT 20;"))
+            db.commit()
+            print("Adatbázis oszlopok frissítve (Migráció sikeres).")
+        except Exception as mig_e:
+            print(f"Migrációs megjegyzés (nem kritikus): {mig_e}")
+            db.rollback()
+
         db.commit()
         db.close()
         print("Teszfiókok ellenőrizve: admin/admin, oktato/oktato.")
