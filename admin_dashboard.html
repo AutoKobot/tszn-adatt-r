@@ -496,7 +496,7 @@
             // Éles (Render) környezet és Lokális fejlesztés megkülönböztetése
             const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
                 ? 'http://localhost:8000'
-                : 'https://edu-registrar-backend.onrender.com'; // Cseréld meg ha más a backend render címed!
+                : 'https://tszn.onrender.com'; // Felhasználó által megadott valódi Backend cím
 
             try {
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, {
