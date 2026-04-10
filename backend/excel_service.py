@@ -60,6 +60,16 @@ class ExcelService:
                 best_row = i
         return best_row
 
+    def _get_safe_val(self, row, key, default=None):
+        """Biztonságosan lekér egy értéket egy sorból, akkor is ha duplikált oszlop miatt Series-t kapnánk"""
+        val = row.get(key)
+        if hasattr(val, 'any'): # Ha Series (lista)
+            val = val.iloc[0] if len(val) > 0 else None
+        
+        if pd.isna(val):
+            return default
+        return val
+
     def parse_instructors(self, file_bytes):
         """Oktatói Excel feldolgozása Intelligensen"""
         header_row = self._find_header_row(file_bytes)
@@ -71,43 +81,36 @@ class ExcelService:
         
         instructors = []
         for _, row in df.iterrows():
-            val = row.get('nev')
-            # Handle potential Series if get returns multiple values (though duplicated() fix should prevent this)
-            if hasattr(val, 'any'): val = val.iloc[0] if len(val) > 0 else None
-            
-            if pd.isna(val) or str(val).strip() == "":
+            nev = self._get_safe_val(row, 'nev')
+            if not nev or str(nev).strip() == "":
                 continue # Üres nevek átugrása
             
-            # Adatok kinyerése (ha nincs az excelben, None marad, rugalmas)
             instructor_data = {
-                "nev": str(row.get('nev', '')).strip(),
-                "email": str(row.get('email', '')).strip() if pd.notna(row.get('email')) else None,
-                "szakterulet": str(row.get('szakma', '')).strip() if pd.notna(row.get('szakma')) else None,
-                "telefon": str(row.get('telefon', '')).strip() if pd.notna(row.get('telefon')) else None,
+                "nev": str(nev).strip(),
+                "email": str(self._get_safe_val(row, 'email', '')).strip() or None,
+                "szakterulet": str(self._get_safe_val(row, 'szakma', '')).strip() or None,
+                "telefon": str(self._get_safe_val(row, 'telefon', '')).strip() or None,
                 "metadata_json": {}
             }
             instructors.append(instructor_data)
-            
         return instructors
 
     def parse_students(self, file_bytes):
-        """Tanulói Excel feldolgozása, támogatva a felnőtt/nappali keveredést nyitott módon"""
+        """Tanulói Excel feldolgozása"""
         header_row = self._find_header_row(file_bytes)
         df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=0, header=header_row)
+        
         # Normalize headers and remove duplicates
         df.columns = [self._normalize_column_name(col) for col in df.columns]
         df = df.loc[:, ~df.columns.duplicated()]
         
         students = []
         for _, row in df.iterrows():
-            val = row.get('nev')
-            if hasattr(val, 'any'): val = val.iloc[0] if len(val) > 0 else None
-            
-            if pd.isna(val) or str(val).strip() == "":
+            nev = self._get_safe_val(row, 'nev')
+            if not nev or str(nev).strip() == "":
                 continue
                 
-            # Dátumok feldarabolása ha egyben vannak (pl. "2024.09.01.-2027.06.30.")
-            szerz_szoveg = str(row.get('szerzodes_idoszak', ''))
+            szerz_szoveg = str(self._get_safe_val(row, 'szerzodes_idoszak', ''))
             kezdet, vege = None, None
             if "-" in szerz_szoveg:
                 parts = szerz_szoveg.split("-")
@@ -115,19 +118,18 @@ class ExcelService:
                 vege = parts[1].replace('.', '-').strip()
                 
             student_data = {
-                "om_azonosito": str(row.get('om_azonosito', '')).strip() if pd.notna(row.get('om_azonosito')) else None,
-                "diakigazolvany_szam": str(row.get('diakigazolvany', '')).strip() if pd.notna(row.get('diakigazolvany')) else None,
-                "nev": str(row.get('nev', '')).strip(),
-                "email": str(row.get('email', '')).strip() if pd.notna(row.get('email')) else None,
-                "iskola": str(row.get('iskola', '')).strip() if pd.notna(row.get('iskola')) else None,
-                "szakma": str(row.get('szakma', '')).strip() if pd.notna(row.get('szakma')) else None,
-                "evfolyam": str(row.get('evfolyam', '')).strip() if pd.notna(row.get('evfolyam')) else None,
+                "om_azonosito": str(self._get_safe_val(row, 'om_azonosito', '')).strip() or None,
+                "diakigazolvany_szam": str(self._get_safe_val(row, 'diakigazolvany', '')).strip() or None,
+                "nev": str(nev).strip(),
+                "email": str(self._get_safe_val(row, 'email', '')).strip() or None,
+                "iskola": str(self._get_safe_val(row, 'iskola', '')).strip() or None,
+                "szakma": str(self._get_safe_val(row, 'szakma', '')).strip() or None,
+                "evfolyam": str(self._get_safe_val(row, 'evfolyam', '')).strip() or None,
                 "szerzodes_kezdet": kezdet,
                 "szerzodes_vege": vege,
                 "metadata_json": {}
             }
             students.append(student_data)
-            
         return students
 
 excel_service = ExcelService()
