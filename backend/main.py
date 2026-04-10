@@ -122,9 +122,13 @@ async def serve_oktato():
 # --- DIÁKOK KEZELÉSE ---
 @app.get("/students/", response_model=list[schemas.Student])
 def read_students(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    print("[API] Diákok listázása (GET /students/)")
-    students = db.query(models.Student).offset(skip).limit(limit).all()
-    return students
+    try:
+        print("[API] Diákok listázása (GET /students/)")
+        students = db.query(models.Student).offset(skip).limit(limit).all()
+        return students
+    except Exception as e:
+        print(f"[HIBA] Diákok lekérése közben: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/students/", response_model=schemas.Student)
 def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
