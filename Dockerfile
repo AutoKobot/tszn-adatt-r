@@ -8,6 +8,8 @@ RUN apt-get update && apt-get install -y \
     libreoffice \
     wget \
     gnupg \
+    gcc \
+    python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 3. Munkakönyvtár beállítása
