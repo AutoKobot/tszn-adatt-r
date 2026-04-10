@@ -65,12 +65,17 @@ class ExcelService:
         header_row = self._find_header_row(file_bytes)
         df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=0, header=header_row)
         
-        # Normalize headers
+        # Normalize headers and remove duplicates
         df.columns = [self._normalize_column_name(col) for col in df.columns]
+        df = df.loc[:, ~df.columns.duplicated()]
         
         instructors = []
         for _, row in df.iterrows():
-            if pd.isna(row.get('nev')):
+            val = row.get('nev')
+            # Handle potential Series if get returns multiple values (though duplicated() fix should prevent this)
+            if hasattr(val, 'any'): val = val.iloc[0] if len(val) > 0 else None
+            
+            if pd.isna(val) or str(val).strip() == "":
                 continue # Üres nevek átugrása
             
             # Adatok kinyerése (ha nincs az excelben, None marad, rugalmas)
@@ -89,11 +94,16 @@ class ExcelService:
         """Tanulói Excel feldolgozása, támogatva a felnőtt/nappali keveredést nyitott módon"""
         header_row = self._find_header_row(file_bytes)
         df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=0, header=header_row)
+        # Normalize headers and remove duplicates
         df.columns = [self._normalize_column_name(col) for col in df.columns]
+        df = df.loc[:, ~df.columns.duplicated()]
         
         students = []
         for _, row in df.iterrows():
-            if pd.isna(row.get('nev')):
+            val = row.get('nev')
+            if hasattr(val, 'any'): val = val.iloc[0] if len(val) > 0 else None
+            
+            if pd.isna(val) or str(val).strip() == "":
                 continue
                 
             # Dátumok feldarabolása ha egyben vannak (pl. "2024.09.01.-2027.06.30.")
