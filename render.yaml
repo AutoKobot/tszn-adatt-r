@@ -1,7 +1,7 @@
 services:
   # 1. Backend Szolgáltatás (FastAPI)
   - type: web
-    name: edu-registrar-backend
+    name: tszn-adattar
     env: docker
     plan: free
     envVars:
