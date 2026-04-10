@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Response
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
@@ -98,10 +99,24 @@ def get_db():
 
 @app.get("/ping")
 def keepalive_ping():
-    """Keepalive végpont: a frontend rendszeresen hívja, hogy a
-    Render ingyenes szerver ne aludjon el tétlenség miatt."""
     import datetime
     return {"pong": True, "time": datetime.datetime.utcnow().isoformat()}
+
+# --- EXPLICIT FRONTEND ÚTVONALAK ---
+@app.get("/")
+async def serve_index():
+    print("[SERVER] Index.html kiszolgálása")
+    return FileResponse("index.html")
+
+@app.get("/admin_dashboard.html")
+@app.get("/admin")
+async def serve_admin():
+    print("[SERVER] Admin Dashboard kiszolgálása")
+    return FileResponse("admin_dashboard.html")
+
+@app.get("/oktato")
+async def serve_oktato():
+    return FileResponse("oktato_dashboard.html")
 
 # --- DIÁKOK KEZELÉSE ---
 @app.get("/students/", response_model=list[schemas.Student])
@@ -313,6 +328,6 @@ def add_grade(grade: schemas.GradeCreate, db: Session = Depends(get_db)):
     # Oktató esetén ellenőrizni kell (Business logic szinten), hogy a saját szakmájához tartozik-e
     return {"status": "Jegy rögzítve"}
 
-# --- STATIKUS FÁJLOK KISZOLGÁLÁSA ---
-# Minden mást, ami nem API hívás, statikus fájlként kezelünk a gyökérkönyvtárból
+# Minden más fájlt (CSS, JS, képek) a "static" mount szolgál ki, de NEM a gyökérben
+# Hanem csak ha konkrét fájlról van szó.
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
