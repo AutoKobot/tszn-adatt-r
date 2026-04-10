@@ -6,6 +6,7 @@ import asyncio
 import shutil
 import os
 from . import models, schemas, database, sync_service
+from fastapi.staticfiles import StaticFiles
 
 # --- ÜTEMEZETT FELADATOK (asyncio alapú, APScheduler nélkül) ---
 
@@ -93,9 +94,7 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/")
-def read_root():
-    return {"status": "Az EduRegistrar háttérrendszer fut"}
+# A gyökér útvonalat a StaticFiles fogja kezelni (index.html kiszolgálása)
 
 @app.get("/ping")
 def keepalive_ping():
@@ -313,3 +312,7 @@ def create_contract(contract: schemas.ContractCreate, db: Session = Depends(get_
 def add_grade(grade: schemas.GradeCreate, db: Session = Depends(get_db)):
     # Oktató esetén ellenőrizni kell (Business logic szinten), hogy a saját szakmájához tartozik-e
     return {"status": "Jegy rögzítve"}
+
+# --- STATIKUS FÁJLOK KISZOLGÁLÁSA ---
+# Minden mást, ami nem API hívás, statikus fájlként kezelünk a gyökérkönyvtárból
+app.mount("/", StaticFiles(directory=".", html=True), name="static")

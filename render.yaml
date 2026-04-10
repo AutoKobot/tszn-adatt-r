@@ -15,13 +15,4 @@ services:
       - key: PYTHON_VERSION
         value: 3.10.0
 
-  # 2. Frontend Szolgáltatás (Statikus HTML/CSS/JS)
-  - type: static
-    name: edu-registrar-frontend
-    publishPath: ./
-    headers:
-      - path: /*
-        name: Access-Control-Allow-Origin
-        value: "*"
-
-# MEGJEGYZÉS: Render-belső PostgreSQL eltávolítva - az alkalmazás Supabase-t használ
+  # 2. MEGJEGYZÉS: Render-belső PostgreSQL eltávolítva - az alkalmazás Supabase-t használ
