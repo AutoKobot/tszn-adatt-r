@@ -3,6 +3,7 @@ uvicorn
 gunicorn
 sqlalchemy
 psycopg2-binary
+bcrypt==3.2.0
 pydantic
 python-multipart
 python-dotenv
@@ -13,7 +14,8 @@ pillow
 python-docx
 docxtpl
 docx2pdf
-passlib[bcrypt]
+passlib
+bcrypt==3.2.0
 python-jose[cryptography]
 playwright
 apscheduler
