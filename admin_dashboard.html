@@ -455,10 +455,9 @@
             const formData = new FormData();
             formData.append('file', file);
             
-            // Éles (Render) környezet és Lokális fejlesztés megkülönböztetése
             const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
                 ? 'http://localhost:8000'
-                : 'https://tszn.onrender.com'; // Felhasználó által megadott valódi Backend cím
+                : (window.location.origin.includes('tszn-adattar') ? window.location.origin : 'https://tszn-adattar.onrender.com'); 
 
             try {
                 const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -493,7 +492,7 @@
         async function fetchAndDisplayStudents() {
             const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
                 ? 'http://localhost:8000'
-                : 'https://tszn.onrender.com';
+                : (window.location.origin.includes('tszn-adattar') ? window.location.origin : 'https://tszn-adattar.onrender.com');
                 
             const tbody = document.getElementById('studentTableBody');
             tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: gray;"><i class="fas fa-spinner fa-spin" style="margin-right: 10px;"></i> Adatok letöltése folyamatban...</td></tr>`;
@@ -552,7 +551,7 @@
         async function loadClasses() {
             const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
                 ? 'http://localhost:8000'
-                : 'https://tszn.onrender.com';
+                : (window.location.origin.includes('tszn-adattar') ? window.location.origin : 'https://tszn-adattar.onrender.com');
             
             try {
                 const response = await fetch(`${API_BASE_URL}/classes/`);
@@ -594,7 +593,7 @@
         async function saveClassParameters() {
             const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
                 ? 'http://localhost:8000'
-                : 'https://tszn.onrender.com';
+                : (window.location.origin.includes('tszn-adattar') ? window.location.origin : 'https://tszn-adattar.onrender.com');
                 
             const classId = document.getElementById('param-class-select').value;
             const maxAbsence = document.getElementById('param-max-absence').value;
@@ -632,7 +631,7 @@
         // --- KEEPALIVE: Szerver ébresztőóra ---
         const API_BASE_URL = window.location.hostname.includes('localhost') || window.location.hostname.includes('127.0.0.1')
             ? 'http://localhost:8000'
-            : 'https://tszn.onrender.com';
+            : (window.location.origin.includes('tszn-adattar') ? window.location.origin : 'https://tszn-adattar.onrender.com');
 
         async function pingBackend() {
             try {
