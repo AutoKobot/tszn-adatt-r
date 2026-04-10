@@ -39,7 +39,9 @@
         <main class="main-content">
             <header>
                 <h1>ÁKK Rendszervezérlő</h1>
-                <p>Üdvözöljük! Itt a duális képzés és az intézményi adminisztráció teljes áttekintése.</p>
+                <p>Üdvözöljük! Itt a duális képzés és az intézményi adminisztráció teljes áttekintése. 
+                   <span id="api-status-badge" style="font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 10px; margin-left:10px;">API: Ellenőrzés...</span>
+                </p>
             </header>
 
             <div class="dashboard-stats">
@@ -641,6 +643,10 @@
             // Azonnal pingeljük, majd 10 percenként ismételten, hogy a szerver ne aludjon el
             pingBackend();
             setInterval(pingBackend, 10 * 60 * 1000); // 10 perc
+
+            // API Állapot kijelzése a fejlécben
+            const badge = document.getElementById('api-status-badge');
+            if(badge) badge.innerText = `API: ${window.location.host} (Unified)`;
         });
     </script>
 </body>

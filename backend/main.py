@@ -99,6 +99,7 @@ def get_db():
 
 @app.get("/ping")
 def keepalive_ping():
+    print("[API] PING hívás érkezett")
     import datetime
     return {"pong": True, "time": datetime.datetime.utcnow().isoformat()}
 
@@ -121,6 +122,7 @@ async def serve_oktato():
 # --- DIÁKOK KEZELÉSE ---
 @app.get("/students/", response_model=list[schemas.Student])
 def read_students(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    print("[API] Diákok listázása (GET /students/)")
     students = db.query(models.Student).offset(skip).limit(limit).all()
     return students
 
