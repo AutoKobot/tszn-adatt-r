@@ -20,6 +20,8 @@ class ExcelService:
             return "email"
         if "szakma" in name or "kepzes" in name or "szakir" in name:
             return "szakma"
+        if "szerz" in name and "kezd" in name and "vege" in name:
+            return "szerzodes_idoszak"
         if ("szerz" in name and ("kezd" in name or "datum" in name)) and "vege" not in name:
             return "szerzodes_kezdet"
         if "szerz" in name and ("vege" in name or "lejar" in name):
@@ -146,10 +148,14 @@ class ExcelService:
             
             if not kezdet or not vege:
                 szerz_szoveg = str(self._get_safe_val(row, 'szerzodes_idoszak', ''))
-                if "-" in szerz_szoveg:
-                    parts = szerz_szoveg.split("-")
-                    if not kezdet: kezdet = parts[0].replace('.', '-').strip()
-                    if not vege: vege = parts[1].replace('.', '-').strip()
+                # Elválasztók keresése: .-, -. vagy csak - vagy .
+                for sep in ["-", "–", "—"]: 
+                    if sep in szerz_szoveg:
+                        parts = szerz_szoveg.split(sep)
+                        if len(parts) >= 2:
+                            if not kezdet: kezdet = parts[0].strip()
+                            if not vege: vege = parts[1].strip()
+                            break
             
             # Formázás (ha szükséges, pl. pontok kötőjelre cserélése)
             if kezdet: kezdet = str(kezdet).replace('.', '-').strip()

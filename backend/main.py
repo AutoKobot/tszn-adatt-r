@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 import asyncio
 import shutil
 import os
+import datetime
 from . import models, schemas, database, sync_service
 from fastapi.staticfiles import StaticFiles
 
@@ -100,7 +101,6 @@ def get_db():
 @app.get("/ping")
 def keepalive_ping():
     print("[API] PING hívás érkezett")
-    import datetime
     return {"pong": True, "time": datetime.datetime.utcnow().isoformat()}
 
 # --- EXPLICIT FRONTEND ÚTVONALAK ---
