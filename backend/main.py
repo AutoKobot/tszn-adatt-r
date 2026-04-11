@@ -258,62 +258,59 @@ async def import_students_excel(tagozat: str = "nappali", file: UploadFile = Fil
             s_nev = s_data["nev"]
             s_szakma = s_data["szakma"]
             
-            # Duplikáció ellenőrzés a MOSTANI importon belül
-            if s_om and s_om in seen_oms:
-                import_results["duplicates"] += 1
-                continue
-            if s_email and s_email in seen_emails:
-                import_results["duplicates"] += 1
-                continue
-
-            is_duplicate = False
-            # 0. Adatbázis ellenőrzés
+            # Duplikáció ellenőrzés és FRISSÍTÉS (Upsert logika)
+            existing_student = None
             if s_om:
-                if db.query(models.Student).filter(models.Student.oktatasi_azonosito == s_om).first():
-                    is_duplicate = True
+                existing_student = db.query(models.Student).filter(models.Student.oktatasi_azonosito == s_om).first()
             
-            if not is_duplicate and s_email:
-                if db.query(models.Student).filter(models.Student.email == s_email).first():
-                    is_duplicate = True
+            if not existing_student and s_email and s_email != "nincs":
+                existing_student = db.query(models.Student).filter(models.Student.email == s_email).first()
             
-            if not is_duplicate:
-                # Név alapú ellenőrzés ha nincs email/OM
-                if not s_om and not s_email:
-                    if db.query(models.Student).filter(models.Student.nev == s_nev).first():
-                        is_duplicate = True
+            if not existing_student and not s_om and (not s_email or s_email == "nincs"):
+                existing_student = db.query(models.Student).filter(models.Student.nev == s_nev).first()
 
-            if is_duplicate:
-                import_results["duplicates"] += 1
-                continue
-
-            # Új diák létrehozása - MINDEN mezőt explicit beállítunk az egyenletes batch-eléshez
-            new_student = models.Student(
-                oktatasi_azonosito=s_om,
-                diakigazolvany_szam=s_data.get("diakigazolvany_szam"),
-                nev=s_nev,
-                email=s_email,
-                telefon=None,
-                lakhely=None,
-                ertesitesi_cim=None,
-                tagozat=tagozat,
-                szerzodes_kezdet=s_data.get("szerzodes_kezdet") or None,
-                szerzodes_vege=s_data.get("szerzodes_vege") or None,
-                osztaly_id=None,
-                metadata_json={
-                    "iskola": s_data.get("iskola"), 
-                    "szakma": s_data.get("szakma"), 
-                    "evfolyam": s_data.get("evfolyam"),
-                    "import_date": datetime.datetime.now().isoformat()
-                }
-            )
-            db.add(new_student)
-            import_results["saved"] += 1
+            if existing_student:
+                # Frissítjük a meglévőt
+                existing_student.nev = s_nev
+                if s_om: existing_student.oktatasi_azonosito = s_om
+                if s_email and s_email != "nincs": existing_student.email = s_email
+                existing_student.tagozat = tagozat
+                existing_student.szerzodes_kezdet = s_data.get("szerzodes_kezdet") or existing_student.szerzodes_kezdet
+                existing_student.szerzodes_vege = s_data.get("szerzodes_vege") or existing_student.szerzodes_vege
+                
+                # Metadata összefésülése
+                current_meta = existing_student.metadata_json or {}
+                current_meta.update({
+                    "iskola": s_data.get("iskola") or current_meta.get("iskola"),
+                    "szakma": s_data.get("szakma") or current_meta.get("szakma"),
+                    "evfolyam": s_data.get("evfolyam") or current_meta.get("evfolyam"),
+                    "last_update": datetime.datetime.now().isoformat()
+                })
+                existing_student.metadata_json = current_meta
+                
+                import_results["duplicates"] += 1 # Itt a 'duplicates' most a frissítetteket jelenti
+            else:
+                # Új diák létrehozása
+                new_student = models.Student(
+                    oktatasi_azonosito=s_om,
+                    diakigazolvany_szam=s_data.get("diakigazolvany_szam"),
+                    nev=s_nev,
+                    email=s_email,
+                    tagozat=tagozat,
+                    szerzodes_kezdet=s_data.get("szerzodes_kezdet"),
+                    szerzodes_vege=s_data.get("szerzodes_vege"),
+                    metadata_json={
+                        "iskola": s_data.get("iskola"), 
+                        "szakma": s_data.get("szakma"), 
+                        "evfolyam": s_data.get("evfolyam"),
+                        "import_date": datetime.datetime.now().isoformat()
+                    }
+                )
+                db.add(new_student)
+                import_results["saved"] += 1
             
-            if s_om: seen_oms.add(s_om)
-            if s_email: seen_emails.add(s_email)
-            
-            # Chunked commit: 100 soronként ürítjük a memóriát
-            if i % 100 == 0:
+            # Memória ürítés
+            if i % 50 == 0:
                 db.commit()
                 
         except Exception as e:
