@@ -108,6 +108,7 @@
                                 </select>
                                 
                                 <button class="btn-primary" style="background: #3b82f6;" onclick="fetchAndDisplayStudents()"><i class="fas fa-sync"></i> Frissítés</button>
+                                <button class="btn-primary" style="background: #10b981;" onclick="openNewStudentModal()"><i class="fas fa-user-plus"></i> Új Tanuló</button>
                             </div>
                         </div>
     
@@ -158,6 +159,13 @@
                                 <h3><i class="fas fa-file-excel" style="color: #10b981;"></i> Adatok Importálása (Kréta / Excel)</h3>
                                 <p style="margin-bottom: 20px;">Intelligens import adatbázis frissítéshez oszlopsorrendtől függetlenül.</p>
                                 
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                                    <label style="margin-bottom: 0; white-space: nowrap;">Célcsoport:</label>
+                                    <select id="import-tagozat-select" class="login-input" style="padding: 5px; border-radius: 5px;">
+                                        <option value="nappali">Nappali tagozat</option>
+                                        <option value="felnott">Felnőttképzés</option>
+                                    </select>
+                                </div>
                                 <div class="import-zones" style="display:flex; gap:10px; margin-bottom: 20px;">
                                     <div class="drop-zone" id="studentExcelZone" style="flex:1; padding: 15px; cursor: pointer;">
                                         <i class="fas fa-user-graduate"></i>
@@ -391,6 +399,57 @@
         </main>
     </div>
 
+    <!-- MODAL: ÚJ / SZERKESZTÉS TANULÓ -->
+    <div id="studentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Tanuló Adatlap</h2>
+                <span class="close-modal" onclick="closeStudentModal()">&times;</span>
+            </div>
+            <form id="studentForm" onsubmit="handleStudentSubmit(event)">
+                <input type="hidden" id="student-id">
+                <div class="form-group">
+                    <label>Teljes név</label>
+                    <input type="text" id="student-nev" required placeholder="Példa János">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email cím</label>
+                        <input type="email" id="student-email" placeholder="pelda@iskola.hu">
+                    </div>
+                    <div class="form-group">
+                        <label>Tagozat</label>
+                        <select id="student-tagozat">
+                            <option value="nappali">Nappali</option>
+                            <option value="felnott">Felnőttképzés</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>OM azonosító</label>
+                        <input type="text" id="student-om" maxlength="11" placeholder="71234567890">
+                    </div>
+                    <div class="form-group">
+                        <label>Diákigazolvány szám</label>
+                        <input type="text" id="student-igazolvany" placeholder="123456AB">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Munkaszerződés kezdete / lejárata</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="date" id="student-kezdet">
+                        <input type="date" id="student-vege">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-outline" onclick="closeStudentModal()">Mégse</button>
+                    <button type="submit" class="btn-primary" id="saveStudentBtn">Mentés</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         // Tab Váltó Logika az Admin felülethez
         const adminTabs = document.querySelectorAll('.admin-tab-btn');
@@ -429,7 +488,8 @@
             // Fájl kiválasztása esetén
             input.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
-                if (file) await uploadExcelTask(file, endpoint, zone);
+                const tagozat = document.getElementById('import-tagozat-select').value;
+                if (file) await uploadExcelTask(file, `${endpoint}?tagozat=${tagozat}`, zone);
                 input.value = ''; // Reset
             });
 
@@ -446,7 +506,8 @@
                 e.preventDefault();
                 zone.style.background = '';
                 const file = e.dataTransfer.files[0];
-                if (file) await uploadExcelTask(file, endpoint, zone);
+                const tagozat = document.getElementById('import-tagozat-select').value;
+                if (file) await uploadExcelTask(file, `${endpoint}?tagozat=${tagozat}`, zone);
             });
         }
 
@@ -530,8 +591,8 @@
                         </td>
                         <td style="padding: 15px; text-align: right;">
                             <div style="display: flex; gap: 5px; justify-content: flex-end;">
-                                <button class="btn-primary" style="padding: 5px 10px; background: #3b82f6;" title="Profil megtekintése"><i class="fas fa-user-edit"></i></button>
-                                <button class="btn-secondary" style="padding: 5px 10px;"><i class="fas fa-user-minus"></i></button>
+                                <button class="btn-primary" style="padding: 5px 10px; background: #3b82f6;" title="Szerkesztés" onclick='openEditStudentModal(${JSON.stringify(s)})'><i class="fas fa-user-edit"></i></button>
+                                <button class="btn-secondary" style="padding: 5px 10px;" title="Törlés" onclick="deleteStudent(${s.id})"><i class="fas fa-trash"></i></button>
                             </div>
                         </td>
                     `;
@@ -648,6 +709,83 @@
             const badge = document.getElementById('api-status-badge');
             if(badge) badge.innerText = `API: ${window.location.host} (Unified)`;
         });
+
+        // --- MANUÁLIS KEZELÉS FUNKCIÓK ---
+        function openNewStudentModal() {
+            document.getElementById('modalTitle').innerText = 'Új Tanuló Felvitele';
+            document.getElementById('studentForm').reset();
+            document.getElementById('student-id').value = '';
+            document.getElementById('studentModal').style.display = 'block';
+        }
+
+        function openEditStudentModal(student) {
+            document.getElementById('modalTitle').innerText = 'Tanuló Adatainak Szerkesztése';
+            document.getElementById('student-id').value = student.id;
+            document.getElementById('student-nev').value = student.nev;
+            document.getElementById('student-email').value = student.email || '';
+            document.getElementById('student-om').value = student.oktatasi_azonosito || '';
+            document.getElementById('student-igazolvany').value = student.diakigazolvany_szam || '';
+            document.getElementById('student-tagozat').value = student.tagozat || 'nappali';
+            document.getElementById('student-kezdet').value = student.szerzodes_kezdet || '';
+            document.getElementById('student-vege').value = student.szerzodes_vege || '';
+            document.getElementById('studentModal').style.display = 'block';
+        }
+
+        function closeStudentModal() {
+            document.getElementById('studentModal').style.display = 'none';
+        }
+
+        async function handleStudentSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('student-id').value;
+            const data = {
+                nev: document.getElementById('student-nev').value,
+                email: document.getElementById('student-email').value || null,
+                oktatasi_azonosito: document.getElementById('student-om').value || null,
+                diakigazolvany_szam: document.getElementById('student-igazolvany').value || null,
+                tagozat: document.getElementById('student-tagozat').value,
+                szerzodes_kezdet: document.getElementById('student-kezdet').value || null,
+                szerzodes_vege: document.getElementById('student-vege').value || null
+            };
+
+            const url = id ? `/students/${id}` : '/students/';
+            const method = id ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('Sikeres mentés!');
+                    closeStudentModal();
+                    fetchAndDisplayStudents();
+                } else {
+                    const error = await response.json();
+                    alert('Hiba: ' + (error.detail || 'Sikertelen mentés'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Szerver hiba történt.');
+            }
+        }
+
+        async function deleteStudent(id) {
+            if (!confirm('Biztosan törölni szeretnéd ezt a tanulót?')) return;
+            try {
+                const response = await fetch(`/students/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    alert('Diák sikeresen törölve.');
+                    fetchAndDisplayStudents();
+                } else {
+                    alert('Hiba történt a törlés során.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
     </script>
 </body>
 </html>

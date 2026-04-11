@@ -18,6 +18,18 @@ class StudentBase(BaseModel):
 class StudentCreate(StudentBase):
     pass
 
+class StudentUpdate(BaseModel):
+    oktatasi_azonosito: Optional[str] = None
+    diakigazolvany_szam: Optional[str] = None
+    nev: Optional[str] = None
+    email: Optional[EmailStr] = None
+    telefon: Optional[str] = None
+    lakhely: Optional[str] = None
+    tagozat: Optional[str] = None
+    szerzodes_kezdet: Optional[date] = None
+    szerzodes_vege: Optional[date] = None
+    metadata_json: Optional[dict] = None
+
 class Student(StudentBase):
     id: int
     letrehozva: datetime

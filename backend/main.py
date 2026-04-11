@@ -138,6 +138,29 @@ def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)
     db.refresh(db_student)
     return db_student
 
+@app.put("/students/{student_id}", response_model=schemas.Student)
+def update_student(student_id: int, student_update: schemas.StudentUpdate, db: Session = Depends(get_db)):
+    db_student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not db_student:
+        raise HTTPException(status_code=404, detail="Diák nem található")
+    
+    update_data = student_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_student, key, value)
+    
+    db.commit()
+    db.refresh(db_student)
+    return db_student
+
+@app.delete("/students/{student_id}")
+def delete_student(student_id: int, db: Session = Depends(get_db)):
+    db_student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not db_student:
+        raise HTTPException(status_code=404, detail="Diák nem található")
+    db.delete(db_student)
+    db.commit()
+    return {"status": "success", "message": "Diák törölve"}
+
 # --- OSZTÁLYOK / KÉPZÉSI PARAMÉTEREK ---
 @app.get("/classes/", response_model=list[schemas.ClassRoom])
 def read_classes(db: Session = Depends(get_db)):
@@ -206,7 +229,7 @@ async def process_document(file: UploadFile = File(...)):
 from .excel_service import excel_service
 
 @app.post("/import/students")
-async def import_students_excel(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def import_students_excel(tagozat: str = "nappali", file: UploadFile = File(...), db: Session = Depends(get_db)):
     content = await file.read()
     parsed_students = excel_service.parse_students(content)
     
@@ -258,7 +281,7 @@ async def import_students_excel(file: UploadFile = File(...), db: Session = Depe
                 telefon=None,
                 lakhely=None,
                 ertesitesi_cim=None,
-                tagozat=None,
+                tagozat=tagozat,
                 osztaly_id=None,
                 metadata_json={
                     "iskola": s_data.get("iskola"), 
