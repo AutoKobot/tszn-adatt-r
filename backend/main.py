@@ -273,33 +273,27 @@ async def import_students_excel(tagozat: str = "nappali", file: UploadFile = Fil
                 if existing_student: reason = "A név már szerepel a rendszerben"
 
             if existing_student:
-                # Ez egy konfliktus, nem mentjük el, hanem visszaküldjük döntésre
-                import_results["conflicts"].append({
-                    "reason": reason,
-                    "incoming_data": s_data,
-                    "existing_data": {
-                        "id": existing_student.id,
-                        "nev": existing_student.nev,
-                        "email": existing_student.email,
-                        "oktatasi_azonosito": existing_student.oktatasi_azonosito,
-                        "tagozat": existing_student.tagozat,
-                        "metadata_json": existing_student.metadata_json
-                    }
-                })
+                # Frissítés
+                existing_student.nev = s_nev
+                meta = existing_student.metadata_json or {}
+                meta["szakma"] = s_data.get("szakma")
+                meta["iskola"] = s_data.get("iskola")
+                meta["evfolyam"] = s_data.get("evfolyam")
+                existing_student.metadata_json = meta
+                import_results["duplicates"] += 1
             else:
-                # Tiszta új adat, menthetjük
+                # Új
                 new_student = models.Student(
-                    oktatasi_azonosito=s_om,
                     nev=s_nev,
                     email=s_email,
+                    oktatasi_azonosito=s_om,
                     tagozat=tagozat,
                     szerzodes_kezdet=s_data.get("szerzodes_kezdet"),
                     szerzodes_vege=s_data.get("szerzodes_vege"),
                     metadata_json={
-                        "iskola": s_data.get("iskola"), 
-                        "szakma": s_data.get("szakma"), 
-                        "evfolyam": s_data.get("evfolyam"),
-                        "import_date": datetime.datetime.now().isoformat()
+                        "szakma": s_data.get("szakma"),
+                        "iskola": s_data.get("iskola"),
+                        "evfolyam": s_data.get("evfolyam")
                     }
                 )
                 db.add(new_student)
