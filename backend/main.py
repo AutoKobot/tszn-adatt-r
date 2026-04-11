@@ -128,7 +128,11 @@ def debug_database(db: Session = Depends(get_db)):
             "diakok_szama": db.query(models.Student).count(),
             "oktatok_szama": db.query(models.Instructor).count(),
             "osztalyok_szama": db.query(models.ClassRoom).count(),
-            "adatbazis_url_eleje": str(database.engine.url).split('@')[-1] # Csak a hostot mutatjuk biztonsági okból
+            "adatbazis_url_eleje": str(database.engine.url).split('@')[-1],
+            "elso_3_diak_nyers_adata": [
+                {"id": s.id, "nev": s.nev, "meta": s.metadata_json} 
+                for s in db.query(models.Student).limit(3).all()
+            ]
         }
         return counts
     except Exception as e:
@@ -273,13 +277,17 @@ async def import_students_excel(tagozat: str = "nappali", file: UploadFile = Fil
                 if existing_student: reason = "A név már szerepel a rendszerben"
 
             if existing_student:
-                # Frissítés
+                # Kényszerített frissítés
                 existing_student.nev = s_nev
-                meta = existing_student.metadata_json or {}
+                meta = dict(existing_student.metadata_json or {})
                 meta["szakma"] = s_data.get("szakma")
                 meta["iskola"] = s_data.get("iskola")
                 meta["evfolyam"] = s_data.get("evfolyam")
                 existing_student.metadata_json = meta
+                
+                from sqlalchemy.orm.attributes import flag_modified
+                flag_modified(existing_student, "metadata_json")
+                
                 import_results["duplicates"] += 1
             else:
                 # Új
