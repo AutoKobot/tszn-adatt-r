@@ -556,7 +556,8 @@
             tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px;"><i class="fas fa-spinner fa-spin"></i> Betöltés...</td></tr>`;
             
             try {
-                const response = await fetch(`${API_BASE_URL}/students/`);
+                // Cache-elést megkerülő időbélyeg hozzáadása
+                const response = await fetch(`${API_BASE_URL}/students/?t=${Date.now()}`);
                 const students = await response.json();
                 
                 const statEl = document.getElementById('stat-active-contracts');

@@ -120,6 +120,20 @@ async def serve_oktato():
     return FileResponse("oktato_dashboard.html")
 
 # --- DIÁKOK KEZELÉSE ---
+# --- DIAGNOSZTIKA ---
+@app.get("/debug/db")
+def debug_database(db: Session = Depends(get_db)):
+    try:
+        counts = {
+            "diakok_szama": db.query(models.Student).count(),
+            "oktatok_szama": db.query(models.Instructor).count(),
+            "osztalyok_szama": db.query(models.ClassRoom).count(),
+            "adatbazis_url_eleje": str(database.engine.url).split('@')[-1] # Csak a hostot mutatjuk biztonsági okból
+        }
+        return counts
+    except Exception as e:
+        return {"error": str(e)}
+
 @app.get("/students/", response_model=list[schemas.Student])
 def read_students(skip: int = 0, limit: int = 500, db: Session = Depends(get_db)):
     try:
