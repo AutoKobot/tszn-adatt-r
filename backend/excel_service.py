@@ -20,7 +20,11 @@ class ExcelService:
             return "email"
         if "szakma" in name or "kepzes" in name or "szakir" in name:
             return "szakma"
-        if ("szerz" in name and "kezd" in name) or "idoszak" in name or "erven" in name:
+        if ("szerz" in name and ("kezd" in name or "datum" in name)) and "vege" not in name:
+            return "szerzodes_kezdet"
+        if "szerz" in name and ("vege" in name or "lejar" in name):
+            return "szerzodes_vege"
+        if ("szerz" in name and "idoszak" in name) or "erven" in name:
             return "szerzodes_idoszak"
         if "iskol" in name:
             return "iskola"
@@ -44,11 +48,26 @@ class ExcelService:
                    .replace('ó','o').replace('ö','o').replace('ő','o')\
                    .replace('ú','u').replace('ü','u').replace('ű','u')
 
+    def _read_df(self, file_bytes, sheet=0, header=None):
+        """Beolvassa a fájlt (Excel vagy CSV) DataFrame-be."""
+        try:
+            # Megpróbáljuk Excelként
+            return pd.read_excel(io.BytesIO(file_bytes), sheet_name=sheet, header=header)
+        except Exception:
+            # Ha nem Excel, megpróbáljuk CSV-ként
+            # Automatikus szeparátor felismerés (sep=None, engine='python')
+            try:
+                # Először UTF-8-as kódolással
+                return pd.read_csv(io.BytesIO(file_bytes), sep=None, engine='python', header=header, encoding='utf-8')
+            except Exception:
+                # Ha elbukik (pl. ékezetes karakterek hibás kódolása), megpróbáljuk közép-európai kódolással
+                return pd.read_csv(io.BytesIO(file_bytes), sep=None, engine='python', header=header, encoding='latin-2')
+
     def _find_header_row(self, file_bytes, sheet=0):
         """Megkeresi, hogy melyik sorban vannak a fejlécek (0-indexelt).
         Végigpásztázza az első 10 sort, és azt választja, ahol a legtöbb
         ismert kulcsszót találja (pl. 'nev', 'mail', 'iskol', 'szakma')."""
-        df_raw = pd.read_excel(io.BytesIO(file_bytes), sheet_name=sheet, header=None)
+        df_raw = self._read_df(file_bytes, sheet=sheet, header=None)
         keywords = ['nev', 'mail', 'iskol', 'szakma', 'oktat', 'evfolyam', 'tanu', 'szerz']
         best_row = 0
         best_score = 0
@@ -71,9 +90,9 @@ class ExcelService:
         return val
 
     def parse_instructors(self, file_bytes):
-        """Oktatói Excel feldolgozása Intelligensen"""
+        """Oktatói Excel/CSV feldolgozása Intelligensen"""
         header_row = self._find_header_row(file_bytes)
-        df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=0, header=header_row)
+        df = self._read_df(file_bytes, sheet=0, header=header_row)
         
         # Normalize headers and remove duplicates
         df.columns = [self._normalize_column_name(col) for col in df.columns]
@@ -96,9 +115,9 @@ class ExcelService:
         return instructors
 
     def parse_students(self, file_bytes):
-        """Tanulói Excel feldolgozása"""
+        """Tanulói Excel/CSV feldolgozása"""
         header_row = self._find_header_row(file_bytes)
-        df = pd.read_excel(io.BytesIO(file_bytes), sheet_name=0, header=header_row)
+        df = self._read_df(file_bytes, sheet=0, header=header_row)
         
         # Normalize headers and remove duplicates
         df.columns = [self._normalize_column_name(col) for col in df.columns]
@@ -110,12 +129,20 @@ class ExcelService:
             if not nev or str(nev).strip() == "":
                 continue
                 
-            szerz_szoveg = str(self._get_safe_val(row, 'szerzodes_idoszak', ''))
-            kezdet, vege = None, None
-            if "-" in szerz_szoveg:
-                parts = szerz_szoveg.split("-")
-                kezdet = parts[0].replace('.', '-').strip()
-                vege = parts[1].replace('.', '-').strip()
+            # Szerződés kezelés: lehet egyben (pl. 2023.01.01 - 2024.12.31) vagy külön oszlopban
+            kezdet = self._get_safe_val(row, 'szerzodes_kezdet')
+            vege = self._get_safe_val(row, 'szerzodes_vege')
+            
+            if not kezdet or not vege:
+                szerz_szoveg = str(self._get_safe_val(row, 'szerzodes_idoszak', ''))
+                if "-" in szerz_szoveg:
+                    parts = szerz_szoveg.split("-")
+                    if not kezdet: kezdet = parts[0].replace('.', '-').strip()
+                    if not vege: vege = parts[1].replace('.', '-').strip()
+            
+            # Formázás (ha szükséges, pl. pontok kötőjelre cserélése)
+            if kezdet: kezdet = str(kezdet).replace('.', '-').strip()
+            if vege: vege = str(vege).replace('.', '-').strip()
                 
             student_data = {
                 "om_azonosito": str(self._get_safe_val(row, 'om_azonosito', '')).strip() or None,

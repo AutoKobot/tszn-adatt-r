@@ -251,7 +251,11 @@ async def import_students_excel(file: UploadFile = File(...), db: Session = Depe
             saved_count += 1
             
     db.commit()
-    return {"status": "success", "message": f"{saved_count} db új tanuló importálva a {len(parsed_students)} sorból."}
+    return {
+        "status": "success", 
+        "message": f"{saved_count} db új tanuló importálva a {len(parsed_students)} sorból.",
+        "beolvasott_sorok": f"{saved_count} / {len(parsed_students)}"
+    }
 
 @app.post("/import/instructors")
 async def import_instructors_excel(file: UploadFile = File(...), db: Session = Depends(get_db)):
@@ -286,7 +290,11 @@ async def import_instructors_excel(file: UploadFile = File(...), db: Session = D
             saved_count += 1
             
     db.commit()
-    return {"status": "success", "message": f"{saved_count} db új oktató importálva a {len(parsed_instructors)} sorból."}
+    return {
+        "status": "success", 
+        "message": f"{saved_count} db új oktató importálva a {len(parsed_instructors)} sorból.",
+        "beolvasott_sorok": f"{saved_count} / {len(parsed_instructors)}"
+    }
 
 # --- TEMPLATE FELTÖLTÉS ---
 @app.post("/templates/upload")
