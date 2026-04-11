@@ -7,41 +7,47 @@ class ExcelService:
         pass
 
     def _normalize_column_name(self, name):
-        """Oszlopnevek egységesítése - rugalmas, széles körű felismerés"""
         if pd.isna(name): return ""
-        name = str(name).lower().strip()
-        # Ékezetek normalizálása
-        name = name.replace('á','a').replace('é','e').replace('í','i').replace('ó','o').replace('ö','o').replace('ő','o').replace('ú','u').replace('ü','u').replace('ű','u')
+        orig_name = str(name).strip()
+        name = orig_name.lower()
+        # Ékezetek manuális lecsupaszítása az összehasonlításhoz
+        name = self._normalize_accent(name)
         
-        if "szakma" in name or "kepzes" in name or "szakir" in name:
-            return "szakma"
-        if any(x in name for x in ["nev", "tanu", "diak"]) and "megnevez" not in name:
-            if "iskol" not in name:  # Ne keverjük az iskolával
-                return "nev"
+        # PRIORITÁS 1: Szakma (Ez a leggyakoribb hibaforrás)
+        if "szakma" in name or "kepzes" in name or "szakir" in name or "megnevez" in name:
+            if "nev" not in name or "szakma" in name: # Ha mindkét szó benne van, a szakma győz
+                print(f"[DEBUG] Oszlop azonosítva: '{orig_name}' -> 'szakma'")
+                return "szakma"
+        
+        # PRIORITÁS 2: Név
+        if any(x in name for x in ["nev", "tanu", "diak"]) and "iskol" not in name:
+            print(f"[DEBUG] Oszlop azonosítva: '{orig_name}' -> 'nev'")
+            return "nev"
+            
         if "mail" in name:
+            print(f"[DEBUG] Oszlop azonosítva: '{orig_name}' -> 'email'")
             return "email"
-        if "szerz" in name and "kezd" in name and "vege" in name:
-            return "szerzodes_idoszak"
-        if ("szerz" in name and ("kezd" in name or "datum" in name)) and "vege" not in name:
-            return "szerzodes_kezdet"
-        if "szerz" in name and ("vege" in name or "lejar" in name):
-            return "szerzodes_vege"
-        if ("szerz" in name and "idoszak" in name) or "erven" in name:
-            return "szerzodes_idoszak"
-        if "iskol" in name:
-            return "iskola"
-        if "evfolyam" in name or "evf" in name or "osztaly" in name or "csoport" in name:
-            return "evfolyam"
-        if "telefon" in name or "tel" in name or "mobil" in name:
-            return "telefon"
-        if "om" == name.strip() or "om_" in name or ("oktat" in name and "azonos" in name) or "om azon" in name:
-            return "om_azonosito"
-        if "igazolv" in name or "diakig" in name:
-            return "diakigazolvany"
-        if "szam" in name and len(name) < 8:  # pl. "sorszám"
-            return "sorszam"
         
-        return re.sub(r'[^a-z0-9_]', '', name.replace(' ', '_'))
+        if "iskol" in name:
+            print(f"[DEBUG] Oszlop azonosítva: '{orig_name}' -> 'iskola'")
+            return "iskola"
+            
+        if "evfolyam" in name or "evf" in name or "osztaly" in name:
+            print(f"[DEBUG] Oszlop azonosítva: '{orig_name}' -> 'evfolyam'")
+            return "evfolyam"
+            
+        if "szerz" in name:
+            if "kezd" in name and "vege" in name: return "szerzodes_idoszak"
+            if "kezd" in name: return "szerzodes_kezdet"
+            if "vege" in name: return "szerzodes_vege"
+            return "szerzodes_idoszak"
+
+        if "om" in name or "oktat" in name:
+            return "om_azonosito"
+            
+        res = re.sub(r'[^a-z0-9_]', '', name.replace(' ', '_'))
+        print(f"[DEBUG] Oszlop (egyéb): '{orig_name}' -> '{res}'")
+        return res
 
 
     def _normalize_accent(self, text):
