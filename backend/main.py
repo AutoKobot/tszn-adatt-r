@@ -121,7 +121,7 @@ async def serve_oktato():
 
 # --- DIÁKOK KEZELÉSE ---
 @app.get("/students/", response_model=list[schemas.Student])
-def read_students(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+def read_students(skip: int = 0, limit: int = 500, db: Session = Depends(get_db)):
     try:
         print("[API] Diákok listázása (GET /students/)")
         students = db.query(models.Student).offset(skip).limit(limit).all()
@@ -306,11 +306,20 @@ async def import_students_excel(tagozat: str = "nappali", file: UploadFile = Fil
             import_results["errors"] += 1
             
     db.commit()
-    msg = f"{import_results['saved']} db új tanuló rögzítve. Duplikált: {import_results['duplicates']}. Hiba: {import_results['errors']}."
+    
+    # Diagnosztikai log a Render konzolra
+    total_in_db = db.query(models.Student).count()
+    print(f"[IMPORT] Kész. Mentve: {import_results['saved']}, Duplikált: {import_results['duplicates']}, Összesen az adatbázisban: {total_in_db}")
+
+    msg = f"Import kész: {import_results['saved']} új rögzítve. Kimaradt (már létezik): {import_results['duplicates']}."
+    if import_results['errors'] > 0:
+        msg += f" Hiba történt {import_results['errors']} sornál."
+
     return {
         "status": "success", 
         "message": msg,
-        "beolvasott_sorok": f"{import_results['saved']} / {len(parsed_students)}"
+        "beolvasott_sorok": f"{import_results['saved']} / {len(parsed_students)}",
+        "details": import_results
     }
 
 @app.post("/import/instructors")

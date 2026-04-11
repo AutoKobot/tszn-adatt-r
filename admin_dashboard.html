@@ -535,7 +535,7 @@
                 });
                 const result = await response.json();
                 if(response.ok) {
-                    alert(`Sikeres! ${result.beolvasott_sorok || 'OK'}`);
+                    alert(`${result.message || 'Sikeres importálás!'}`);
                     span.innerText = 'Sikeres! ✅';
                     fetchAndDisplayStudents();
                 } else {
