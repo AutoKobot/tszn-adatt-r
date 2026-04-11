@@ -247,53 +247,49 @@ async def import_students_excel(tagozat: str = "nappali", file: UploadFile = Fil
     content = await file.read()
     parsed_students = excel_service.parse_students(content)
     
-    import_results = {"saved": 0, "duplicates": 0, "errors": 0}
-    seen_oms = set()
-    seen_emails = set()
+    import_results = {"saved": 0, "conflicts": [], "errors": 0}
     
     for i, s_data in enumerate(parsed_students):
         try:
             s_om = s_data.get("om_azonosito")
             s_email = s_data.get("email")
             s_nev = s_data["nev"]
-            s_szakma = s_data["szakma"]
             
-            # Duplikáció ellenőrzés és FRISSÍTÉS (Upsert logika)
+            # Konfliktus keresés
             existing_student = None
+            reason = "none"
+            
             if s_om:
                 existing_student = db.query(models.Student).filter(models.Student.oktatasi_azonosito == s_om).first()
+                if existing_student: reason = "Az OM azonosító már létezik"
             
             if not existing_student and s_email and s_email != "nincs":
                 existing_student = db.query(models.Student).filter(models.Student.email == s_email).first()
+                if existing_student: reason = "Az Email cím már létezik"
             
-            if not existing_student and not s_om and (not s_email or s_email == "nincs"):
+            if not existing_student:
+                # Név alapú egyezés
                 existing_student = db.query(models.Student).filter(models.Student.nev == s_nev).first()
+                if existing_student: reason = "A név már szerepel a rendszerben"
 
             if existing_student:
-                # Frissítjük a meglévőt
-                existing_student.nev = s_nev
-                if s_om: existing_student.oktatasi_azonosito = s_om
-                if s_email and s_email != "nincs": existing_student.email = s_email
-                existing_student.tagozat = tagozat
-                existing_student.szerzodes_kezdet = s_data.get("szerzodes_kezdet") or existing_student.szerzodes_kezdet
-                existing_student.szerzodes_vege = s_data.get("szerzodes_vege") or existing_student.szerzodes_vege
-                
-                # Metadata összefésülése
-                current_meta = existing_student.metadata_json or {}
-                current_meta.update({
-                    "iskola": s_data.get("iskola") or current_meta.get("iskola"),
-                    "szakma": s_data.get("szakma") or current_meta.get("szakma"),
-                    "evfolyam": s_data.get("evfolyam") or current_meta.get("evfolyam"),
-                    "last_update": datetime.datetime.now().isoformat()
+                # Ez egy konfliktus, nem mentjük el, hanem visszaküldjük döntésre
+                import_results["conflicts"].append({
+                    "reason": reason,
+                    "incoming_data": s_data,
+                    "existing_data": {
+                        "id": existing_student.id,
+                        "nev": existing_student.nev,
+                        "email": existing_student.email,
+                        "oktatasi_azonosito": existing_student.oktatasi_azonosito,
+                        "tagozat": existing_student.tagozat,
+                        "metadata_json": existing_student.metadata_json
+                    }
                 })
-                existing_student.metadata_json = current_meta
-                
-                import_results["duplicates"] += 1 # Itt a 'duplicates' most a frissítetteket jelenti
             else:
-                # Új diák létrehozása
+                # Tiszta új adat, menthetjük
                 new_student = models.Student(
                     oktatasi_azonosito=s_om,
-                    diakigazolvany_szam=s_data.get("diakigazolvany_szam"),
                     nev=s_nev,
                     email=s_email,
                     tagozat=tagozat,
@@ -309,9 +305,7 @@ async def import_students_excel(tagozat: str = "nappali", file: UploadFile = Fil
                 db.add(new_student)
                 import_results["saved"] += 1
             
-            # Memória ürítés
-            if i % 50 == 0:
-                db.commit()
+            if i % 50 == 0: db.commit()
                 
         except Exception as e:
             print(f"[IMPORT HIBA] Sor {i}: {e}")
@@ -320,20 +314,68 @@ async def import_students_excel(tagozat: str = "nappali", file: UploadFile = Fil
             
     db.commit()
     
-    # Diagnosztikai log a Render konzolra
-    total_in_db = db.query(models.Student).count()
-    print(f"[IMPORT] Kész. Mentve: {import_results['saved']}, Duplikált: {import_results['duplicates']}, Összesen az adatbázisban: {total_in_db}")
-
-    msg = f"Import kész: {import_results['saved']} új rögzítve. Kimaradt (már létezik): {import_results['duplicates']}."
-    if import_results['errors'] > 0:
-        msg += f" Hiba történt {import_results['errors']} sornál."
-
+    msg = f"Importálás kész. {import_results['saved']} diák rögzítve. {len(import_results['conflicts'])} konfliktus vár feloldásra."
     return {
         "status": "success", 
         "message": msg,
-        "beolvasott_sorok": f"{import_results['saved']} / {len(parsed_students)}",
-        "details": import_results
+        "saved_count": import_results["saved"],
+        "conflicts": import_results["conflicts"] # Visszaküldjük a listát a frontendre
     }
+
+@app.post("/import/resolve-conflicts")
+async def resolve_conflicts(decisions: list[dict], db: Session = Depends(get_db)):
+    """
+    Decisions formátum: [{"action": "update|create|skip", "incoming": {...}, "existing_id": 123}]
+    """
+    resolved_count = 0
+    try:
+        for d in decisions:
+            action = d.get("action")
+            inc = d.get("incoming")
+            
+            if action == "skip": continue
+            
+            if action == "update":
+                existing = db.query(models.Student).get(d["existing_id"])
+                if existing:
+                    existing.nev = inc.get("nev")
+                    existing.email = inc.get("email")
+                    existing.oktatasi_azonosito = inc.get("om_azonosito")
+                    existing.szerzodes_kezdet = inc.get("szerzodes_kezdet")
+                    existing.szerzodes_vege = inc.get("szerzodes_vege")
+                    # Meta frissítése
+                    meta = existing.metadata_json or {}
+                    meta.update({
+                        "iskola": inc.get("iskola"),
+                        "szakma": inc.get("szakma"),
+                        "evfolyam": inc.get("evfolyam"),
+                        "resolved_update": datetime.datetime.now().isoformat()
+                    })
+                    existing.metadata_json = meta
+                    resolved_count += 1
+            
+            elif action == "create":
+                new_student = models.Student(
+                    nev=inc.get("nev"),
+                    email=inc.get("email"),
+                    oktatasi_azonosito=inc.get("om_azonosito"),
+                    szerzodes_kezdet=inc.get("szerzodes_kezdet"),
+                    szerzodes_vege=inc.get("szerzodes_vege"),
+                    tagozat=inc.get("tagozat", "nappali"),
+                    metadata_json={
+                        "iskola": inc.get("iskola"),
+                        "szakma": inc.get("szakma"),
+                        "evfolyam": inc.get("evfolyam")
+                    }
+                )
+                db.add(new_student)
+                resolved_count += 1
+        
+        db.commit()
+        return {"status": "success", "resolved_count": resolved_count}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/import/instructors")
 async def import_instructors_excel(file: UploadFile = File(...), db: Session = Depends(get_db)):

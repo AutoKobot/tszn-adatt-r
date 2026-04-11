@@ -36,6 +36,13 @@ class Student(StudentBase):
 
     model_config = {"from_attributes": True}
 
+# --- IMPORT KONFLIKTUS KÉP ---
+class ImportConflict(BaseModel):
+    id: Optional[int] = None
+    incoming_data: dict
+    existing_data: Optional[dict] = None
+    reason: str # 'om_match', 'email_match', 'name_match'
+
 # --- OSZTÁLYOK / PARAMÉTEREK ---
 class ClassRoomBase(BaseModel):
     megnevezes: str
