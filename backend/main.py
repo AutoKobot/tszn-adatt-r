@@ -296,6 +296,8 @@ async def import_students_excel(tagozat: str = "nappali", file: UploadFile = Fil
                 lakhely=None,
                 ertesitesi_cim=None,
                 tagozat=tagozat,
+                szerzodes_kezdet=s_data.get("szerzodes_kezdet") or None,
+                szerzodes_vege=s_data.get("szerzodes_vege") or None,
                 osztaly_id=None,
                 metadata_json={
                     "iskola": s_data.get("iskola"), 

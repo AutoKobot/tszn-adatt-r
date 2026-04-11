@@ -7,7 +7,7 @@ class StudentBase(BaseModel):
     oktatasi_azonosito: Optional[str] = None
     diakigazolvany_szam: Optional[str] = None
     nev: str
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     telefon: Optional[str] = None
     lakhely: Optional[str] = None
     tagozat: Optional[str] = "nappali"
@@ -22,7 +22,7 @@ class StudentUpdate(BaseModel):
     oktatasi_azonosito: Optional[str] = None
     diakigazolvany_szam: Optional[str] = None
     nev: Optional[str] = None
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     telefon: Optional[str] = None
     lakhely: Optional[str] = None
     tagozat: Optional[str] = None
@@ -68,7 +68,7 @@ class GradeCreate(BaseModel):
 # --- OKTATÓK ---
 class InstructorBase(BaseModel):
     nev: str
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     telefon: Optional[str] = None
     szakterulet: Optional[str] = None
     metadata_json: Optional[dict] = {}

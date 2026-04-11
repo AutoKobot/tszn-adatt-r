@@ -25,6 +25,8 @@ class Student(Base):
     lakhely = Column(Text)
     ertesitesi_cim = Column(Text)
     tagozat = Column(String(50))
+    szerzodes_kezdet = Column(Date)
+    szerzodes_vege = Column(Date)
     osztaly_id = Column(Integer, ForeignKey("osztalyok.id"))
     metadata_json = Column("megjegyzesek", JSON, default={})
     letrehozva = Column(TIMESTAMP, default=datetime.datetime.utcnow)
