@@ -210,51 +210,84 @@ async def import_students_excel(file: UploadFile = File(...), db: Session = Depe
     content = await file.read()
     parsed_students = excel_service.parse_students(content)
     
-    saved_count = 0
-    for s_data in parsed_students:
-        s_om = s_data.get("om_azonosito")
-        s_igaz = s_data.get("diakigazolvany_szam")
-        s_nev = s_data["nev"]
-        s_email = s_data["email"]
-        s_szakma = s_data["szakma"]
-        
-        is_duplicate = False
-        
-        # 0. Ha Van OM azonosító, ELSŐDLEGESEN azzal szűrünk (a legpontosabb!)
-        if s_om:
-            if db.query(models.Student).filter(models.Student.oktatasi_azonosito == s_om).first():
-                is_duplicate = True
-        
-        if not is_duplicate:
-            # Lekérjük az összes azonos nevű diákot, ha az OM nem hozott eredményt (vagy nincs OM)
-            existing_students = db.query(models.Student).filter(models.Student.nev == s_nev).all()
-            for ex in existing_students:
-                # 1. Ha az email is 100% egyezik (és nem üres) -> Biztos duplikáció
-                if s_email and ex.email == s_email:
-                    is_duplicate = True
-                    break
-                    
-                # 2. Ha az email üres, de a név ÉS a betartott szakma is ugyanaz -> Valószínűleg duplikáció
-                if not s_email and ex.metadata_json and ex.metadata_json.get("szakma") == s_szakma:
-                     is_duplicate = True
-                     break
+    import_results = {"saved": 0, "duplicates": 0, "errors": 0}
+    seen_oms = set()
+    seen_emails = set()
+    
+    for i, s_data in enumerate(parsed_students):
+        try:
+            s_om = s_data.get("om_azonosito")
+            s_email = s_data.get("email")
+            s_nev = s_data["nev"]
+            s_szakma = s_data["szakma"]
+            
+            # Duplikáció ellenőrzés a MOSTANI importon belül
+            if s_om and s_om in seen_oms:
+                import_results["duplicates"] += 1
+                continue
+            if s_email and s_email in seen_emails:
+                import_results["duplicates"] += 1
+                continue
 
-        if not is_duplicate:
+            is_duplicate = False
+            # 0. Adatbázis ellenőrzés
+            if s_om:
+                if db.query(models.Student).filter(models.Student.oktatasi_azonosito == s_om).first():
+                    is_duplicate = True
+            
+            if not is_duplicate and s_email:
+                if db.query(models.Student).filter(models.Student.email == s_email).first():
+                    is_duplicate = True
+            
+            if not is_duplicate:
+                # Név alapú ellenőrzés ha nincs email/OM
+                if not s_om and not s_email:
+                    if db.query(models.Student).filter(models.Student.nev == s_nev).first():
+                        is_duplicate = True
+
+            if is_duplicate:
+                import_results["duplicates"] += 1
+                continue
+
+            # Új diák létrehozása - MINDEN mezőt explicit beállítunk az egyenletes batch-eléshez
             new_student = models.Student(
                 oktatasi_azonosito=s_om,
-                diakigazolvany_szam=s_igaz,
+                diakigazolvany_szam=s_data.get("diakigazolvany_szam"),
                 nev=s_nev,
                 email=s_email,
-                metadata_json={"iskola": s_data["iskola"], "szakma": s_szakma, "evfolyam": s_data["evfolyam"]}
+                telefon=None,
+                lakhely=None,
+                ertesitesi_cim=None,
+                tagozat=None,
+                osztaly_id=None,
+                metadata_json={
+                    "iskola": s_data.get("iskola"), 
+                    "szakma": s_data.get("szakma"), 
+                    "evfolyam": s_data.get("evfolyam"),
+                    "import_date": datetime.datetime.now().isoformat()
+                }
             )
             db.add(new_student)
-            saved_count += 1
+            import_results["saved"] += 1
+            
+            if s_om: seen_oms.add(s_om)
+            if s_email: seen_emails.add(s_email)
+            
+            # Chunked commit: 100 soronként ürítjük a memóriát
+            if i % 100 == 0:
+                db.commit()
+                
+        except Exception as e:
+            print(f"[IMPORT HIBA] Sor {i}: {e}")
+            db.rollback()
+            import_results["errors"] += 1
             
     db.commit()
+    msg = f"{import_results['saved']} db új tanuló rögzítve. Duplikált: {import_results['duplicates']}. Hiba: {import_results['errors']}."
     return {
         "status": "success", 
-        "message": f"{saved_count} db új tanuló importálva a {len(parsed_students)} sorból.",
-        "beolvasott_sorok": f"{saved_count} / {len(parsed_students)}"
+        "message": msg,
+        "beolvasott_sorok": f"{import_results['saved']} / {len(parsed_students)}"
     }
 
 @app.post("/import/instructors")

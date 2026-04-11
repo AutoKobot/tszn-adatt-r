@@ -79,6 +79,15 @@ class ExcelService:
                 best_row = i
         return best_row
 
+    def _clean_string(self, value):
+        """Megtisztítja a sztringet a null bájtoktól és egyéb vezérlő karakterektől, amik tönkretehetik az adatbázist."""
+        if value is None: return None
+        s = str(value)
+        # Null bájt (\0) eltávolítása - PostgreSQL nem szereti őket VARCHAR-ban
+        s = s.replace('\0', '').replace('\u0000', '')
+        # Felesleges whitespace-ek
+        return s.strip()
+
     def _get_safe_val(self, row, key, default=None):
         """Biztonságosan lekér egy értéket egy sorból, akkor is ha duplikált oszlop miatt Series-t kapnánk"""
         val = row.get(key)
@@ -87,7 +96,9 @@ class ExcelService:
         
         if pd.isna(val):
             return default
-        return val
+        
+        # Tisztítás
+        return self._clean_string(val)
 
     def parse_instructors(self, file_bytes):
         """Oktatói Excel/CSV feldolgozása Intelligensen"""
