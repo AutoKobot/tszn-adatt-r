@@ -13,13 +13,13 @@ class ExcelService:
         # Ékezetek normalizálása
         name = name.replace('á','a').replace('é','e').replace('í','i').replace('ó','o').replace('ö','o').replace('ő','o').replace('ú','u').replace('ü','u').replace('ű','u')
         
-        if any(x in name for x in ["nev", "oktat", "tanu", "diak", "nev"]):
+        if "szakma" in name or "kepzes" in name or "szakir" in name:
+            return "szakma"
+        if any(x in name for x in ["nev", "tanu", "diak"]) and "megnevez" not in name:
             if "iskol" not in name:  # Ne keverjük az iskolával
                 return "nev"
         if "mail" in name:
             return "email"
-        if "szakma" in name or "kepzes" in name or "szakir" in name:
-            return "szakma"
         if "szerz" in name and "kezd" in name and "vege" in name:
             return "szerzodes_idoszak"
         if ("szerz" in name and ("kezd" in name or "datum" in name)) and "vege" not in name:
