@@ -603,14 +603,14 @@
             document.getElementById('modalTitle').innerText = 'Új Tanuló Felvitele';
             document.getElementById('studentForm').reset();
             document.getElementById('student-id').value = '';
-            modal.style.display = 'block';
+            modal.style.display = 'flex';
         }
 
         function openEditStudentModal(id) {
             const student = window.allStudents[id];
             if (!student) return;
             
-            document.getElementById('modalTitle').innerText = 'Szerkesztés';
+            document.getElementById('modalTitle').innerText = 'Tanuló Szerkesztése';
             document.getElementById('student-id').value = student.id;
             document.getElementById('student-nev').value = student.nev;
             document.getElementById('student-email').value = student.email || '';
@@ -619,7 +619,7 @@
             document.getElementById('student-tagozat').value = student.tagozat || 'nappali';
             document.getElementById('student-kezdet').value = student.szerzodes_kezdet || '';
             document.getElementById('student-vege').value = student.szerzodes_vege || '';
-            document.getElementById('studentModal').style.display = 'block';
+            document.getElementById('studentModal').style.display = 'flex';
         }
 
         function closeStudentModal() {
