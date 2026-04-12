@@ -81,37 +81,43 @@
                 <!-- TAB 1: Adatbázis & Szerződések -->
                 <div id="admin-tab-db" class="admin-tab-content">
                     <section class="data-section">
-                        <!-- Intelligens Kereső és Szűrőközpont -->
                         <div style="background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);">
                             <h4 style="margin-top: 0; margin-bottom: 15px; color: #60a5fa;"><i class="fas fa-filter"></i> Intelligens Szűrőközpont</h4>
                             
                             <div style="display: flex; flex-wrap: wrap; gap: 10px;">
                                 <!-- 1. Alap Keresés -->
-                                <input type="text" placeholder="Keresés név (tanuló/oktató) alapján..." class="login-input" style="flex: 1; min-width: 250px; border-radius: 8px;">
+                                <input type="text" id="filter-search" placeholder="Keresés név, iskola, szakma alapán..." class="login-input" style="flex: 1; min-width: 250px; border-radius: 8px;" oninput="filterStudents()">
                                 
-                                <!-- 2. Kategóriák és Szerepkörök -->
-                                <select class="login-input" style="border-radius: 8px; background: rgba(30,30,47,0.9); flex: 1; min-width: 150px;">
-                                    <option value="">Mindenki (Kategória)</option>
-                                    <option value="tanulok">Csak Tanulók</option>
-                                    <option value="oktatok">Csak Oktatók</option>
-                                    <option value="vegzosok">Végzős Osztályok</option>
+                                <!-- 2. Tagozat -->
+                                <select id="filter-tagozat" class="login-input" style="border-radius: 8px; background: rgba(30,30,47,0.9); flex: 1; min-width: 150px;" onchange="filterStudents()">
+                                    <option value="">Mindenki (Tagozat)</option>
+                                    <option value="nappali">Nappali</option>
+                                    <option value="felnott">Felnőttképzés</option>
                                 </select>
                                 
-                                <!-- 3. Osztályok -->
-                                <select class="login-input" style="border-radius: 8px; background: rgba(30,30,47,0.9); flex: 1; min-width: 150px;">
-                                    <option value="">Összes Osztály</option>
+                                <!-- 3. Évfolyam -->
+                                <select id="filter-evfolyam" class="login-input" style="border-radius: 8px; background: rgba(30,30,47,0.9); flex: 1; min-width: 150px;" onchange="filterStudents()">
+                                    <option value="">Összes Évfolyam</option>
+                                    <option value="9">9. évfolyam</option>
+                                    <option value="10">10. évfolyam</option>
+                                    <option value="11">11. évfolyam</option>
+                                    <option value="12">12. évfolyam</option>
+                                    <option value="13">13. évfolyam</option>
                                 </select>
 
-                                <!-- 4. Riasztások és Hiányosságok -->
-                                <select class="login-input" style="border-radius: 8px; background: rgba(220, 38, 38, 0.1); border-color: #ef4444; color: #fca5a5; flex: 1.5; min-width: 200px; font-weight: bold;">
-                                    <option value="">-- Figyelmeztetések (Riasztások) --</option>
+                                <!-- 4. Riasztások -->
+                                <select id="filter-warning" class="login-input" style="border-radius: 8px; background: rgba(220, 38, 38, 0.1); border-color: #ef4444; color: #fca5a5; flex: 1.5; min-width: 200px; font-weight: bold;" onchange="filterStudents()">
+                                    <option value="">-- Riasztás szűrő --</option>
+                                    <option value="no_szakma">Hiányzó szakma</option>
+                                    <option value="no_email">Hiányzó email</option>
+                                    <option value="no_om">Hiányzó OM azonosító</option>
                                 </select>
                                 
                                 <button class="btn-primary" style="background: #3b82f6;" onclick="fetchAndDisplayStudents()"><i class="fas fa-sync"></i> Frissítés</button>
                                 <button class="btn-primary" style="background: #10b981;" onclick="openNewStudentModal()"><i class="fas fa-user-plus"></i> Új Tanuló</button>
                             </div>
                         </div>
-    
+
                             <div style="overflow-x: auto;">
                                 <table style="width: 100%; text-align: left; border-collapse: collapse; color: white; min-width: 900px;">
                                     <thead>
@@ -662,64 +668,108 @@
             setTimeout(() => { span.innerText = originalText; }, 3000);
         }
 
-        // --- DIÁKOK LISTÁZÁSA ---
+        // --- DIÁKOK LISTÁZÁSA ÉS SZŰRÉSE ---
+        window.studentList = []; // nyers lista cache a szűrőhöz
+
         async function fetchAndDisplayStudents() {
             const tbody = document.getElementById('studentTableBody');
             if (!tbody) return;
             tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px;"><i class="fas fa-spinner fa-spin"></i> Betöltés...</td></tr>`;
-            
             try {
-                // Cache-elést megkerülő időbélyeg hozzáadása
                 const response = await fetch(`${API_BASE_URL}/students/?t=${Date.now()}`);
                 const students = await response.json();
-                
+                window.studentList = students;
+                window.allStudents = {};
+                students.forEach(s => { window.allStudents[s.id] = s; });
+
                 const statEl = document.getElementById('stat-active-contracts');
                 if(statEl) statEl.innerText = `${students.length} Nyilvántartott Diák`;
-                
-                if (students.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px;">Üres adatbázis.</td></tr>`;
-                    return;
-                }
-                
-                tbody.innerHTML = '';
-                window.allStudents = {}; // Reset cache
-                
-                students.forEach(s => {
-                    window.allStudents[s.id] = s; // Cache-be tesszük
-                    const meta = s.metadata_json || {};
-                    const azonosito = s.oktatasi_azonosito || s.diakigazolvany_szam || 'Nincs azonosító';
-                    
-                    // Rugalmas mezőkeresés (szakma és évfolyam több néven is szerepelhet)
-                    const szakmaDisplay = meta.szakma || meta.Szakma || meta.szakma_megnevezese || '-';
-                    const evfolyamDisplay = meta.evfolyam || meta.Evfolyam || meta.evf || '';
-                    const iskolaDisplay = meta.iskola || meta.Iskola || '';
 
-                    const tr = document.createElement('tr');
-                    tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
-                    tr.innerHTML = `
-                        <td style="padding: 15px;">
-                            <strong>${s.nev}</strong><br>
-                            <small style="color: gray;">${azonosito}</small><br>
-                            <small style="color: #60a5fa;">${iskolaDisplay}</small>
-                        </td>
-                        <td style="padding: 15px;">${s.email || '-'}</td>
-                        <td style="padding: 15px;">
-                            ${szakmaDisplay}<br>
-                            <small style="color:gray;">${evfolyamDisplay ? evfolyamDisplay + '. évfolyam' : ''}</small>
-                        </td>
-                        <td style="padding: 15px;"><span class="tag" style="background:rgba(16,185,129,0.1); border:none;">${s.tagozat || 'nappali'}</span></td>
-                        <td style="padding: 15px; text-align: right;">
-                            <div style="display: flex; gap: 5px; justify-content: flex-end;">
-                                <button class="btn-primary" style="padding: 5px 10px; background: #3b82f6;" onclick="openEditStudentModal(${s.id})"><i class="fas fa-user-edit"></i></button>
-                                <button class="btn-secondary" style="padding: 5px 10px;" onclick="deleteStudent(${s.id})"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+                filterStudents(); // szűrő alapján renderelünk
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #ef4444;">Kapcsolódási hiba.</td></tr>`;
             }
+        }
+
+        function filterStudents() {
+            const tbody = document.getElementById('studentTableBody');
+            if (!tbody || !window.studentList) return;
+
+            const query = (document.getElementById('filter-search')?.value || '').toLowerCase().trim();
+            const tagozat = document.getElementById('filter-tagozat')?.value || '';
+            const evfolyam = document.getElementById('filter-evfolyam')?.value || '';
+            const warning = document.getElementById('filter-warning')?.value || '';
+
+            const filtered = window.studentList.filter(s => {
+                const meta = s.metadata_json || {};
+                const szakma = (meta.szakma || meta.Szakma || '').toLowerCase();
+                const iskola = (meta.iskola || meta.Iskola || '').toLowerCase();
+                const evf = String(meta.evfolyam || meta.Evfolyam || '');
+
+                // Szöveges keresés: név, iskola, szakma
+                if (query) {
+                    const matchText = (s.nev || '').toLowerCase().includes(query)
+                        || iskola.includes(query)
+                        || szakma.includes(query)
+                        || (s.email || '').toLowerCase().includes(query);
+                    if (!matchText) return false;
+                }
+                // Tagozat szűrő
+                if (tagozat && (s.tagozat || 'nappali') !== tagozat) return false;
+                // Évfolyam szűrő
+                if (evfolyam && evf !== evfolyam) return false;
+                // Riasztás szűrők
+                if (warning === 'no_szakma' && szakma && szakma !== '-') return false;
+                if (warning === 'no_email' && s.email) return false;
+                if (warning === 'no_om' && s.oktatasi_azonosito) return false;
+
+                return true;
+            });
+
+            // Eredmény info
+            const info = document.getElementById('filter-result-info');
+            if (info) {
+                if (query || tagozat || evfolyam || warning) {
+                    info.innerHTML = `<i class="fas fa-search"></i> <strong>${filtered.length}</strong> találat (összesen: ${window.studentList.length} diák)`;
+                } else {
+                    info.innerHTML = '';
+                }
+            }
+
+            tbody.innerHTML = '';
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #94a3b8;"><i class="fas fa-search"></i> Nincs találat a szűrési feltételekre.</td></tr>`;
+                return;
+            }
+            filtered.forEach(s => {
+                const meta = s.metadata_json || {};
+                const azonosito = s.oktatasi_azonosito || s.diakigazolvany_szam || 'Nincs azonosító';
+                const szakmaDisplay = meta.szakma || meta.Szakma || meta.szakma_megnevezese || '-';
+                const evfolyamDisplay = meta.evfolyam || meta.Evfolyam || meta.evf || '';
+                const iskolaDisplay = meta.iskola || meta.Iskola || '';
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+                tr.innerHTML = `
+                    <td style="padding: 15px;">
+                        <strong>${s.nev}</strong><br>
+                        <small style="color: gray;">${azonosito}</small><br>
+                        <small style="color: #60a5fa;">${iskolaDisplay}</small>
+                    </td>
+                    <td style="padding: 15px;">${s.email || '-'}</td>
+                    <td style="padding: 15px;">
+                        ${szakmaDisplay}<br>
+                        <small style="color:gray;">${evfolyamDisplay ? evfolyamDisplay + '. évfolyam' : ''}</small>
+                    </td>
+                    <td style="padding: 15px;"><span class="tag" style="background:rgba(16,185,129,0.1); border:none;">${s.tagozat || 'nappali'}</span></td>
+                    <td style="padding: 15px; text-align: right;">
+                        <div style="display: flex; gap: 5px; justify-content: flex-end;">
+                            <button class="btn-primary" style="padding: 5px 10px; background: #3b82f6;" onclick="openEditStudentModal(${s.id})"><i class="fas fa-user-edit"></i></button>
+                            <button class="btn-secondary" style="padding: 5px 10px;" onclick="deleteStudent(${s.id})"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
         // --- MODAL KEZELÉS ---
