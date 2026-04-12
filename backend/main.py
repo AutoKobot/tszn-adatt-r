@@ -270,6 +270,69 @@ async def debug_excel_columns(file: UploadFile = File(...)):
         "first_3_parsed_students": parsed[:3]
     }
 
+@app.post("/import/patch-szakma")
+async def patch_szakma_from_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """
+    Csak a szakma mezőt frissíti a meglévő diákoknál, CSV/Excel alapján.
+    Hasznos ha a teljes import már megtörtént, de a szakma null maradt.
+    Egyezés: Név alapján (case-insensitive, trimelt).
+    """
+    content = await file.read()
+    parsed_students = excel_service.parse_students(content)
+    
+    updated = 0
+    not_found = []
+    already_ok = 0
+    no_szakma_in_file = 0
+    
+    for s_data in parsed_students:
+        s_nev = s_data.get("nev", "").strip()
+        s_szakma = s_data.get("szakma")
+        s_iskola = s_data.get("iskola")
+        s_evfolyam = s_data.get("evfolyam")
+        
+        if not s_nev:
+            continue
+        if not s_szakma:
+            no_szakma_in_file += 1
+            continue
+        
+        # Keressük meg a diákot névpontos egyezéssel
+        student = db.query(models.Student).filter(
+            models.Student.nev == s_nev
+        ).first()
+        
+        if not student:
+            not_found.append(s_nev)
+            continue
+        
+        # Ha már van and ugyanaz, skip
+        current_meta = student.metadata_json or {}
+        if current_meta.get("szakma") == s_szakma:
+            already_ok += 1
+            continue
+        
+        # Frissítés
+        new_meta = dict(current_meta)
+        new_meta["szakma"] = s_szakma
+        if s_iskola: new_meta["iskola"] = s_iskola
+        if s_evfolyam: new_meta["evfolyam"] = s_evfolyam
+        student.metadata_json = new_meta
+        
+        from sqlalchemy.orm.attributes import flag_modified
+        flag_modified(student, "metadata_json")
+        updated += 1
+    
+    db.commit()
+    return {
+        "status": "success",
+        "frissitett": updated,
+        "mar_rendben_volt": already_ok,
+        "nem_talalt_nev": len(not_found),
+        "csv_szakma_nelkul": no_szakma_in_file,
+        "ismeretlen_nevek": not_found[:20]  # Max 20 nevet mutat
+    }
+
 @app.post("/import/students")
 async def import_students_excel(tagozat: str = "nappali", file: UploadFile = File(...), db: Session = Depends(get_db)):
     content = await file.read()
@@ -303,10 +366,17 @@ async def import_students_excel(tagozat: str = "nappali", file: UploadFile = Fil
             if existing_student:
                 # Kényszerített frissítés
                 existing_student.nev = s_nev
+                if s_data.get("email"): existing_student.email = s_data.get("email")
+                if s_data.get("telefon"): existing_student.telefon = s_data.get("telefon")
+                if s_data.get("lakhely"): existing_student.lakhely = s_data.get("lakhely")
                 meta = dict(existing_student.metadata_json or {})
                 meta["szakma"] = s_data.get("szakma")
                 meta["iskola"] = s_data.get("iskola")
                 meta["evfolyam"] = s_data.get("evfolyam")
+                if s_data.get("metadata_json", {}).get("szuletesi_datum"):
+                    meta["szuletesi_datum"] = s_data["metadata_json"]["szuletesi_datum"]
+                if s_data.get("metadata_json", {}).get("anyja_neve"):
+                    meta["anyja_neve"] = s_data["metadata_json"]["anyja_neve"]
                 existing_student.metadata_json = meta
                 
                 from sqlalchemy.orm.attributes import flag_modified
@@ -320,13 +390,15 @@ async def import_students_excel(tagozat: str = "nappali", file: UploadFile = Fil
                     email=s_email,
                     oktatasi_azonosito=s_om,
                     tagozat=tagozat,
+                    telefon=s_data.get("telefon"),
+                    lakhely=s_data.get("lakhely"),
                     szerzodes_kezdet=s_data.get("szerzodes_kezdet"),
                     szerzodes_vege=s_data.get("szerzodes_vege"),
-                    metadata_json={
+                    metadata_json=s_data.get("metadata_json", {
                         "szakma": s_data.get("szakma"),
                         "iskola": s_data.get("iskola"),
                         "evfolyam": s_data.get("evfolyam")
-                    }
+                    })
                 )
                 db.add(new_student)
                 import_results["saved"] += 1

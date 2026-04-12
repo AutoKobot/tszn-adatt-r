@@ -14,25 +14,39 @@ class ExcelService:
         name = self._normalize_accent(name)
         
         # PRIORITÁS 1: Szakma
-        if "szakma" in name or "kepzes" in name or "szakir" in name or "megnevez" in name:
+        if "szakma" in name or "kepzes" in name or "kepzesi" in name or "szakir" in name or "megnevez" in name:
             return "szakma"
         
-        # PRIORITÁS 2: Név
-        if any(x in name for x in ["nev", "tanu", "diak"]) and "iskol" not in name:
+        # PRIORITÁS 2: Név (de NE legyen "oktato" vagy "anyja")
+        if any(x in name for x in ["tanu", "diak"]) and "iskol" not in name:
             return "nev"
-            
+        if "nev" in name and "iskol" not in name and "anyja" not in name and "oktato" not in name:
+            return "nev"
+
         if "mail" in name: return "email"
         if "iskol" in name: return "iskola"
-        if "evfolyam" in name or "evf" in name or "osztaly" in name: return "evfolyam"
-            
+        if "evfolyam" in name or "osztaly" in name: return "evfolyam"
+        
         if "szerz" in name:
-            if "kezd" in name and "vege" in name: return "szerzodes_idoszak"
+            if "kezd" in name and "veg" in name: return "szerzodes_idoszak"
             if "kezd" in name: return "szerzodes_kezdet"
-            if "vege" in name: return "szerzodes_vege"
+            if "veg" in name: return "szerzodes_vege"
             return "szerzodes_idoszak"
 
-        if "om" in name or "oktat" in name:
+        # OM azonosító: csak ha valóban azonosítóról van szó, NEM oktatóról
+        if ("azonosito" in name or "om" == name.strip()) and "oktat" not in name:
             return "om_azonosito"
+        if "oktatasi" in name and "azonosito" in name:
+            return "om_azonosito"
+
+        # Kréta-specifikus mezők → metadata_json-ba kerülnek
+        if "szulet" in name:
+            if "hely" in name: return "szuletesi_hely"
+            return "szuletesi_datum"
+        if "anyja" in name: return "anyja_neve"
+        if "lakcim" in name or "lakhely" in name or "cim" in name: return "lakhely"
+        if "taj" in name: return "taj_szam"
+        if "telefon" in name or "tel" == name.strip(): return "telefon"
             
         return re.sub(r'[^a-z0-9_]', '', name.replace(' ', '_'))
 
@@ -123,12 +137,25 @@ class ExcelService:
                 "diakigazolvany_szam": self._get_safe_val(row, 'diakigazolvany'),
                 "nev": str(nev),
                 "email": self._get_safe_val(row, 'email'),
+                "telefon": self._get_safe_val(row, 'telefon'),
+                "lakhely": self._get_safe_val(row, 'lakhely'),
                 "iskola": self._get_safe_val(row, 'iskola'),
                 "szakma": szakma,
                 "evfolyam": self._get_safe_val(row, 'evfolyam'),
                 "szerzodes_kezdet": str(kezdet).replace('.', '-') if kezdet else None,
                 "szerzodes_vege": str(vege).replace('.', '-') if vege else None,
-                "metadata_json": {}
+                "metadata_json": {
+                    # Alap meta
+                    "szakma": szakma,
+                    "iskola": self._get_safe_val(row, 'iskola'),
+                    "evfolyam": self._get_safe_val(row, 'evfolyam'),
+                    # Kréta-specifikus extra mezők
+                    "szuletesi_datum": self._get_safe_val(row, 'szuletesi_datum'),
+                    "szuletesi_hely": self._get_safe_val(row, 'szuletesi_hely'),
+                    "anyja_neve": self._get_safe_val(row, 'anyja_neve'),
+                    "taj_szam": self._get_safe_val(row, 'taj_szam'),
+                    "import_date": __import__('datetime').datetime.now().isoformat()
+                }
             })
         return students
 
