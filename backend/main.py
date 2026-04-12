@@ -246,12 +246,36 @@ async def process_document(file: UploadFile = File(...)):
 # --- EXCEL IMPORTÁLÁS ---
 from .excel_service import excel_service
 
+@app.post("/debug/excel-columns")
+async def debug_excel_columns(file: UploadFile = File(...)):
+    """Megmutatja, mit lát az Excel parser: fejléc sor, oszlop nevek, és az első 3 sor nyers adata."""
+    content = await file.read()
+    import pandas as pd, io
+    header_row = excel_service._find_header_row(content)
+    df_raw = excel_service._read_df(content, sheet=0, header=None)
+    raw_header = list(df_raw.iloc[header_row].values) if header_row < len(df_raw) else []
+    df = excel_service._read_df(content, sheet=0, header=header_row)
+    normalized_cols = [excel_service._normalize_column_name(col) for col in df.columns]
+    sample_rows = []
+    for i, (_, row) in enumerate(df.iterrows()):
+        if i >= 3: break
+        sample_rows.append({normalized_cols[j]: str(v) for j, v in enumerate(row.values)})
+    # Parse first 3 students to see szakma detection
+    parsed = excel_service.parse_students(content)
+    return {
+        "detected_header_row": header_row,
+        "raw_header_values": [str(x) for x in raw_header],
+        "normalized_column_names": normalized_cols,
+        "sample_parsed_rows": sample_rows,
+        "first_3_parsed_students": parsed[:3]
+    }
+
 @app.post("/import/students")
 async def import_students_excel(tagozat: str = "nappali", file: UploadFile = File(...), db: Session = Depends(get_db)):
     content = await file.read()
     parsed_students = excel_service.parse_students(content)
     
-    import_results = {"saved": 0, "conflicts": [], "errors": 0}
+    import_results = {"saved": 0, "conflicts": [], "errors": 0, "duplicates": 0}
     
     for i, s_data in enumerate(parsed_students):
         try:
@@ -386,18 +410,20 @@ async def import_instructors_excel(file: UploadFile = File(...), db: Session = D
     
     saved_count = 0
     for i_data in parsed_instructors:
-        # Hasonló okos szűrés az oktatókra is (Név + Email vagy Telefon alapú)
-        i_nev, i_email, i_telefon = i_data["nev"], i_data["email"], i_data["telefon"]
+        # Hasonló okos szűrés az oktatókra is (Név + Email alapú)
+        i_nev = i_data.get("nev")
+        i_email = i_data.get("email")
+        i_szakterulet = i_data.get("szakterulet")
         
         existing_insts = db.query(models.Instructor).filter(models.Instructor.nev == i_nev).all()
         is_duplicate = False
         
         for ex in existing_insts:
-            if (i_email and ex.email == i_email) or (i_telefon and ex.telefon == i_telefon):
+            if i_email and ex.email == i_email:
                 is_duplicate = True
                 break
-            # Ha nincs email/telefon, de a név azonos, feltételezzük a duplikációt egyelőre
-            if not i_email and not i_telefon:
+            # Ha nincs email, de a név azonos, feltételezzük a duplikációt
+            if not i_email:
                 is_duplicate = True
                 break
                 
@@ -405,8 +431,7 @@ async def import_instructors_excel(file: UploadFile = File(...), db: Session = D
             new_instructor = models.Instructor(
                 nev=i_nev,
                 email=i_email,
-                szakterulet=i_data["szakterulet"],
-                telefon=i_telefon
+                szakterulet=i_szakterulet,
             )
             db.add(new_instructor)
             saved_count += 1
