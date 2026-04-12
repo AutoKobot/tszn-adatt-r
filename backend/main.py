@@ -525,6 +525,44 @@ async def upload_template(type: str, file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
     return {"status": "success", "message": f"{type} sablon sikeresen feltöltve."}
 
+from .document_service import DocumentService
+doc_service = DocumentService(template_dir="backend/templates", output_dir="backend/storage/contracts")
+
+@app.get("/students/{student_id}/contract")
+async def generate_student_contract(student_id: int, db: Session = Depends(get_db)):
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Tanuló nem található")
+    
+    # Adatok előkészítése a sablonhoz
+    meta = student.metadata_json or {}
+    data = {
+        "nev": student.nev,
+        "email": student.email or "",
+        "om_azonosito": student.oktatasi_azonosito or "",
+        "diakigazolvany": student.diakigazolvany_szam or "",
+        "szerzodes_kezdet": student.szerzodes_kezdet or "",
+        "szerzodes_vege": student.szerzodes_vege or "",
+        "tagozat": student.tagozat,
+        "szakma": meta.get("szakma", ""),
+        "iskola": meta.get("iskola", ""),
+        "evfolyam": meta.get("evfolyam", ""),
+        "lakhely": student.lakhely or ""
+    }
+    
+    # Sablon kiválasztása tagozat alapján
+    template_name = "dualis_nappali.docx" if student.tagozat == "nappali" else "dualis_felnott.docx"
+    
+    try:
+        output_path = doc_service.generate_contract(template_name, data)
+        return FileResponse(
+            path=output_path, 
+            filename=os.path.basename(output_path),
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Szerződés generálási hiba: {str(e)}")
+
 # --- HITELESÍTÉS ÉS LOGIN ---
 from . import auth
 from fastapi.security import OAuth2PasswordRequestForm
