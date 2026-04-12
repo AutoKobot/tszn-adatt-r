@@ -419,8 +419,10 @@
             </div>
             <form id="studentForm" onsubmit="handleStudentSubmit(event)">
                 <input type="hidden" id="student-id">
+
+                <!-- Alap adatok -->
                 <div class="form-group">
-                    <label>Teljes név</label>
+                    <label>Teljes név *</label>
                     <input type="text" id="student-nev" required placeholder="Példa János">
                 </div>
                 <div class="form-row">
@@ -429,30 +431,72 @@
                         <input type="email" id="student-email" placeholder="pelda@iskola.hu">
                     </div>
                     <div class="form-group">
-                        <label>Tagozat</label>
-                        <select id="student-tagozat">
-                            <option value="nappali">Nappali</option>
-                            <option value="felnott">Felnőttképzés</option>
-                        </select>
+                        <label>Telefonszám</label>
+                        <input type="tel" id="student-telefon" placeholder="+36 30 123 4567">
                     </div>
                 </div>
-                <div class="form-row">
+
+                <!-- Képzési adatok -->
+                <div style="border-top: 1px solid rgba(255,255,255,0.08); margin: 12px 0 12px; padding-top: 12px;">
+                    <p style="font-size:0.75rem; color:#60a5fa; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Képzési adatok</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Szakma megnevezése</label>
+                            <input type="text" id="student-szakma" placeholder="pl. Burkoló, Heggesztő...">
+                        </div>
+                        <div class="form-group">
+                            <label>Iskola</label>
+                            <input type="text" id="student-iskola" placeholder="pl. Bánki, Teleki...">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Évfolyam</label>
+                            <select id="student-evfolyam">
+                                <option value="">- Válassz -</option>
+                                <option value="9">9. évfolyam</option>
+                                <option value="10">10. évfolyam</option>
+                                <option value="11">11. évfolyam</option>
+                                <option value="12">12. évfolyam</option>
+                                <option value="13">13. évfolyam</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tagozat</label>
+                            <select id="student-tagozat">
+                                <option value="nappali">Nappali</option>
+                                <option value="felnott">Felnőttképzés</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Azonosítók -->
+                <div style="border-top: 1px solid rgba(255,255,255,0.08); margin: 12px 0 12px; padding-top: 12px;">
+                    <p style="font-size:0.75rem; color:#60a5fa; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Azonosítók és szerződés</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>OM azonosító</label>
+                            <input type="text" id="student-om" maxlength="11" placeholder="71234567890">
+                        </div>
+                        <div class="form-group">
+                            <label>Diákigazolvány szám</label>
+                            <input type="text" id="student-igazolvany" placeholder="123456AB">
+                        </div>
+                    </div>
                     <div class="form-group">
-                        <label>OM azonosító</label>
-                        <input type="text" id="student-om" maxlength="11" placeholder="71234567890">
+                        <label>Munkaszerződés kezdete / lejárata</label>
+                        <div style="display:flex; gap:10px;">
+                            <input type="date" id="student-kezdet">
+                            <input type="date" id="student-vege">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label>Diákigazolvány szám</label>
-                        <input type="text" id="student-igazolvany" placeholder="123456AB">
+                        <label>Lakhélye</label>
+                        <input type="text" id="student-lakhely" placeholder="4440 Tiszavasvári, Kossuth u. 1.">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Munkaszerződés kezdete / lejárata</label>
-                    <div style="display:flex; gap:10px;">
-                        <input type="date" id="student-kezdet">
-                        <input type="date" id="student-vege">
-                    </div>
-                </div>
+
                 <div class="form-actions">
                     <button type="button" class="btn-outline" onclick="closeStudentModal()">Mégse</button>
                     <button type="submit" class="btn-primary" id="saveStudentBtn">Mentés</button>
@@ -701,6 +745,15 @@
             document.getElementById('student-tagozat').value = student.tagozat || 'nappali';
             document.getElementById('student-kezdet').value = student.szerzodes_kezdet || '';
             document.getElementById('student-vege').value = student.szerzodes_vege || '';
+            document.getElementById('student-telefon').value = student.telefon || '';
+            document.getElementById('student-lakhely').value = student.lakhely || '';
+            // metadata_json mezők
+            const meta = student.metadata_json || {};
+            document.getElementById('student-szakma').value = meta.szakma || meta.Szakma || '';
+            document.getElementById('student-iskola').value = meta.iskola || meta.Iskola || '';
+            const evf = meta.evfolyam || meta.Evfolyam || '';
+            const evfEl = document.getElementById('student-evfolyam');
+            evfEl.value = evf ? String(evf).replace(/[^0-9]/g, '') : '';
             document.getElementById('studentModal').style.display = 'flex';
         }
 
@@ -711,14 +764,28 @@
         async function handleStudentSubmit(e) {
             e.preventDefault();
             const id = document.getElementById('student-id').value;
+            const szakma = document.getElementById('student-szakma').value.trim();
+            const iskola = document.getElementById('student-iskola').value.trim();
+            const evfolyam = document.getElementById('student-evfolyam').value;
+            // Eredeti metadata_json megtartása ha szerkesztés
+            let baseMetadata = {};
+            if (id && window.allStudents[id]) baseMetadata = window.allStudents[id].metadata_json || {};
             const data = {
                 nev: document.getElementById('student-nev').value,
                 email: document.getElementById('student-email').value || null,
+                telefon: document.getElementById('student-telefon').value || null,
+                lakhely: document.getElementById('student-lakhely').value || null,
                 oktatasi_azonosito: document.getElementById('student-om').value || null,
                 diakigazolvany_szam: document.getElementById('student-igazolvany').value || null,
                 tagozat: document.getElementById('student-tagozat').value,
                 szerzodes_kezdet: document.getElementById('student-kezdet').value || null,
-                szerzodes_vege: document.getElementById('student-vege').value || null
+                szerzodes_vege: document.getElementById('student-vege').value || null,
+                metadata_json: {
+                    ...baseMetadata,
+                    ...(szakma && { szakma }),
+                    ...(iskola && { iskola }),
+                    ...(evfolyam && { evfolyam })
+                }
             };
 
             const url = id ? `${API_BASE_URL}/students/${id}` : `${API_BASE_URL}/students/`;
