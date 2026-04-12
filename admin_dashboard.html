@@ -40,7 +40,7 @@
             <header>
                 <h1>ÁKK Rendszervezérlő</h1>
                 <p>Üdvözöljük! Itt a duális képzés és az intézményi adminisztráció teljes áttekintése. 
-                   <span id="api-status-badge" style="font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 10px; margin-left:10px;">API: Ellenőrzés...</span>
+                   <span id="api-status-badge" style="font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 10px; margin-left:10px; cursor:pointer;" onclick="wakeUpServer()" title="Kattints az ébredéshez">API: Ellenőrzés...</span>
                 </p>
             </header>
 
@@ -179,7 +179,18 @@
                                     </div>
                                     <input type="file" id="instructorExcelInput" style="display: none;" accept=".xlsx, .xls, .csv">
                                 </div>
-    
+
+                                <!-- Szakma Javítás -->
+                                <div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                                    <h4 style="margin:0 0 8px; color:#fbbf24;"><i class="fas fa-wrench"></i> Szakma Javítás</h4>
+                                    <p style="font-size:0.85rem; color: rgba(255,255,255,0.6); margin-bottom:12px;">Ha a diákok már bent vannak de a szakma hiányzik, töltsd fel az eredeti CSV-t itt.</p>
+                                    <div class="drop-zone" id="patchSzakmaZone" style="padding: 12px; cursor: pointer;">
+                                        <i class="fas fa-band-aid" style="color:#fbbf24;"></i>
+                                        <span>Szakma javítás (CSV/XLSX)</span>
+                                    </div>
+                                    <input type="file" id="patchSzakmaInput" style="display: none;" accept=".xlsx, .xls, .csv">
+                                </div>
+
                                 <hr style="border-color: rgba(255,255,255,0.1); margin-bottom: 20px;">
     
                                 <h3><i class="fas fa-file-word" style="color: #3b82f6;"></i> Szerződésminták (Sablon) Feltöltése</h3>
@@ -506,13 +517,39 @@
             if(badge) badge.innerText = `API: ${window.location.host} (Unified)`;
         });
 
-        // --- KEEPALIVE ---
+        // --- KEEPALIVE ÉS SERVER WAKE ---
         async function pingBackend() {
+            const badge = document.getElementById('api-status-badge');
             try {
-                await fetch(`${API_BASE_URL}/ping`);
+                const r = await fetch(`${API_BASE_URL}/ping`, {signal: AbortSignal.timeout(8000)});
+                if (r.ok) {
+                    if(badge) { badge.innerText = 'API: online'; badge.style.background='rgba(16,185,129,0.2)'; }
+                } else {
+                    if(badge) { badge.innerText = 'API: Hiba'; badge.style.background='rgba(245,158,11,0.2)'; }
+                }
             } catch (e) {
+                if(badge) { badge.innerText = 'Szerver alszik — kattints'; badge.style.background='rgba(239,68,68,0.2)'; }
                 console.warn('[Keepalive] Hiba:', e);
             }
+        }
+
+        async function wakeUpServer() {
+            const badge = document.getElementById('api-status-badge');
+            if(badge) { badge.innerText = 'Ebredesfolyamatban...'; badge.style.background='rgba(245,158,11,0.3)'; }
+            let attempts = 0;
+            const tryWake = async () => {
+                attempts++;
+                try {
+                    const r = await fetch(`${API_BASE_URL}/ping`, {signal: AbortSignal.timeout(10000)});
+                    if(r.ok) {
+                        if(badge) { badge.innerText = 'Szerver online! Feltolthetsz.'; badge.style.background='rgba(16,185,129,0.2)'; }
+                        return;
+                    }
+                } catch(e) {}
+                if(attempts < 6) setTimeout(tryWake, 8000);
+                else if(badge) { badge.innerText = 'Nem valaszol. Ellenorizd Rendert!'; badge.style.background='rgba(239,68,68,0.3)'; }
+            };
+            tryWake();
         }
 
         // --- EXCEL IMPORT ---
@@ -559,6 +596,10 @@
                     if (result.conflicts && result.conflicts.length > 0) {
                         openConflictModal(result.conflicts);
                         span.innerText = 'Döntés szükséges ⚠️';
+                    } else if (result.frissitett !== undefined) {
+                        alert('Szakma javitas kesz!\n\nFrissitett: ' + result.frissitett + ' diak\nMar rendben volt: ' + result.mar_rendben_volt + '\nNem talalt nev: ' + result.nem_talalt_nev + '\nCSV-ben ures szakma: ' + result.csv_szakma_nelkul);
+                        span.innerText = 'Javitas kesz! ✅';
+                        fetchAndDisplayStudents();
                     } else {
                         alert(`${result.message || 'Sikeres importálás!'}`);
                         span.innerText = 'Sikeres! ✅';
@@ -569,7 +610,9 @@
                     span.innerText = 'Hiba ❌';
                 }
             } catch (err) {
-                alert("Hálózati hiba.");
+                const badge = document.getElementById('api-status-badge');
+                if(badge) { badge.innerText = 'Szerver alszik — kattints'; badge.style.background='rgba(239,68,68,0.3)'; }
+                alert('Halozati hiba — a szerver valoszinuleg alszik (Render free tier).\n\nTeendo:\n1. Kattints az API jelvenyre a fejlecben (ebredes ~30mp)\n2. Utan probald ujra a feltoelteset.');
                 span.innerText = 'Hiba ❌';
             }
             setTimeout(() => { span.innerText = originalText; }, 3000);
@@ -754,6 +797,8 @@
 
         // Init
         setupDropZone('studentExcelZone', 'studentExcelInput', '/import/students');
+        setupDropZone('instructorExcelZone', 'instructorExcelInput', '/import/instructors');
+        setupDropZone('patchSzakmaZone', 'patchSzakmaInput', '/import/patch-szakma');
         // --- KONFLIKTUS KEZELŐ FÜGGVÉNYEK ---
         function openConflictModal(conflicts) {
             window.pendingConflicts = conflicts;
