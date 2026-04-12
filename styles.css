@@ -398,10 +398,13 @@ input:focus, select:focus {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     width: 100%;
-    max-width: 550px;
+    max-width: 580px;
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    padding: 2.5rem;
     animation: modalPopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    flex-direction: column;
 }
 
 @keyframes modalPopIn {
@@ -413,9 +416,15 @@ input:focus, select:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem 2rem 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    position: sticky;
+    top: 0;
+    background: #1e293b;
+    z-index: 1;
+    border-radius: 20px 20px 0 0;
+    flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -433,6 +442,36 @@ input:focus, select:focus {
     font-weight: bold;
     cursor: pointer;
     transition: var(--transition);
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 6px;
 }
 
-.close-modal:hover { color: #fff; }
+.close-modal:hover { color: #fff; background: rgba(255,255,255,0.1); }
+
+/* Modal form scrollable body */
+#studentForm {
+    padding: 0 2rem 1rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Sticky bottom actions bar */
+#studentForm .form-actions {
+    position: sticky;
+    bottom: 0;
+    background: #1e293b;
+    padding: 1rem 0 0.5rem;
+    margin-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    z-index: 1;
+}
+
+/* Compact form groups inside modal */
+#studentForm .form-group {
+    margin-bottom: 1rem;
+}
+
+#studentForm .form-row {
+    gap: 1rem;
+}
