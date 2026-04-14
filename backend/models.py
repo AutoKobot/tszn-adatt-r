@@ -83,6 +83,7 @@ class ClassRoom(Base):
     __tablename__ = "osztalyok"
     id = Column(Integer, primary_key=True, index=True)
     megnevezes = Column(String(50))
+    statusz = Column(String(20), default="aktív") # 'aktív', 'archivált'
     # --- ÁKK és Duális Képzési Paraméterek ---
     elvart_szakiranyu_oraszam = Column(Integer, default=400, comment="Félévi vagy éves elvárt gyakorlati óraszám")
     max_hianyzas_szazalek = Column(Integer, default=20, comment="A megengedett hiányzás %-os határa")

@@ -192,6 +192,10 @@ def update_class_parameters(class_id: int, params: schemas.ClassRoomUpdate, db: 
     if not db_class:
         raise HTTPException(status_code=404, detail="Osztály nem található")
     
+    if params.megnevezes is not None:
+        db_class.megnevezes = params.megnevezes
+    if params.statusz is not None:
+        db_class.statusz = params.statusz
     if params.elvart_szakiranyu_oraszam is not None:
         db_class.elvart_szakiranyu_oraszam = params.elvart_szakiranyu_oraszam
     if params.max_hianyzas_szazalek is not None:
@@ -200,6 +204,15 @@ def update_class_parameters(class_id: int, params: schemas.ClassRoomUpdate, db: 
     db.commit()
     db.refresh(db_class)
     return db_class
+
+@app.put("/classes/{class_id}/archive")
+def archive_class(class_id: int, db: Session = Depends(get_db)):
+    db_class = db.query(models.ClassRoom).filter(models.ClassRoom.id == class_id).first()
+    if not db_class:
+        raise HTTPException(status_code=404, detail="Osztály nem található")
+    db_class.statusz = "archivált"
+    db.commit()
+    return {"status": "success", "message": f"Osztály {db_class.megnevezes} archiválva."}
 
 # --- OCR ÉS DOKUMENTUM GENERÁLÁS ---
 from .ocr_service import ocr_service
@@ -507,6 +520,10 @@ async def import_instructors_excel(file: UploadFile = File(...), db: Session = D
         "beolvasott_sorok": f"{saved_count} / {len(parsed_instructors)}"
     }
 
+@app.get("/instructors/", response_model=list[schemas.Instructor])
+def read_instructors(db: Session = Depends(get_db)):
+    return db.query(models.Instructor).all()
+
 # --- TEMPLATE FELTÖLTÉS ---
 @app.post("/templates/upload")
 async def upload_template(type: str, file: UploadFile = File(...)):
@@ -555,6 +572,19 @@ async def generate_student_contract(student_id: int, db: Session = Depends(get_d
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Szerződés generálási hiba: {str(e)}")
 
+# --- PARTNEREK ---
+@app.get("/partners/", response_model=list[schemas.Partner])
+def read_partners(db: Session = Depends(get_db)):
+    return db.query(models.Partner).all()
+
+@app.post("/partners/", response_model=schemas.Partner)
+def create_partner(partner: schemas.PartnerCreate, db: Session = Depends(get_db)):
+    db_partner = models.Partner(**partner.dict())
+    db.add(db_partner)
+    db.commit()
+    db.refresh(db_partner)
+    return db_partner
+
 # --- HITELESÍTÉS ÉS LOGIN ---
 from . import auth
 from fastapi.security import OAuth2PasswordRequestForm
@@ -571,6 +601,24 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
         data={"sub": user.username, "role": user.role}
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@app.post("/users/", response_model=schemas.User)
+def create_instructor_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    # Ellenőrizzük, hogy létezik-e már a felhasználó
+    if db.query(models.User).filter(models.User.username == user.username).first():
+        raise HTTPException(status_code=400, detail="A felhasználónév már foglalt")
+    
+    db_user = models.User(
+        username=user.username,
+        hashed_password=auth.get_password_hash(user.password),
+        role=user.role,
+        full_name=user.full_name,
+        szakma_id=user.instructor_id # Itt az instructor_id-t használjuk ha átadták
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
 
 # --- RBAC ALAPÚ VÉDGÁTAK (PÉLDÁK) ---
 

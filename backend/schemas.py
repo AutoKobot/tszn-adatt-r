@@ -46,10 +46,13 @@ class ImportConflict(BaseModel):
 # --- OSZTÁLYOK / PARAMÉTEREK ---
 class ClassRoomBase(BaseModel):
     megnevezes: str
+    statusz: Optional[str] = "aktív"
     elvart_szakiranyu_oraszam: Optional[int] = 400
     max_hianyzas_szazalek: Optional[int] = 20
 
 class ClassRoomUpdate(BaseModel):
+    megnevezes: Optional[str] = None
+    statusz: Optional[str] = None
     elvart_szakiranyu_oraszam: Optional[int] = None
     max_hianyzas_szazalek: Optional[int] = None
 
@@ -115,4 +118,33 @@ class Equipment(EquipmentBase):
     id: int
     datum_kiadva: date
     datum_visszaveve: Optional[date] = None
+    model_config = {"from_attributes": True}
+
+# --- PARTNEREK SÉMÁK ---
+class PartnerBase(BaseModel):
+    cegnev: str
+    adoszam: Optional[str] = None
+    szekhely: Optional[str] = None
+
+class PartnerCreate(PartnerBase):
+    pass
+
+class Partner(PartnerBase):
+    id: int
+    model_config = {"from_attributes": True}
+
+# --- FELHASZNÁLÓ SÉMÁK ---
+class UserBase(BaseModel):
+    username: str
+    full_name: Optional[str] = None
+    role: str
+    status: Optional[bool] = True
+
+class UserCreate(UserBase):
+    password: str
+    instructor_id: Optional[int] = None
+
+class User(UserBase):
+    id: int
+    last_login: Optional[datetime] = None
     model_config = {"from_attributes": True}

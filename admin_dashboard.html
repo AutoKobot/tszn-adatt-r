@@ -150,7 +150,7 @@
                                         <option>12.A (Végzősök - 2026)</option>
                                         <option>11.B (Keresztféléves)</option>
                                     </select>
-                                    <button class="btn-primary" style="background: #ef4444;"><i class="fas fa-archive"></i> Osztály Véglegesítése</button>
+                                    <button class="btn-primary" style="background: #ef4444;" onclick="archiveClass()"><i class="fas fa-archive"></i> Osztály Véglegesítése</button>
                                 </div>
                             </div>
                         </div>
@@ -232,19 +232,19 @@
                                 <p style="margin-bottom: 20px;">Duális partnercégek adatbázisának építése.</p>
                                 <div class="form-group">
                                     <label>Cégjegyzéknév</label>
-                                    <input type="text" class="login-input" placeholder="pl: Vasvári Gépészeti Kft." style="border-radius: 8px;">
+                                    <input type="text" id="partner-nev" class="login-input" placeholder="pl: Vasvári Gépészeti Kft." style="border-radius: 8px;">
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group" style="flex:1;">
                                         <label>Adószám</label>
-                                        <input type="text" class="login-input" placeholder="12345678-2-12" style="border-radius: 8px;">
+                                        <input type="text" id="partner-adoszam" class="login-input" placeholder="12345678-2-12" style="border-radius: 8px;">
                                     </div>
                                     <div class="form-group" style="flex:1;">
-                                        <label>Kapcsolattartó Email</label>
-                                        <input type="email" class="login-input" placeholder="iroda@ceg.hu" style="border-radius: 8px;">
+                                        <label>Székhely</label>
+                                        <input type="text" id="partner-szekhely" class="login-input" placeholder="4440 Tiszavasvári..." style="border-radius: 8px;">
                                     </div>
                                 </div>
-                                <button type="button" class="btn-primary" style="width: 100%; background: #f59e0b;"><i class="fas fa-save"></i> Partnercég Rögzítése</button>
+                                <button type="button" class="btn-primary" style="width: 100%; background: #f59e0b;" onclick="registerPartner()"><i class="fas fa-save"></i> Partnercég Rögzítése</button>
                             </div>
 
                             <!-- Paraméterek -->
@@ -272,21 +272,21 @@
                                 <h3><i class="fas fa-user-plus" style="color: #3b82f6;"></i> Oktatói Hozzáférés Kiosztása</h3>
                                 <div class="form-group" style="margin-top: 15px;">
                                     <label>Oktató kiválasztása listából</label>
-                                    <select class="login-input" style="width: 100%; border-radius: 8px;">
-                                        <option>Kovács Péter (Informatika)</option>
+                                    <select id="user-instructor-select" class="login-input" style="width: 100%; border-radius: 8px;">
+                                        <option value="">-- Válassz oktatót --</option>
                                     </select>
                                 </div>
                                 <div class="form-row">
                                     <div class="form-group" style="flex:1;">
                                         <label>Felhasználónév</label>
-                                        <input type="text" value="kovacs.peter" class="login-input">
+                                        <input type="text" id="user-username" placeholder="felhasznalonev" class="login-input">
                                     </div>
                                     <div class="form-group" style="flex:1;">
-                                        <label>Jelszó generálás</label>
-                                        <input type="text" value="Oktato2024!" class="login-input">
+                                        <label>Jelszó</label>
+                                        <input type="text" id="user-password" value="Oktato2024!" class="login-input">
                                     </div>
                                 </div>
-                                <button type="button" class="btn-primary" style="width: 100%; background: #3b82f6;"><i class="fas fa-key"></i> Fiók Kiosztása</button>
+                                <button type="button" class="btn-primary" style="width: 100%; background: #3b82f6;" onclick="assignInstructorAccount()"><i class="fas fa-key"></i> Fiók Kiosztása</button>
                             </div>
                         </section>
                     </div>
@@ -404,19 +404,8 @@ müveg</td>
                                 <h3><i class="fas fa-list-alt" style="color: #64748b;"></i> Rendszernapló (Audit Log)</h3>
                                 <p style="margin-bottom: 20px;">Intézményi szintű tevékenységek követése (GDPR megfelelőség).</p>
                                 
-                                <div style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; max-height: 250px; overflow-y: auto;">
-                                    <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem;">
-                                        <span style="color: gray;">Ma 14:12</span> - <strong>Kovács Péter (Oktató)</strong> módosította Nagy Bence érdemjegyét (Elmélet: 4 -> 5).
-                                    </div>
-                                    <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem;">
-                                        <span style="color: gray;">Ma 09:30</span> - <strong>Rendszergazda</strong> importált 24 új diákot (12.A_lista.xlsx).
-                                    </div>
-                                    <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem;">
-                                        <span style="color: gray;">Tegnap 16:45</span> - <strong>Rendszergazda</strong> archiválta a 13. C Osztályt.
-                                    </div>
-                                    <div style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; color: #fca5a5;">
-                                        <span style="color: gray;">Tegnap 08:15</span> - <strong>Szabó Éva (Oktató)</strong> Sikertelen bejelentkezési kísérlet.
-                                    </div>
+                                <div id="audit-log-container" style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; max-height: 250px; overflow-y: auto;">
+                                    <p style="text-align: center; color: gray; padding: 20px;">Napló betöltése...</p>
                                 </div>
                             </div>
                         </section>
@@ -1210,17 +1199,112 @@ müveg</td>
             } catch(e) { alert('Hiba a tisztítás során.'); }
         }
 
+        async function archiveClass() {
+            const select = document.querySelector('#admin-tab-db select.login-input'); // first select in archive card
+            // Actually it's better to use the specific one. Let's find it.
+            const archiveSelect = document.querySelector('.card[style*="border-left: 4px solid #ef4444"] select');
+            if(!archiveSelect) return;
+            const classId = archiveSelect.value;
+            if(!classId) { alert('Válassz osztályt!'); return; }
+            if(!confirm('Biztosan archiválni szeretnéd ezt az osztályt?')) return;
+            
+            try {
+                const r = await fetch(`${API_BASE_URL}/classes/${classId}/archive`, { method: 'PUT' });
+                if(r.ok) {
+                    alert('Osztály archiválva!');
+                    loadClasses();
+                }
+            } catch(e) { alert('Hiba.'); }
+        }
+
+        async function registerPartner() {
+            const nev = document.getElementById('partner-nev').value;
+            const adoszam = document.getElementById('partner-adoszam').value;
+            const szekhely = document.getElementById('partner-szekhely').value;
+            if(!nev) { alert('Cégnév kötelező!'); return; }
+            try {
+                const r = await fetch(`${API_BASE_URL}/partners/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cegnev: nev, adoszam: adoszam, szekhely: szekhely })
+                });
+                if(r.ok) {
+                    alert('Partner rögzítve!');
+                    document.getElementById('partner-nev').value = '';
+                    document.getElementById('partner-adoszam').value = '';
+                    document.getElementById('partner-szekhely').value = '';
+                }
+            } catch(e) {}
+        }
+
+        async function assignInstructorAccount() {
+            const instId = document.getElementById('user-instructor-select').value;
+            const username = document.getElementById('user-username').value;
+            const password = document.getElementById('user-password').value;
+            if(!instId || !username || !password) { alert('Minden mező kitöltése kötelező!'); return; }
+            
+            const instName = document.querySelector(`#user-instructor-select option[value="${instId}"]`).textContent;
+            
+            try {
+                const r = await fetch(`${API_BASE_URL}/users/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: username,
+                        password: password,
+                        role: 'oktato',
+                        full_name: instName,
+                        instructor_id: parseInt(instId)
+                    })
+                });
+                if(r.ok) {
+                    alert('Oktatói fiók létrehozva!');
+                    document.getElementById('user-username').value = '';
+                } else {
+                    const err = await r.json();
+                    alert('Hiba: ' + (err.detail || 'Fiók létrehozása sikertelen'));
+                }
+            } catch(e) {}
+        }
+
+        async function fetchAuditLogs() {
+            const container = document.getElementById('audit-log-container');
+            if(!container) return;
+            try {
+                const r = await fetch(`${API_BASE_URL}/audit/`);
+                if(r.ok) {
+                    const logs = await r.json();
+                    if(logs.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: gray; padding: 20px;">Nincs rögzített tevékenység.</p>';
+                        return;
+                    }
+                    container.innerHTML = '';
+                    logs.forEach(log => {
+                        const div = document.createElement('div');
+                        div.style = 'padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem;';
+                        const time = new Date(log.idopont).toLocaleString('hu-HU');
+                        div.innerHTML = `<span style="color: gray;">${time}</span> - ${log.esemeny}`;
+                        container.appendChild(div);
+                    });
+                }
+            } catch(e) {}
+        }
+
         // Kiegészítő hívások az Init végén
         document.addEventListener('DOMContentLoaded', () => {
             // ... (eredeti init kód)
             setTimeout(() => {
                 fetchSafetyTrainings();
                 fetchEquipment();
+                fetchAuditLogs();
                 
                 // Diák választók feltöltése
                 const equipSelect = document.getElementById('equip-student-select');
                 const safetyStudents = document.getElementById('safety-opt-students');
-                if(equipSelect && window.studentList) {
+                
+                if(window.studentList) {
+                    [equipSelect, safetyStudents].forEach(el => { if(el) el.innerHTML = el.id.includes('safety') ? '' : '<option value="">Válassz tanulót...</option>'; });
+                    
                     window.studentList.forEach(s => {
                         const opt = document.createElement('option');
                         opt.value = s.id;
@@ -1237,12 +1321,38 @@ müveg</td>
                 }
                 
                 const safetyClasses = document.getElementById('safety-opt-classes');
-                if(safetyClasses && window.currentClasses) {
+                const archiveSelect = document.querySelector('.card[style*="border-left: 4px solid #ef4444"] select');
+                if(window.currentClasses) {
+                    if(safetyClasses) safetyClasses.innerHTML = '';
+                    if(archiveSelect) archiveSelect.innerHTML = '<option value="">-- Válassz osztályt --</option>';
+
                     window.currentClasses.forEach(c => {
                         const opt = document.createElement('option');
-                        opt.value = `class:${c.id}`;
-                        opt.textContent = `Teljes ${c.megnevezes} osztály`;
-                        safetyClasses.appendChild(opt);
+                        opt.value = c.id;
+                        opt.textContent = c.megnevezes + (c.statusz === 'archivált' ? ' (Archivált)' : '');
+                        
+                        if(archiveSelect) archiveSelect.appendChild(opt.cloneNode(true));
+
+                        if(safetyClasses) {
+                            const sOpt = opt.cloneNode(true);
+                            sOpt.value = `class:${c.id}`;
+                            sOpt.textContent = `Teljes ${c.megnevezes} osztály`;
+                            safetyClasses.appendChild(sOpt);
+                        }
+                    });
+                }
+
+                // Oktatók betöltése fiók kiosztáshoz
+                const instSelect = document.getElementById('user-instructor-select');
+                if(instSelect) {
+                    fetch(`${API_BASE_URL}/instructors/`).then(r => r.json()).then(instructors => {
+                        instSelect.innerHTML = '<option value="">-- Válassz oktatót --</option>';
+                        instructors.forEach(i => {
+                            const opt = document.createElement('option');
+                            opt.value = i.id;
+                            opt.textContent = i.nev + (i.szakterulet ? ` (${i.szakterulet})` : '');
+                            instSelect.appendChild(opt);
+                        });
                     });
                 }
 
