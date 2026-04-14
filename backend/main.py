@@ -43,9 +43,7 @@ async def lifespan(app: FastAPI):
         if not db.query(models.User).filter(models.User.username == "admin").first():
             admin_user = models.User(username="admin", hashed_password=auth.get_password_hash("admin"), role="admin", full_name="Adminisztrátor")
             db.add(admin_user)
-        if not db.query(models.User).filter(models.User.username == "oktato").first():
-            oktato_user = models.User(username="oktato", hashed_password=auth.get_password_hash("oktato"), role="oktato", full_name="Teszt Oktató")
-            db.add(oktato_user)
+        # Eltávolítva a "Teszt Oktató" automatikus létrehozása
             
         # Adatbázis sémák frissítése (Migráció meglévő táblákon)
         from sqlalchemy import text
@@ -183,13 +181,7 @@ def delete_student(student_id: int, db: Session = Depends(get_db)):
 @app.get("/classes/", response_model=list[schemas.ClassRoom])
 def read_classes(db: Session = Depends(get_db)):
     classes = db.query(models.ClassRoom).all()
-    # Dummy data provision if empty for demonstration
-    if not classes:
-        demo_class1 = models.ClassRoom(megnevezes="11.B (Gépészet)", elvart_szakiranyu_oraszam=400, max_hianyzas_szazalek=20)
-        demo_class2 = models.ClassRoom(megnevezes="12.A (Informatika)", elvart_szakiranyu_oraszam=350, max_hianyzas_szazalek=20)
-        db.add_all([demo_class1, demo_class2])
-        db.commit()
-        classes = db.query(models.ClassRoom).all()
+    # Eltávolítva a dummy osztályok automatikus létrehozása
     return classes
 
 from fastapi import HTTPException
@@ -599,6 +591,53 @@ def add_grade(grade: schemas.GradeCreate, db: Session = Depends(get_db)):
     # Oktató esetén ellenőrizni kell (Business logic szinten), hogy a saját szakmájához tartozik-e
     return {"status": "Jegy rögzítve"}
 
-# Minden más fájlt (CSS, JS, képek) a "static" mount szolgál ki, de NEM a gyökérben
-# Hanem csak ha konkrét fájlról van szó.
+# --- BIZTONSÁG ÉS ESZKÖZÖK ---
+@app.get("/safety-trainings/", response_model=list[schemas.SafetyTraining])
+def read_safety_trainings(db: Session = Depends(get_db)):
+    return db.query(models.SafetyTraining).all()
+
+@app.post("/safety-trainings/", response_model=schemas.SafetyTraining)
+def create_safety_training(training: schemas.SafetyTrainingCreate, db: Session = Depends(get_db)):
+    db_training = models.SafetyTraining(**training.dict())
+    db.add(db_training)
+    db.commit()
+    db.refresh(db_training)
+    return db_training
+
+@app.get("/equipment/", response_model=list[schemas.Equipment])
+def read_equipment(db: Session = Depends(get_db)):
+    return db.query(models.Equipment).all()
+
+@app.post("/equipment/", response_model=schemas.Equipment)
+def create_equipment(equip: schemas.EquipmentCreate, db: Session = Depends(get_db)):
+    db_equip = models.Equipment(**equip.dict())
+    db.add(db_equip)
+    db.commit()
+    db.refresh(db_equip)
+    return db_equip
+
+@app.delete("/equipment/{equip_id}")
+def delete_equipment(equip_id: int, db: Session = Depends(get_db)):
+    db_equip = db.query(models.Equipment).filter(models.Equipment.id == equip_id).first()
+    if not db_equip:
+        raise HTTPException(status_code=404, detail="Eszköz nem található")
+    db.delete(db_equip)
+    db.commit()
+    return {"status": "success"}
+
+# --- RENDKÍVÜLI ADATTÖRLÉS (Dummy adatok) ---
+@app.post("/debug/cleanup-dummy-data")
+def cleanup_dummy_data(db: Session = Depends(get_db)):
+    # Töröljük a diákokat aki neve teszt jellegű
+    dummy_names = ["Kovács Péter", "Szabó Éva", "Teszt Elek", "John Doe", "Jane Doe"]
+    deleted_students = db.query(models.Student).filter(models.Student.nev.in_(dummy_names)).delete(synchronize_session=False)
+    
+    # Töröljük a demo osztályokat
+    dummy_classes = ["11.B (Gépészet)", "12.A (Informatika)"]
+    deleted_classes = db.query(models.ClassRoom).filter(models.ClassRoom.megnevezes.in_(dummy_classes)).delete(synchronize_session=False)
+    
+    db.commit()
+    return {"status": "success", "deleted_students": deleted_students, "deleted_classes": deleted_classes}
+
+# Minden más fájlt (CSS, JS, képek) a "static" mount szolgál ki
 app.mount("/", StaticFiles(directory=".", html=True), name="static")

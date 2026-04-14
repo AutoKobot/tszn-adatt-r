@@ -86,3 +86,33 @@ class InstructorCreate(InstructorBase):
 class Instructor(InstructorBase):
     id: int
     model_config = {"from_attributes": True}
+
+# --- BIZTONSÁG ÉS ESZKÖZÖK ---
+class SafetyTrainingBase(BaseModel):
+    diak_id: Optional[int] = None
+    osztaly_id: Optional[int] = None
+    megnevezes: str = "Munkavédelmi oktatás"
+    datum: Optional[date] = None
+    lejarat: date
+    teljesitve: bool = True
+
+class SafetyTrainingCreate(SafetyTrainingBase):
+    pass
+
+class SafetyTraining(SafetyTrainingBase):
+    id: int
+    model_config = {"from_attributes": True}
+
+class EquipmentBase(BaseModel):
+    diak_id: int
+    eszkoz_nev: str
+    statusz: Optional[str] = "kiadva"
+
+class EquipmentCreate(EquipmentBase):
+    pass
+
+class Equipment(EquipmentBase):
+    id: int
+    datum_kiadva: date
+    datum_visszaveve: Optional[date] = None
+    model_config = {"from_attributes": True}

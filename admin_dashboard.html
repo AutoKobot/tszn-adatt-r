@@ -197,7 +197,15 @@
                                     <input type="file" id="patchSzakmaInput" style="display: none;" accept=".xlsx, .xls, .csv">
                                 </div>
 
+                                </div>
+                                
                                 <hr style="border-color: rgba(255,255,255,0.1); margin-bottom: 20px;">
+                                
+                                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                                    <h4 style="margin:0 0 8px; color:#ef4444;"><i class="fas fa-trash-alt"></i> Adattisztítás</h4>
+                                    <p style="font-size:0.85rem; color: rgba(255,255,255,0.6); margin-bottom:12px;">Tanuló/AI által létrehozott kamú (teszt) adatok végleges törlése az adatbázisból.</p>
+                                    <button class="btn-secondary" style="background: #ef4444; color: white; border: none; width: 100%;" onclick="cleanupDummyData()"><i class="fas fa-biohazard"></i> Kamú adatok törlése</button>
+                                </div>
     
                                 <h3><i class="fas fa-file-word" style="color: #3b82f6;"></i> Szerződésminták (Sablon) Feltöltése</h3>
                                 <p style="margin-bottom: 20px;">Tölts fel alapértelmezett Word sablonokat a generátorhoz.</p>
@@ -295,24 +303,24 @@
                                 <div class="form-row">
                                     <div class="form-group" style="flex: 2;">
                                         <label>Célcsoport (Osztály / Személy)</label>
-                                        <select class="login-input" style="border-radius: 8px;">
-                                            <option>Teljes 11.B Osztály</option>
-                                            <option>Új belépő: Nagy Bence</option>
+                                        <select id="safety-target-select" class="login-input" style="border-radius: 8px;">
+                                            <option value="">-- Válassz célpontot --</option>
+                                            <optgroup label="Osztályok" id="safety-opt-classes"></optgroup>
+                                            <optgroup label="Tanulók" id="safety-opt-students"></optgroup>
                                         </select>
                                     </div>
                                     <div class="form-group" style="flex: 1;">
                                         <label>Lejárat (1 év)</label>
-                                        <input type="date" class="login-input" style="border-radius: 8px;" value="2027-04-08">
+                                        <input type="date" id="safety-expiry" class="login-input" style="border-radius: 8px;">
                                     </div>
                                 </div>
-                                <button class="btn-primary" style="width: 100%; background: #f59e0b; margin-top: 5px;"><i class="fas fa-stamp"></i> Oktatás Megtörténtként Rögzítése</button>
-
+                                <button class="btn-primary" style="width: 100%; background: #f59e0b; margin-top: 5px;" onclick="recordSafetyTraining()"><i class="fas fa-stamp"></i> Oktatás Megtörténtként Rögzítése</button>
+                                
                                 <h4 style="margin-top: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Lejáró oktatások (Figyelmeztetés)</h4>
-                                <div style="background: rgba(220, 38, 38, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; border-left: 3px solid #ef4444;">
-                                    <span><strong>Papp László</strong> (12.A)</span>
-                                    <span style="color: #fca5a5;">Lejárt: 3 napja!</span>
+                                <div id="safety-warnings-container">
+                                    <p style="text-align: center; color: gray; padding: 10px;">Nincs rögzített oktatás vagy minden rendben.</p>
                                 </div>
-                                <div style="background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between; border-left: 3px solid #f59e0b;">
+10px; display: flex; justify-content: space-between; border-left: 3px solid #f59e0b;">
                                     <span><strong>Teljes 10.C osztály</strong></span>
                                     <span style="color: #fcd34d;">Lejár: 14 nap múlva</span>
                                 </div>
@@ -320,28 +328,29 @@
                         </section>
 
                         <section class="form-section">
-                            <div class="card" style="border-left: 4px solid #8b5cf6;">
-                                <h3><i class="fas fa-boxes" style="color: #8b5cf6;"></i> Munkaruházat és Eszköznyilvántartó</h3>
-                                <p style="margin-bottom: 20px;">Gyakorlati műszerek és formaruha kiadásának adminisztrációja.</p>
-                                
-                                <div class="form-row">
+                            <div class="card" style="border-left: 4px s                                <div class="form-row">
                                     <div class="form-group" style="flex: 1;">
-                                        <label>Tanuló Neve</label>
-                                        <input type="text" class="login-input" placeholder="Név keresése..." style="border-radius: 8px;">
+                                        <label>Tanuló</label>
+                                        <select id="equip-student-select" class="login-input" style="border-radius: 8px;">
+                                            <option value="">Válassz tanulót...</option>
+                                        </select>
                                     </div>
                                     <div class="form-group" style="flex: 1;">
                                         <label>Kiadott eszköz / ruha</label>
-                                        <input type="text" class="login-input" placeholder="pl: 42-es bakancs" style="border-radius: 8px;">
+                                        <input type="text" id="equip-name" class="login-input" placeholder="pl: 42-es bakancs" style="border-radius: 8px;">
                                     </div>
                                 </div>
-                                <button class="btn-primary" style="width: 100%; background: #8b5cf6;"><i class="fas fa-hand-holding-box"></i> Eszköz Átadása</button>
-
+                                <button class="btn-primary" style="width: 100%; background: #8b5cf6;" onclick="assignEquipment()"><i class="fas fa-hand-holding-box"></i> Eszköz Átadása</button>
+ 
                                 <div style="margin-top: 25px;">
                                     <h4 style="margin-bottom: 10px; color: gray;">Kintlévő Eszközök</h4>
                                     <table style="width: 100%; text-align: left; background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden;">
-                                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); padding: 5px;">
-                                            <td style="padding: 10px;">Szabó Anna</td>
-                                            <td style="padding: 10px;">Védőszemüveg</td>
+                                        <tbody id="equipment-table-body">
+                                            <tr><td colspan="3" style="text-align: center; padding: 10px; color: gray;">Nincs kiadott eszköz.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+müveg</td>
                                             <td style="padding: 10px; text-align: right;"><button class="btn-secondary" style="padding: 3px 10px; font-size: 0.8rem;">Visszavétel</button></td>
                                         </tr>
                                     </table>
@@ -1059,6 +1068,192 @@
                 alert('Hálózati hiba.');
             }
         }
+
+        // --- BIZTONSÁG ÉS ESZKÖZÖK LOGIKA ---
+        async function fetchSafetyTrainings() {
+            const container = document.getElementById('safety-warnings-container');
+            if(!container) return;
+            try {
+                const response = await fetch(`${API_BASE_URL}/safety-trainings/`);
+                if(response.ok) {
+                    const data = await response.json();
+                    if(data.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: gray; padding: 10px;">Nincs rögzített oktatás.</p>';
+                        return;
+                    }
+                    container.innerHTML = '';
+                    data.forEach(t => {
+                        const now = new Date();
+                        const lejarat = new Date(t.lejarat);
+                        const diffDays = Math.ceil((lejarat - now) / (1000 * 60 * 60 * 24));
+                        
+                        let style = 'background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10b981;';
+                        let color = '#a7f3d0';
+                        let label = `Még ${diffDays} napig érvényes`;
+
+                        if(diffDays < 0) {
+                            style = 'background: rgba(220, 38, 38, 0.1); border-left: 3px solid #ef4444;';
+                            color = '#fca5a5';
+                            label = `Lejárt ${Math.abs(diffDays)} napja!`;
+                        } else if(diffDays < 30) {
+                            style = 'background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b;';
+                            color = '#fcd34d';
+                            label = `Lejár ${diffDays} nap múlva`;
+                        }
+
+                        const div = document.createElement('div');
+                        div.style = style + ' padding: 10px; border-radius: 8px; margin-top: 10px; display: flex; justify-content: space-between;';
+                        
+                        let targetName = 'Ismeretlen';
+                        if(t.diak_id && window.allStudents[t.diak_id]) targetName = window.allStudents[t.diak_id].nev;
+                        else if(t.osztaly_id && window.currentClasses) {
+                            const cls = window.currentClasses.find(x => x.id == t.osztaly_id);
+                            if(cls) targetName = `Teljes ${cls.megnevezes} osztály`;
+                        }
+
+                        div.innerHTML = `<span><strong>${targetName}</strong> (${t.megnevezes})</span><span style="color: ${color};">${label}</span>`;
+                        container.appendChild(div);
+                    });
+                }
+            } catch(e) {}
+        }
+
+        async function fetchEquipment() {
+            const tbody = document.getElementById('equipment-table-body');
+            if(!tbody) return;
+            try {
+                const response = await fetch(`${API_BASE_URL}/equipment/`);
+                if(response.ok) {
+                    const data = await response.json();
+                    if(data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 10px; color: gray;">Nincs kiadott eszköz.</td></tr>';
+                        return;
+                    }
+                    tbody.innerHTML = '';
+                    data.forEach(e => {
+                        const student = window.allStudents[e.diak_id];
+                        const tr = document.createElement('tr');
+                        tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
+                        tr.innerHTML = `
+                            <td style="padding: 10px;">${student ? student.nev : 'ID: ' + e.diak_id}</td>
+                            <td style="padding: 10px;">${e.eszkoz_nev}</td>
+                            <td style="padding: 10px; text-align: right;">
+                                <button class="btn-secondary" style="padding: 3px 10px; font-size: 0.8rem;" onclick="returnEquipment(${e.id})">Visszavétel</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch(e) {}
+        }
+
+        async function recordSafetyTraining() {
+            const target = document.getElementById('safety-target-select').value;
+            const expiry = document.getElementById('safety-expiry').value;
+            if(!target || !expiry) { alert('Válassz célpontot és lejáratot!'); return; }
+            
+            const [type, id] = target.split(':');
+            const data = {
+                lejarat: expiry,
+                megnevezes: "Munkavédelmi oktatás",
+                teljesitve: true
+            };
+            if(type === 'student') data.diak_id = parseInt(id);
+            else data.osztaly_id = parseInt(id);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/safety-trainings/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if(response.ok) {
+                    alert('Oktatás rögzítve!');
+                    fetchSafetyTrainings();
+                }
+            } catch(e) { alert('Hiba!'); }
+        }
+
+        async function assignEquipment() {
+            const diakId = document.getElementById('equip-student-select').value;
+            const name = document.getElementById('equip-name').value.trim();
+            if(!diakId || !name) { alert('Válassz diákot és írd be az eszközt!'); return; }
+            try {
+                const response = await fetch(`${API_BASE_URL}/equipment/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ diak_id: parseInt(diakId), eszkoz_nev: name })
+                });
+                if(response.ok) {
+                    document.getElementById('equip-name').value = '';
+                    fetchEquipment();
+                }
+            } catch(e) {}
+        }
+
+        async function returnEquipment(id) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/equipment/${id}`, { method: 'DELETE' });
+                if(response.ok) fetchEquipment();
+            } catch(e) {}
+        }
+
+        async function cleanupDummyData() {
+            if(!confirm('BIZTOSAN törölni akarod az összes Kovács Péter, Szabó Éva és egyéb kamú tesztadatot? Ez nem vonható vissza!')) return;
+            try {
+                const response = await fetch(`${API_BASE_URL}/debug/cleanup-dummy-data`, { method: 'POST' });
+                if(response.ok) {
+                    const res = await response.json();
+                    alert(`Sikeres tisztítás!\nTörölt diákok: ${res.deleted_students}\nTörölt osztályok: ${res.deleted_classes}`);
+                    fetchAndDisplayStudents();
+                }
+            } catch(e) { alert('Hiba a tisztítás során.'); }
+        }
+
+        // Kiegészítő hívások az Init végén
+        document.addEventListener('DOMContentLoaded', () => {
+            // ... (eredeti init kód)
+            setTimeout(() => {
+                fetchSafetyTrainings();
+                fetchEquipment();
+                
+                // Diák választók feltöltése
+                const equipSelect = document.getElementById('equip-student-select');
+                const safetyStudents = document.getElementById('safety-opt-students');
+                if(equipSelect && window.studentList) {
+                    window.studentList.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = s.nev;
+                        if(equipSelect) equipSelect.appendChild(opt.cloneNode(true));
+                        
+                        if(safetyStudents) {
+                            const sOpt = document.createElement('option');
+                            sOpt.value = `student:${s.id}`;
+                            sOpt.textContent = s.nev;
+                            safetyStudents.appendChild(sOpt);
+                        }
+                    });
+                }
+                
+                const safetyClasses = document.getElementById('safety-opt-classes');
+                if(safetyClasses && window.currentClasses) {
+                    window.currentClasses.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = `class:${c.id}`;
+                        opt.textContent = `Teljes ${c.megnevezes} osztály`;
+                        safetyClasses.appendChild(opt);
+                    });
+                }
+
+                // Alapértelmezett dátum a lejáratnak (ma + 1 év)
+                const nextYear = new Date();
+                nextYear.setFullYear(nextYear.getFullYear() + 1);
+                const expiryInput = document.getElementById('safety-expiry');
+                if(expiryInput) expiryInput.value = nextYear.toISOString().split('T')[0];
+
+            }, 2000); // Várjunk amíg a diákok betöltenek
+        });
     </script>
 </body>
 </html>

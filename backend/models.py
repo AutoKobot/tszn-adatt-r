@@ -95,3 +95,22 @@ class Instructor(Base):
     telefon = Column(String(20))
     szakterulet = Column(String(255))
     metadata_json = Column("metadata", JSON, default={})
+
+class SafetyTraining(Base):
+    __tablename__ = "biztonsagi_oktatasok"
+    id = Column(Integer, primary_key=True, index=True)
+    diak_id = Column(Integer, ForeignKey("diakok.id"), nullable=True) # None ha teljes osztályra vonatkozik
+    osztaly_id = Column(Integer, ForeignKey("osztalyok.id"), nullable=True)
+    megnevezes = Column(String(255), default="Munkavédelmi oktatás")
+    datum = Column(Date, default=datetime.date.today)
+    lejarat = Column(Date)
+    teljesitve = Column(Boolean, default=True)
+
+class Equipment(Base):
+    __tablename__ = "eszkozok"
+    id = Column(Integer, primary_key=True, index=True)
+    diak_id = Column(Integer, ForeignKey("diakok.id"))
+    eszkoz_nev = Column(String(255), nullable=False)
+    datum_kiadva = Column(Date, default=datetime.date.today)
+    datum_visszaveve = Column(Date, nullable=True)
+    statusz = Column(String(50), default="kiadva") # kiadva, visszavéve, elhasználódott
