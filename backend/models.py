@@ -24,7 +24,18 @@ class Student(Base):
     telefon = Column(String(20))
     lakhely = Column(Text)
     ertesitesi_cim = Column(Text)
+    orvosi_alkalmassagi_lejarat = Column(Date)
+    munkavedelmi_oktatas_datum = Column(Date)
     tagozat = Column(String(50))
+    
+    # Új személyes adatok
+    szuletesi_hely = Column("szuletesi_hely", String(255))
+    szuletesi_datum = Column("szuletesi_datum", Date)
+    anyja_neve = Column("anyja_neve", String(255))
+    tajszam = Column("tajszam", String(20))
+    adoazonosito = Column("adoazonosito", String(20))
+    bankszamlaszam = Column("bankszamlaszam", String(50))
+    
     szerzodes_kezdet = Column(Date)
     szerzodes_vege = Column(Date)
     osztaly_id = Column(Integer, ForeignKey("osztalyok.id"))
@@ -60,6 +71,7 @@ class ExternalGrade(Base):
     diak_id = Column(Integer, ForeignKey("diakok.id"))
     tantargy = Column(String(100), nullable=False)
     ertek = Column(Integer, nullable=False)
+    suly = Column(Integer, default=100) # Súly (százalékban, pl. 50, 100, 200)
     tipus = Column(String(20), default="elmélet", comment="Pl: gyakorlat, elmélet")
     datum = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     forras = Column(String(50), default="EduRegistrar")
@@ -115,3 +127,25 @@ class Equipment(Base):
     datum_kiadva = Column(Date, default=datetime.date.today)
     datum_visszaveve = Column(Date, nullable=True)
     statusz = Column(String(50), default="kiadva") # kiadva, visszavéve, elhasználódott
+
+class Attendance(Base) :
+    __tablename__ = "jelenlet"
+    id = Column(Integer, primary_key=True, index=True)
+    diak_id = Column(Integer, ForeignKey("diakok.id"), nullable=False)
+    datum = Column(Date, nullable=False)
+    oraszam = Column(Integer, default=0)
+    tipus = Column(String(20), default="iskola") # 'iskola', 'cég'
+    statusz = Column(String(20), default="jelen") # 'jelen', 'igazolt_hianyzas', 'igazolatlan_hianyzas'
+    megjegyzes = Column(Text)
+    letrehozva = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+
+class DailyLog(Base):
+    __tablename__ = "haladasi_naplo"
+    id = Column(Integer, primary_key=True, index=True)
+    osztaly_id = Column(Integer, ForeignKey("osztalyok.id"))
+    oktato_id = Column(Integer, ForeignKey("felhasznalok.id"))
+    datum = Column(Date, default=datetime.date.today)
+    oraszam = Column(Integer, default=1)
+    temakor = Column(String(255))
+    tartalom = Column(Text)
+    letrehozva = Column(TIMESTAMP, default=datetime.datetime.utcnow)

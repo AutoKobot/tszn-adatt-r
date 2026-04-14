@@ -11,6 +11,12 @@ class StudentBase(BaseModel):
     telefon: Optional[str] = None
     lakhely: Optional[str] = None
     tagozat: Optional[str] = "nappali"
+    szuletesi_hely: Optional[str] = None
+    szuletesi_datum: Optional[date] = None
+    anyja_neve: Optional[str] = None
+    tajszam: Optional[str] = None
+    adoazonosito: Optional[str] = None
+    bankszamlaszam: Optional[str] = None
     szerzodes_kezdet: Optional[date] = None
     szerzodes_vege: Optional[date] = None
     metadata_json: Optional[dict] = {}
@@ -25,7 +31,15 @@ class StudentUpdate(BaseModel):
     email: Optional[str] = None
     telefon: Optional[str] = None
     lakhely: Optional[str] = None
+    orvosi_alkalmassagi_lejarat: Optional[date] = None
+    munkavedelmi_oktatas_datum: Optional[date] = None
     tagozat: Optional[str] = None
+    szuletesi_hely: Optional[str] = None
+    szuletesi_datum: Optional[date] = None
+    anyja_neve: Optional[str] = None
+    tajszam: Optional[str] = None
+    adoazonosito: Optional[str] = None
+    bankszamlaszam: Optional[str] = None
     szerzodes_kezdet: Optional[date] = None
     szerzodes_vege: Optional[date] = None
     metadata_json: Optional[dict] = None
@@ -73,7 +87,13 @@ class GradeCreate(BaseModel):
     diak_id: int
     tantargy: str
     ertek: int
+    suly: Optional[int] = 100
+    tipus: Optional[str] = "elmélet"
     datum: Optional[datetime] = None
+
+class Grade(GradeCreate):
+    id: int
+    model_config = {"from_attributes": True}
 
 # --- OKTATÓK ---
 class InstructorBase(BaseModel):
@@ -148,3 +168,44 @@ class User(UserBase):
     id: int
     last_login: Optional[datetime] = None
     model_config = {"from_attributes": True}
+
+# --- JELENLÉT SÉMÁK ---
+class AttendanceBase(BaseModel):
+    diak_id: int
+    datum: date
+    oraszam: Optional[int] = 8
+    tipus: Optional[str] = "iskola"
+    statusz: Optional[str] = "jelen"
+    megjegyzes: Optional[str] = None
+
+class AttendanceCreate(AttendanceBase):
+    pass
+
+class Attendance(AttendanceBase):
+    id: int
+    model_config = {"from_attributes": True}
+
+# --- HALADÁSI NAPLÓ SÉMÁK ---
+class DailyLogBase(BaseModel):
+    osztaly_id: int
+    oktato_id: Optional[int] = None
+    datum: date
+    oraszam: int
+    temakor: str
+    tartalom: Optional[str] = ""
+
+class DailyLogCreate(DailyLogBase):
+    pass
+
+class DailyLog(DailyLogBase):
+    id: int
+    model_config = {"from_attributes": True}
+        
+# --- ARCHÍVUM / ÖSSZESÍTŐ ---
+class StudentStats(BaseModel):
+    diak_id: int
+    atlag: float
+    hianyzas_szazalek: float
+    igazolatlan_orak: int
+    osztondij_javaslat: int = 0
+    megfeleloseg_ok: bool = True

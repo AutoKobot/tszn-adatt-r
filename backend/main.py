@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Response
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
+import io
+import csv
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from contextlib import asynccontextmanager
@@ -137,10 +139,13 @@ def debug_database(db: Session = Depends(get_db)):
         return {"error": str(e)}
 
 @app.get("/students/", response_model=list[schemas.Student])
-def read_students(skip: int = 0, limit: int = 500, db: Session = Depends(get_db)):
+def read_students(skip: int = 0, limit: int = 100, class_id: Optional[int] = None, db: Session = Depends(get_db)):
     try:
         print("[API] Diákok listázása (GET /students/)")
-        students = db.query(models.Student).offset(skip).limit(limit).all()
+        query = db.query(models.Student)
+        if class_id:
+            query = query.filter(models.Student.osztaly_id == class_id)
+        students = query.offset(skip).limit(limit).all()
         return students
     except Exception as e:
         print(f"[HIBA] Diákok lekérése közben: {e}")
@@ -374,6 +379,15 @@ async def import_students_excel(tagozat: str = "nappali", file: UploadFile = Fil
                 if s_data.get("email"): existing_student.email = s_data.get("email")
                 if s_data.get("telefon"): existing_student.telefon = s_data.get("telefon")
                 if s_data.get("lakhely"): existing_student.lakhely = s_data.get("lakhely")
+                
+                # Bővített adatok frissítése
+                if s_data.get("szuletesi_hely"): existing_student.szuletesi_hely = s_data["szuletesi_hely"]
+                if s_data.get("szuletesi_datum"): existing_student.szuletesi_datum = s_data["szuletesi_datum"]
+                if s_data.get("anyja_neve"): existing_student.anyja_neve = s_data["anyja_neve"]
+                if s_data.get("tajszam"): existing_student.tajszam = s_data["tajszam"]
+                if s_data.get("adoazonosito"): existing_student.adoazonosito = s_data["adoazonosito"]
+                if s_data.get("bankszamlaszam"): existing_student.bankszamlaszam = s_data["bankszamlaszam"]
+
                 meta = dict(existing_student.metadata_json or {})
                 meta["szakma"] = s_data.get("szakma")
                 meta["iskola"] = s_data.get("iskola")
@@ -397,6 +411,12 @@ async def import_students_excel(tagozat: str = "nappali", file: UploadFile = Fil
                     tagozat=tagozat,
                     telefon=s_data.get("telefon"),
                     lakhely=s_data.get("lakhely"),
+                    szuletesi_hely=s_data.get("szuletesi_hely"),
+                    szuletesi_datum=s_data.get("szuletesi_datum"),
+                    anyja_neve=s_data.get("anyja_neve"),
+                    tajszam=s_data.get("tajszam"),
+                    adoazonosito=s_data.get("adoazonosito"),
+                    bankszamlaszam=s_data.get("bankszamlaszam"),
                     szerzodes_kezdet=s_data.get("szerzodes_kezdet"),
                     szerzodes_vege=s_data.get("szerzodes_vege"),
                     metadata_json=s_data.get("metadata_json", {
@@ -686,6 +706,187 @@ def cleanup_dummy_data(db: Session = Depends(get_db)):
     
     db.commit()
     return {"status": "success", "deleted_students": deleted_students, "deleted_classes": deleted_classes}
+
+# --- JELENLÉT ENDPOINTOK ---
+@app.get("/attendance/", response_model=list[schemas.Attendance])
+def get_all_attendance(db: Session = Depends(get_db)):
+    return db.query(models.Attendance).all()
+
+@app.get("/students/{student_id}/attendance", response_model=list[schemas.Attendance])
+def get_student_attendance(student_id: int, db: Session = Depends(get_db)):
+    return db.query(models.Attendance).filter(models.Attendance.diak_id == student_id).all()
+
+@app.post("/attendance/", response_model=schemas.Attendance)
+def create_attendance(att: schemas.AttendanceCreate, db: Session = Depends(get_db)):
+    db_att = models.Attendance(**att.dict())
+    db.add(db_att)
+    db.commit()
+    db.refresh(db_att)
+    return db_att
+
+@app.post("/attendance/bulk")
+def create_bulk_attendance(attendances: list[schemas.AttendanceCreate], db: Session = Depends(get_db)):
+    try:
+        for att in attendances:
+            db_att = models.Attendance(**att.dict())
+            db.add(db_att)
+        db.commit()
+        return {"status": "success", "count": len(attendances)}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+# --- ÉRTÉKELÉS (JEGYEK) ---
+@app.get("/students/{student_id}/grades", response_model=list[schemas.Grade])
+def get_student_grades(student_id: int, db: Session = Depends(get_db)):
+    return db.query(models.ExternalGrade).filter(models.ExternalGrade.diak_id == student_id).all()
+
+@app.post("/grades/", response_model=schemas.Grade)
+def create_grade(grade: schemas.GradeCreate, db: Session = Depends(get_db)):
+    db_grade = models.ExternalGrade(**grade.dict())
+    db.add(db_grade)
+    db.commit()
+    db.refresh(db_grade)
+    return db_grade
+
+# --- HALADÁSI NAPLÓ ---
+@app.post("/dailylog/", response_model=schemas.DailyLog)
+def create_daily_log(log: schemas.DailyLogCreate, db: Session = Depends(get_db)):
+    db_log = models.DailyLog(**log.dict())
+    db.add(db_log)
+    db.commit()
+    db.refresh(db_log)
+    return db_log
+
+@app.get("/classes/{class_id}/logs", response_model=list[schemas.DailyLog])
+def get_class_logs(class_id: int, db: Session = Depends(get_db)):
+    return db.query(models.DailyLog).filter(models.DailyLog.osztaly_id == class_id).order_by(models.DailyLog.datum.desc()).all()
+
+# --- ÖSSZESÍTETT STATISZTIKÁK (Súlyozott átlag, hiányzás) ---
+@app.get("/students/{student_id}/stats", response_model=schemas.StudentStats)
+def get_student_stats(student_id: int, db: Session = Depends(get_db)):
+    # 1. Átlag számítás (súlyozott)
+    grades = db.query(models.ExternalGrade).filter(models.ExternalGrade.diak_id == student_id).all()
+    weighted_sum = 0
+    weight_total = 0
+    for g in grades:
+        weighted_sum += g.ertek * (g.suly / 100.0)
+        weight_total += (g.suly / 100.0)
+    
+    atlag = round(weighted_sum / weight_total, 2) if weight_total > 0 else 0.0
+
+    # 2. Hiányzás számítás
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not student or not student.osztaly_id:
+        return schemas.StudentStats(diak_id=student_id, atlag=atlag, hianyzas_szazalek=0, igazolatlan_orak=0)
+    
+    db_class = db.query(models.ClassRoom).filter(models.ClassRoom.id == student.osztaly_id).first()
+    elvart_ora = db_class.elvart_szakiranyu_oraszam if db_class else 400
+    
+    absences = db.query(models.Attendance).filter(
+        models.Attendance.diak_id == student_id,
+        models.Attendance.statusz.like("%hianyzas%")
+    ).all()
+    
+    total_absent_hours = sum(a.oraszam for a in absences)
+    igazolatlan_count = sum(a.oraszam for a in absences if a.statusz == "igazolatlan_hianyzas")
+    
+    hiany_szazalek = round((total_absent_hours / elvart_ora) * 100, 1) if elvart_ora > 0 else 0
+    
+    # 3. Ösztöndíj kalkuláció (Példa logika)
+    # Alap: 100.000 Ft (Szakirányú oktatási ösztöndíj alapja)
+    base_stipend = 100000
+    osztondij = 0
+    
+    if atlag >= 2.0 and hiany_szazalek <= 20:
+        if atlag >= 4.5: osztondij = base_stipend
+        elif atlag >= 4.0: osztondij = base_stipend * 0.8
+        elif atlag >= 3.0: osztondij = base_stipend * 0.5
+        elif atlag >= 2.0: osztondij = base_stipend * 0.1
+    
+    # 4. Megfelelőség ellenőrzés
+    is_compliant = True
+    today = datetime.date.today()
+    if not student.orvosi_alkalmassagi_lejarat or student.orvosi_alkalmassagi_lejarat < today:
+        is_compliant = False
+    if not student.munkavedelmi_oktatas_datum:
+        is_compliant = False
+
+    return schemas.StudentStats(
+        diak_id=student_id,
+        atlag=atlag,
+        hianyzas_szazalek=hiany_szazalek,
+        igazolatlan_orak=igazolatlan_count,
+        osztondij_javaslat=int(osztondij),
+        megfeleloseg_ok=is_compliant
+    )
+
+@app.get("/students/dashboard-summary")
+def get_dashboard_summary(db: Session = Depends(get_db)):
+    students = db.query(models.Student).all()
+    total_students = len(students)
+    total_stipend = 0
+    compliance_alerts = 0
+    total_absent_sum = 0
+    
+    for s in students:
+        stats = get_student_stats(s.id, db)
+        total_stipend += stats.osztondij_javaslat
+        if not stats.megfeleloseg_ok:
+            compliance_alerts += 1
+        total_absent_sum += stats.hianyzas_szazalek
+        
+    avg_absence = round(total_absent_sum / total_students, 1) if total_students > 0 else 0
+    
+    return {
+        "total_students": total_students,
+        "total_stipend": total_stipend,
+        "compliance_alerts": compliance_alerts,
+        "avg_absence": avg_absence
+    }
+
+@app.get("/export/payroll")
+def export_payroll(db: Session = Depends(get_db)):
+    students = db.query(models.Student).all()
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=';')
+    writer.writerow(['Nev', 'OM Azonosito', 'Bankszamlaszam', 'Atlag', 'Hianyzas %', 'Osztondij (Ft)', 'Megfeleloseg'])
+    
+    for s in students:
+        stats = get_student_stats(s.id, db)
+        writer.writerow([
+            s.nev,
+            s.oktatasi_azonosito,
+            s.bankszamlaszam or 'Nincs megadva',
+            stats.atlag,
+            f"{stats.hianyzas_szazalek}%",
+            stats.osztondij_javaslat,
+            "Rendben" if stats.megfeleloseg_ok else "HIANYOS"
+        ])
+    
+    output.seek(0)
+    response = StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv"
+    )
+    response.headers["Content-Disposition"] = "attachment; filename=berfelado_export.csv"
+    return response
+
+@app.get("/suggest/{field}")
+def get_suggestions(field: str, class_id: Optional[int] = None, db: Session = Depends(get_db)):
+    if field == "temakor":
+        query = db.query(models.DailyLog.temakor).distinct()
+        if class_id:
+            query = query.filter(models.DailyLog.osztaly_id == class_id)
+        results = query.all()
+    elif field == "szakma":
+        results = db.query(models.Student.metadata_json["szakma"].astext).distinct().all()
+    elif field == "iskola":
+        results = db.query(models.Student.metadata_json["iskola"].astext).distinct().all()
+    else:
+        return []
+    
+    return [r[0] for r in results if r[0]]
 
 # Minden más fájlt (CSS, JS, képek) a "static" mount szolgál ki
 app.mount("/", StaticFiles(directory=".", html=True), name="static")

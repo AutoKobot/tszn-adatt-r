@@ -38,35 +38,81 @@
         <!-- Main Content -->
         <main class="main-content">
             <header>
-                <h1>ÁKK Rendszervezérlő</h1>
-                <p>Üdvözöljük! Itt a duális képzés és az intézményi adminisztráció teljes áttekintése. 
-                   <span id="api-status-badge" style="font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 10px; margin-left:10px; cursor:pointer;" onclick="wakeUpServer()" title="Kattints az ébredéshez">API: Ellenőrzés...</span>
-                </p>
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+                    <div>
+                        <h1>Adminisztrációs Vezérlőpult</h1>
+                        <p>EduRegistrar Intelligent Management System 
+                           <span id="api-status-badge" style="font-size: 0.7rem; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 10px; margin-left:10px; cursor:pointer;" onclick="wakeUpServer()" title="Kattints az ébredéshez">API: Ellenőrzés...</span>
+                        </p>
+                    </div>
+                </div>
             </header>
 
-            <div class="dashboard-stats">
-                <div class="stat-card warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <div class="stat-info">
-                        <h3 id="stat-expired-training">0 Lejáró oktatás</h3>
-                        <p>Munkavédelmi frissítés szükséges</p>
+            <!-- INTELLIGENS ÖSSZEGZŐ KÁRTYÁK -->
+            <div class="content-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: 2rem;">
+                <div class="card" style="border-left: 4px solid #4f46e5; background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(0,0,0,0) 100%);">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Aktív Tanulók</h4>
+                            <h2 style="font-size: 2rem; margin: 5px 0;" id="stat-total-students">0</h2>
+                        </div>
+                        <i class="fas fa-user-graduate" style="color: #4f46e5; font-size: 1.5rem;"></i>
                     </div>
                 </div>
-                <div class="stat-card danger" style="background: rgba(220, 38, 38, 0.1); border-color: rgba(220, 38, 38, 0.4);">
-                    <i class="fas fa-user-clock" style="color: #ef4444;"></i>
-                    <div class="stat-info">
-                        <h3 id="stat-critical-absence" style="color: #ef4444;">0 Kritikus Hiányzó</h3>
-                        <p>Elérték a 80%-os hiányzási küszöböt</p>
+
+                <div class="card" style="border-left: 4px solid #f59e0b; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(0,0,0,0) 100%);">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Mulasztási Átlag</h4>
+                            <h2 style="font-size: 2rem; margin: 5px 0;" id="stat-absent-avg">0%</h2>
+                        </div>
+                        <i class="fas fa-calendar-times" style="color: #f59e0b; font-size: 1.5rem;"></i>
                     </div>
                 </div>
-                <div class="stat-card success">
-                    <i class="fas fa-file-contract"></i>
-                    <div class="stat-info">
-                        <h3 id="stat-active-contracts">0 Aktív szerződés</h3>
-                        <p>Duális partnerekkel kötve</p>
+
+                <div class="card" style="border-left: 4px solid #10b981; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(0,0,0,0) 100%);">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Becsült Ösztöndíj</h4>
+                            <h2 style="font-size: 1.5rem; margin: 5px 0;" id="stat-total-stipend">0 Ft</h2>
+                        </div>
+                        <i class="fas fa-coins" style="color: #10b981; font-size: 1.5rem;"></i>
+                    </div>
+                </div>
+
+                <div class="card" style="border-left: 4px solid #ef4444; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(0,0,0,0) 100%);">
+                    <div style="display: flex; justify-content: space-between;">
+                        <div>
+                            <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Compliance Riasztás</h4>
+                            <h2 style="font-size: 2rem; margin: 5px 0;" id="stat-compliance-alerts">0</h2>
+                        </div>
+                        <i class="fas fa-shield-alt" style="color: #ef4444; font-size: 1.5rem;"></i>
                     </div>
                 </div>
             </div>
+
+            <!-- OKOS ASSZISZTENS PANEL -->
+            <section style="margin-bottom: 2rem;">
+                <div class="card" style="border: 1px solid rgba(79, 70, 229, 0.3); background: rgba(79, 70, 229, 0.05); border-radius: 12px; transition: transform 0.2s;">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                        <div style="background: #4f46e5; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0;">Intelligens Asszisztens</h3>
+                            <p style="margin: 0; font-size: 0.85rem; color: #94a3b8;">Javasolt automatizált műveletek az adatok alapján</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <button class="btn-primary" style="background: #4f46e5; flex: 1; min-width: 250px; padding: 12px;" onclick="document.querySelector('.admin-tab-btn[data-target=\'admin-tab-mgmt\']').click(); alert('Tömeges generálás indítása...');">
+                            <i class="fas fa-file-signature"></i> Tömeges szerződés generálás
+                        </button>
+                        <button class="btn-primary" style="background: #10b981; flex: 1; min-width: 250px; padding: 12px;" onclick="exportCSVData()">
+                            <i class="fas fa-file-excel"></i> Havi bérfeladó export (.csv)
+                        </button>
+                    </div>
+                </div>
+            </section>
 
             <div class="content-grid" style="grid-template-columns: 1fr;">
                 
@@ -448,11 +494,13 @@ müveg</td>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Szakma megnevezése</label>
-                            <input type="text" id="student-szakma" placeholder="pl. Burkoló, Heggesztő...">
+                            <input type="text" id="student-szakma" placeholder="pl. Burkoló, Heggesztő..." list="szakma-list">
+                            <datalist id="szakma-list"></datalist>
                         </div>
                         <div class="form-group">
                             <label>Iskola</label>
-                            <input type="text" id="student-iskola" placeholder="pl. Bánki, Teleki...">
+                            <input type="text" id="student-iskola" placeholder="pl. Bánki, Teleki..." list="iskola-list">
+                            <datalist id="iskola-list"></datalist>
                         </div>
                     </div>
                     <div class="form-row">
@@ -477,9 +525,42 @@ müveg</td>
                     </div>
                 </div>
 
+                <div style="border-top: 1px solid rgba(255,255,255,0.08); margin: 12px 0 12px; padding-top: 12px;">
+                    <p style="font-size:0.75rem; color:#60a5fa; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Személyes adatok</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Születési hely</label>
+                            <input type="text" id="student-szuletesi-hely" placeholder="pl. Budapest">
+                        </div>
+                        <div class="form-group">
+                            <label>Születési dátum</label>
+                            <input type="date" id="student-szuletesi-datum">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Anyja születési neve</label>
+                        <input type="text" id="student-anyja-neve" placeholder="pl. Kovács Piroska">
+                    </div>
+                </div>
+
+                <!-- Megfelelőség -->
+                <div style="border-top: 1px solid rgba(255,255,255,0.08); margin: 12px 0 12px; padding-top: 12px;">
+                    <p style="font-size:0.75rem; color:#f59e0b; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Megfelelőség (Compliance)</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Orvosi alkalmassági lejárata</label>
+                            <input type="date" id="student-orvosi">
+                        </div>
+                        <div class="form-group">
+                            <label>Munkavédelmi oktatás dátuma</label>
+                            <input type="date" id="student-munkavedelem">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Azonosítók -->
                 <div style="border-top: 1px solid rgba(255,255,255,0.08); margin: 12px 0 12px; padding-top: 12px;">
-                    <p style="font-size:0.75rem; color:#60a5fa; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Azonosítók és szerződés</p>
+                    <p style="font-size:0.75rem; color:#60a5fa; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Azonosítók és Pénzügyek</p>
                     <div class="form-row">
                         <div class="form-group">
                             <label>OM azonosító</label>
@@ -490,6 +571,20 @@ müveg</td>
                             <input type="text" id="student-igazolvany" placeholder="123456AB">
                         </div>
                     </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>TAJ szám</label>
+                            <input type="text" id="student-taj" placeholder="123 456 789">
+                        </div>
+                        <div class="form-group">
+                            <label>Adóazonosító</label>
+                            <input type="text" id="student-ado" placeholder="8123456789">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bankszámlaszám</label>
+                        <input type="text" id="student-bankszamla" placeholder="11744400-12345678-00000000">
+                    </div>
                     <div class="form-group">
                         <label>Munkaszerződés kezdete / lejárata</label>
                         <div style="display:flex; gap:10px;">
@@ -498,7 +593,7 @@ müveg</td>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Lakhélye</label>
+                        <label>Lakhelye</label>
                         <input type="text" id="student-lakhely" placeholder="4440 Tiszavasvári, Kossuth u. 1.">
                     </div>
                 </div>
@@ -560,6 +655,8 @@ müveg</td>
             // Kezdeti adatok betöltése
             fetchAndDisplayStudents();
             loadClasses();
+            loadDashboardStats();
+            loadAdminSuggestions();
             pingBackend();
             setInterval(pingBackend, 10 * 60 * 1000);
 
@@ -567,7 +664,41 @@ müveg</td>
             if(badge) badge.innerText = `API: ${window.location.host} (Unified)`;
         });
 
-        // --- KEEPALIVE ÉS SERVER WAKE ---
+        // --- DASHBOARD STATS & AUTOMATION ---
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/students/dashboard-summary`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('stat-total-students').innerText = data.total_students;
+                    document.getElementById('stat-total-stipend').innerText = data.total_stipend.toLocaleString() + ' Ft';
+                    document.getElementById('stat-compliance-alerts').innerText = data.compliance_alerts;
+                    document.getElementById('stat-absent-avg').innerText = data.avg_absence + '%';
+                }
+            } catch (err) {
+                console.error("Dashboard stats error:", err);
+            }
+        }
+
+        async function exportCSVData() {
+            // Tömeges export kérése a backend felé
+            window.location.href = `${API_BASE_URL}/export/payroll`;
+        }
+
+        async function loadAdminSuggestions() {
+            try {
+                const sR = await fetch(`${API_BASE_URL}/suggest/szakma`);
+                if(sR.ok) {
+                    const data = await sR.json();
+                    document.getElementById('szakma-list').innerHTML = data.map(v => `<option value="${v}">`).join('');
+                }
+                const iR = await fetch(`${API_BASE_URL}/suggest/iskola`);
+                if(iR.ok) {
+                    const data = await iR.json();
+                    document.getElementById('iskola-list').innerHTML = data.map(v => `<option value="${v}">`).join('');
+                }
+            } catch(e) {}
+        }
         async function pingBackend() {
             const badge = document.getElementById('api-status-badge');
             try {
@@ -741,26 +872,23 @@ müveg</td>
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #94a3b8;"><i class="fas fa-search"></i> Nincs találat a szűrési feltételekre.</td></tr>`;
                 return;
             }
-            filtered.forEach(s => {
-                const meta = s.metadata_json || {};
-                const azonosito = s.oktatasi_azonosito || s.diakigazolvany_szam || 'Nincs azonosító';
-                const szakmaDisplay = meta.szakma || meta.Szakma || meta.szakma_megnevezese || '-';
-                const evfolyamDisplay = meta.evfolyam || meta.Evfolyam || meta.evf || '';
-                const iskolaDisplay = meta.iskola || meta.Iskola || '';
-                const tr = document.createElement('tr');
-                tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
-                tr.innerHTML = `
-                    <td style="padding: 15px;">
-                        <strong>${s.nev}</strong><br>
-                        <small style="color: gray;">${azonosito}</small><br>
-                        <small style="color: #60a5fa;">${iskolaDisplay}</small>
-                    </td>
-                    <td style="padding: 15px;">${s.email || '-'}</td>
-                    <td style="padding: 15px;">
-                        ${szakmaDisplay}<br>
-                        <small style="color:gray;">${evfolyamDisplay ? evfolyamDisplay + '. évfolyam' : ''}</small>
-                    </td>
-                    <td style="padding: 15px;"><span class="tag" style="background:rgba(16,185,129,0.1); border:none;">${s.tagozat || 'nappali'}</span></td>
+                html += `
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05)">
+                        <td style="padding: 15px;">
+                            <strong>${s.nev}</strong><br>
+                            <small style="color: gray;">${azonosito}</small><br>
+                            <small style="color: #60a5fa;">${iskolaDisplay}</small>
+                        </td>
+                        <td style="padding: 15px;">${s.email || '-'}</td>
+                        <td style="padding: 15px;">
+                            ${szakmaDisplay}<br>
+                            <small style="color:gray;">${evfolyamDisplay ? evfolyamDisplay + '. évfolyam' : ''}</small>
+                        </td>
+                        <td style="padding: 15px;">
+                            <div id="stats-${s.id}" style="font-size: 0.85rem;">
+                                <span style="opacity: 0.5;">Betöltés...</span>
+                            </div>
+                        </td>
                         <td style="padding: 15px; text-align: right;">
                             <div style="display: flex; gap: 5px; justify-content: flex-end;">
                                 <button class="btn-primary" style="padding: 5px 10px; background: #10b981;" onclick="downloadStudentContract(${s.id})" title="Szerződés generálása"><i class="fas fa-file-word"></i></button>
@@ -768,9 +896,36 @@ müveg</td>
                                 <button class="btn-secondary" style="padding: 5px 10px;" onclick="deleteStudent(${s.id})"><i class="fas fa-trash"></i></button>
                             </div>
                         </td>
+                    </tr>
                 `;
-                tbody.appendChild(tr);
+                // Párhuzamosan lekérjük a statisztikát
+                fetchAndRenderStats(s.id);
             });
+            tbody.innerHTML = html;
+        }
+
+        async function fetchAndRenderStats(studentId) {
+            const container = document.getElementById(`stats-${studentId}`);
+            if(!container) return;
+            try {
+                const r = await fetch(`${API_BASE_URL}/students/${studentId}/stats`);
+                if(r.ok) {
+                    const stats = await r.json();
+                    const stipendColor = stats.osztondij_javaslat > 0 ? '#10b981' : '#ef4444';
+                    const complianceColor = stats.megfeleloseg_ok ? '#10b981' : '#f59e0b';
+                    
+                    container.innerHTML = `
+                        <div style="color: ${stipendColor}; font-weight: 600;">💰 ${stats.osztondij_javaslat.toLocaleString()} Ft</div>
+                        <div style="color: ${complianceColor}; font-size: 0.75rem;">
+                            <i class="fas ${stats.megfeleloseg_ok ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> 
+                            ${stats.megfeleloseg_ok ? 'Megfelelt' : 'Hiányos adatok'}
+                        </div>
+                        <div style="font-size: 0.75rem; color: #94a3b8;">
+                            Átlag: ${stats.atlag} | Hiány: ${stats.hianyzas_szazalek}%
+                        </div>
+                    `;
+                }
+            } catch(e) {}
         }
 
         // --- MODAL KEZELÉS ---
@@ -798,6 +953,15 @@ müveg</td>
             document.getElementById('student-vege').value = student.szerzodes_vege || '';
             document.getElementById('student-telefon').value = student.telefon || '';
             document.getElementById('student-lakhely').value = student.lakhely || '';
+            
+            document.getElementById('student-szuletesi-hely').value = student.szuletesi_hely || '';
+            document.getElementById('student-szuletesi-datum').value = student.szuletesi_datum || '';
+            document.getElementById('student-anyja-neve').value = student.anyja_neve || '';
+            document.getElementById('student-taj').value = student.tajszam || '';
+            document.getElementById('student-ado').value = student.adoazonosito || '';
+            document.getElementById('student-bankszamla').value = student.bankszamlaszam || '';
+            document.getElementById('student-orvosi').value = student.orvosi_alkalmassagi_lejarat || '';
+            document.getElementById('student-munkavedelem').value = student.munkavedelmi_oktatas_datum || '';
             // metadata_json mezők
             const meta = student.metadata_json || {};
             document.getElementById('student-szakma').value = meta.szakma || meta.Szakma || '';
@@ -829,6 +993,16 @@ müveg</td>
                 oktatasi_azonosito: document.getElementById('student-om').value || null,
                 diakigazolvany_szam: document.getElementById('student-igazolvany').value || null,
                 tagozat: document.getElementById('student-tagozat').value,
+                
+                szuletesi_hely: document.getElementById('student-szuletesi-hely').value || null,
+                szuletesi_datum: document.getElementById('student-szuletesi-datum').value || null,
+                anyja_neve: document.getElementById('student-anyja-neve').value || null,
+                tajszam: document.getElementById('student-taj').value || null,
+                adoazonosito: document.getElementById('student-ado').value || null,
+                bankszamlaszam: document.getElementById('student-bankszamla').value || null,
+                orvosi_alkalmassagi_lejarat: document.getElementById('student-orvosi').value || null,
+                munkavedelmi_oktatas_datum: document.getElementById('student-munkavedelem').value || null,
+
                 szerzodes_kezdet: document.getElementById('student-kezdet').value || null,
                 szerzodes_vege: document.getElementById('student-vege').value || null,
                 metadata_json: {
