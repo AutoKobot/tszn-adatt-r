@@ -734,7 +734,7 @@ müveg</td>
         }
 
         // --- EXCEL IMPORT ---
-        function setupDropZone(zoneId, inputId, endpoint) {
+        function setupDropZone(zoneId, inputId, endpoint, isInstructor = false) {
             const zone = document.getElementById(zoneId);
             const input = document.getElementById(inputId);
             if(!zone || !input) return;
@@ -742,8 +742,12 @@ müveg</td>
             zone.addEventListener('click', () => input.click());
             input.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
-                const tagozat = document.getElementById('import-tagozat-select').value;
-                if (file) await uploadExcelTask(file, `${endpoint}?tagozat=${tagozat}`, zone);
+                if (isInstructor) {
+                    if (file) await uploadInstructorTask(file, endpoint, zone);
+                } else {
+                    const tagozat = document.getElementById('import-tagozat-select').value;
+                    if (file) await uploadExcelTask(file, `${endpoint}?tagozat=${tagozat}`, zone);
+                }
                 input.value = '';
             });
 
@@ -753,9 +757,48 @@ müveg</td>
                 e.preventDefault();
                 zone.style.background = '';
                 const file = e.dataTransfer.files[0];
-                const tagozat = document.getElementById('import-tagozat-select').value;
-                if (file) await uploadExcelTask(file, `${endpoint}?tagozat=${tagozat}`, zone);
+                if (isInstructor) {
+                    if (file) await uploadInstructorTask(file, endpoint, zone);
+                } else {
+                    const tagozat = document.getElementById('import-tagozat-select').value;
+                    if (file) await uploadExcelTask(file, `${endpoint}?tagozat=${tagozat}`, zone);
+                }
             });
+        }
+
+        // --- Oktató-specifikus upload ---
+        async function uploadInstructorTask(file, endpoint, zone) {
+            const span = zone.querySelector('span');
+            if(!span) return;
+            const originalText = span.innerText;
+            span.innerText = 'Feltöltés...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    const msg = `Oktató import kész!\n\nÚj oktató mentve: ${result.uj_mentve ?? 0}\nFrissítve: ${result.frissitett ?? 0}\nHibák: ${result.hibak ?? 0}`;
+                    alert(msg);
+                    span.innerText = 'Sikeres! ✅';
+                    // Oktatók listájának frissítése (ha van ilyen elem az oldalon)
+                    if (typeof loadInstructorList === 'function') loadInstructorList();
+                } else {
+                    alert(`Hiba az oktatók importálásakor: ${result.detail || JSON.stringify(result)}`);
+                    span.innerText = 'Hiba ❌';
+                }
+            } catch (err) {
+                const badge = document.getElementById('api-status-badge');
+                if(badge) { badge.innerText = 'Szerver alszik — kattints'; badge.style.background='rgba(239,68,68,0.3)'; }
+                alert('Hálózati hiba az oktató importnál.');
+                span.innerText = 'Hiba ❌';
+            }
+            setTimeout(() => { span.innerText = originalText; }, 3000);
         }
 
         async function uploadExcelTask(file, endpoint, zone) {
@@ -777,7 +820,8 @@ müveg</td>
                     if (result.conflicts && result.conflicts.length > 0) {
                         openConflictModal(result.conflicts);
                         span.innerText = 'Döntés szükséges ⚠️';
-                    } else if (result.frissitett !== undefined) {
+                    } else if (result.nem_talalt_nev !== undefined) {
+                        // Szakma patch válasza
                         alert('Szakma javitas kesz!\n\nFrissitett: ' + result.frissitett + ' diak\nMar rendben volt: ' + result.mar_rendben_volt + '\nNem talalt nev: ' + result.nem_talalt_nev + '\nCSV-ben ures szakma: ' + result.csv_szakma_nelkul);
                         span.innerText = 'Javitas kesz! ✅';
                         fetchAndDisplayStudents();
@@ -1099,8 +1143,8 @@ müveg</td>
         }
 
         // Init
-        setupDropZone('studentExcelZone', 'studentExcelInput', '/import/students');
-        setupDropZone('instructorExcelZone', 'instructorExcelInput', '/import/instructors');
+        setupDropZone('studentExcelZone', 'studentExcelInput', '/import/students', false);
+        setupDropZone('instructorExcelZone', 'instructorExcelInput', '/import/instructors', true);  // isInstructor = true
         setupDropZone('patchSzakmaZone', 'patchSzakmaInput', '/import/patch-szakma');
         setupTemplateDropZone('templateZone', 'templateInput');
 
