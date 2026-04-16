@@ -872,6 +872,17 @@ müveg</td>
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 30px; color: #94a3b8;"><i class="fas fa-search"></i> Nincs találat a szűrési feltételekre.</td></tr>`;
                 return;
             }
+
+            let html = '';
+            filtered.forEach(s => {
+                const meta = s.metadata_json || {};
+                const szakmaRaw = meta.szakma || meta.Szakma || '';
+                const iskolaRaw = meta.iskola || meta.Iskola || '';
+                const evfolyamRaw = meta.evfolyam || meta.Evfolyam || '';
+                const szakmaDisplay = szakmaRaw || '<span style="color:#f59e0b;">⚠ Nincs szakma</span>';
+                const iskolaDisplay = iskolaRaw || '<span style="color:gray;">-</span>';
+                const evfolyamDisplay = evfolyamRaw ? String(evfolyamRaw).replace(/[^0-9]/g, '') : '';
+                const azonosito = s.oktatasi_azonosito || s.email || `ID: ${s.id}`;
                 html += `
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.05)">
                         <td style="padding: 15px;">
