@@ -11,8 +11,18 @@ print("Supabase adatbázis kényszerített migrációja (Új oszlopok hozzáadá
 with engine.begin() as conn:
     try:
         # 1. Diákok tábla frissítése
-        conn.execute(text("ALTER TABLE diakok ADD COLUMN oktatasi_azonosito VARCHAR(11);"))
-        conn.execute(text("ALTER TABLE diakok ADD COLUMN diakigazolvany_szam VARCHAR(50);"))
+        conn.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS oktatasi_azonosito VARCHAR(11);"))
+        conn.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS diakigazolvany_szam VARCHAR(50);"))
+        conn.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS orvosi_alkalmassagi_lejarat DATE;"))
+        conn.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS munkavedelmi_oktatas_datum DATE;"))
+        conn.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS szuletesi_hely VARCHAR(255);"))
+        conn.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS szuletesi_datum DATE;"))
+        conn.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS anyja_neve VARCHAR(255);"))
+        conn.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS tajszam VARCHAR(20);"))
+        conn.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS adoazonosito VARCHAR(20);"))
+        conn.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS bankszamlaszam VARCHAR(50);"))
+        conn.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS szerzodes_kezdet DATE;"))
+        conn.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS szerzodes_vege DATE;"))
         print("✅ Diákok tábla kiegészítve.")
     except Exception as e:
         print(f"Megjegyzés (diakok): A diák oszlopok feltehetőleg már léteznek vagy hiba történt: {e}")
