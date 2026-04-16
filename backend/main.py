@@ -516,39 +516,62 @@ async def import_instructors_excel(file: UploadFile = File(...), db: Session = D
     content = await file.read()
     parsed_instructors = excel_service.parse_instructors(content)
     
+    print(f"[IMPORT][OKTATÓK] Beolvasott oktatók száma: {len(parsed_instructors)}")
+    
     saved_count = 0
-    for i_data in parsed_instructors:
-        # Hasonló okos szűrés az oktatókra is (Név + Email alapú)
-        i_nev = i_data.get("nev")
-        i_email = i_data.get("email")
-        i_szakterulet = i_data.get("szakterulet")
-        
-        existing_insts = db.query(models.Instructor).filter(models.Instructor.nev == i_nev).all()
-        is_duplicate = False
-        
-        for ex in existing_insts:
-            if i_email and ex.email == i_email:
-                is_duplicate = True
-                break
-            # Ha nincs email, de a név azonos, feltételezzük a duplikációt
-            if not i_email:
-                is_duplicate = True
-                break
-                
-        if not is_duplicate:
-            new_instructor = models.Instructor(
-                nev=i_nev,
-                email=i_email,
-                szakterulet=i_szakterulet,
-            )
-            db.add(new_instructor)
-            saved_count += 1
+    updated_count = 0
+    error_count = 0
+    errors = []
+
+    for i, i_data in enumerate(parsed_instructors):
+        try:
+            i_nev = i_data.get("nev", "").strip()
+            i_email = i_data.get("email")
+            i_szakterulet = i_data.get("szakterulet")
             
+            if not i_nev:
+                continue
+
+            print(f"[IMPORT][OKTATÓK] Sor {i+1}: nev='{i_nev}', email='{i_email}', szakterulet='{i_szakterulet}'")
+
+            # Keresés névv és email alapján
+            existing = None
+            if i_email:
+                existing = db.query(models.Instructor).filter(models.Instructor.email == i_email).first()
+            if not existing:
+                existing = db.query(models.Instructor).filter(models.Instructor.nev == i_nev).first()
+
+            if existing:
+                # Frissítjük a meglévő oktatót
+                existing.nev = i_nev
+                if i_email: existing.email = i_email
+                if i_szakterulet: existing.szakterulet = i_szakterulet
+                updated_count += 1
+            else:
+                # Új oktató felvétele
+                new_instructor = models.Instructor(
+                    nev=i_nev,
+                    email=i_email,
+                    szakterulet=i_szakterulet,
+                )
+                db.add(new_instructor)
+                saved_count += 1
+
+        except Exception as e:
+            print(f"[IMPORT][OKTATÓK][HIBA] Sor {i+1}: {e}")
+            db.rollback()
+            error_count += 1
+            errors.append({"sor": i+1, "nev": i_data.get("nev", "?"), "hiba": str(e)})
+
     db.commit()
+    print(f"[IMPORT][OKTATÓK] Kész: {saved_count} új, {updated_count} frissítve, {error_count} hiba")
     return {
         "status": "success", 
-        "message": f"{saved_count} db új oktató importálva a {len(parsed_instructors)} sorból.",
-        "beolvasott_sorok": f"{saved_count} / {len(parsed_instructors)}"
+        "message": f"{saved_count} új oktató mentve, {updated_count} frissítve a {len(parsed_instructors)} beolvasott sorból.",
+        "uj_mentve": saved_count,
+        "frissitett": updated_count,
+        "hibak": error_count,
+        "hiba_reszletek": errors
     }
 
 @app.get("/instructors/", response_model=list[schemas.Instructor])

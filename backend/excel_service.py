@@ -16,11 +16,15 @@ class ExcelService:
         # PRIORITÁS 1: Szakma
         if "szakma" in name or "kepzes" in name or "kepzesi" in name or "szakir" in name or "megnevez" in name:
             return "szakma"
-        
-        # PRIORITÁS 2: Név (de NE legyen "oktato" vagy "anyja")
+
+        # PRIORITÁS 2: Oktató neve ("Oktatók" fejléc)
+        if name.strip() in ["oktatok", "oktato"] or ("oktato" in name and "nev" in name):
+            return "nev"
+
+        # PRIORITÁS 3: Általános név mező (de NE legyen "anyja")
         if any(x in name for x in ["tanu", "diak"]) and "iskol" not in name:
             return "nev"
-        if "nev" in name and "iskol" not in name and "anyja" not in name and "oktato" not in name:
+        if "nev" in name and "iskol" not in name and "anyja" not in name:
             return "nev"
 
         if "mail" in name: return "email"
@@ -160,21 +164,56 @@ class ExcelService:
         return students
 
     def parse_instructors(self, file_bytes):
-        # Hasonló logika mint a diákoknál...
+        """Oktatók beolvasása xlsx/csv fájlból.
+        Elvártjellemző fejlécek: Oktatók (nev), Szakma megnevezése (szakterulet), e-mail cím (email)
+        """
         header_row = self._find_header_row(file_bytes)
         df = self._read_df(file_bytes, sheet=0, header=header_row)
-        df.columns = [self._normalize_column_name(col) for col in df.columns]
+        
+        # Oszlop nevek normalizálása
+        orig_cols = list(df.columns)
+        df.columns = [self._normalize_column_name(col) for col in orig_cols]
         df = df.loc[:, ~df.columns.duplicated()]
+        
+        print(f"[EXCEL][OKTATÓK] Fejléc sor: {header_row}")
+        print(f"[EXCEL][OKTATÓK] Eredeti oszlopok: {orig_cols}")
+        print(f"[EXCEL][OKTATÓK] Normalizált oszlopok: {list(df.columns)}")
+        
         instructors = []
         for _, row in df.iterrows():
             nev = self._get_safe_val(row, 'nev')
-            if not nev: continue
+            
+            # Fallback: ha nincs 'nev' oszlop, próbáljuk az első szöveges oszlopot
+            if not nev:
+                for col in df.columns:
+                    val = self._get_safe_val(row, col)
+                    if val and len(val) > 3 and '@' not in val and not val.isdigit():
+                        nev = val
+                        break
+            
+            if not nev or str(nev).strip() == '' or str(nev).isdigit():
+                continue
+            
+            # Sorszám szűrés: ha a "nev" egy szám, kihagyjuk
+            try:
+                float(nev)
+                continue  # Ez csak egy sorszám
+            except (ValueError, TypeError):
+                pass
+            
+            email = self._get_safe_val(row, 'email')
+            szakterulet = self._get_safe_val(row, 'szakma')
+            
             instructors.append({
-                "nev": str(nev),
-                "email": self._get_safe_val(row, 'email'),
-                "szakterulet": self._get_safe_val(row, 'szakma'),
-                "metadata_json": {}
+                "nev": str(nev).strip(),
+                "email": email,
+                "szakterulet": szakterulet,
+                "metadata_json": {
+                    "import_date": __import__('datetime').datetime.now().isoformat()
+                }
             })
+        
+        print(f"[EXCEL][OKTATÓK] Beolvasott oktatók száma: {len(instructors)}")
         return instructors
 
 excel_service = ExcelService()
