@@ -14,14 +14,14 @@ class ExcelService:
         name = self._normalize_accent(name)
         
         # PRIORITÁS 1: Szakma
-        if "szakma" in name or "kepzes" in name or "kepzesi" in name or "szakir" in name or "megnevez" in name:
+        if "szakma" in name or "kepzes" in name or "kepzesi" in name or "szakir" in name or "megnevez" in name or "agazat" in name:
             return "szakma"
 
         # PRIORITÁS 2: Oktató neve ("Oktatók" fejléc)
         if name.strip() in ["oktatok", "oktato"] or ("oktato" in name and "nev" in name):
             return "nev"
 
-        # PRIORITÁS 3: Általános név mező (de NE legyen "anyja")
+        # PRIORITÁS 3: Általános név mező
         if any(x in name for x in ["tanu", "diak"]) and "iskol" not in name:
             return "nev"
         if "nev" in name and "iskol" not in name and "anyja" not in name:
@@ -29,7 +29,7 @@ class ExcelService:
 
         if "mail" in name: return "email"
         if "iskol" in name: return "iskola"
-        if "evfolyam" in name or "osztaly" in name: return "evfolyam"
+        if "evfolyam" in name or "osztaly" in name or "csoport" in name: return "evfolyam"
         
         if "szerz" in name:
             if "kezd" in name and "veg" in name: return "szerzodes_idoszak"
@@ -37,20 +37,23 @@ class ExcelService:
             if "veg" in name: return "szerzodes_vege"
             return "szerzodes_idoszak"
 
-        # OM azonosító: csak ha valóban azonosítóról van szó, NEM oktatóról
-        if ("azonosito" in name or "om" == name.strip()) and "oktat" not in name:
+        # OM azonosító / Oktatási azonosító
+        if ("azonosito" in name or "om" == name.strip() or "oktatasi_azonosito" in name) and "oktat" not in name:
             return "om_azonosito"
-        if "oktatasi" in name and "azonosito" in name:
+        if "oktatasi" in name and ("azonosito" in name or "kod" in name):
             return "om_azonosito"
 
-        # Kréta-specifikus mezők → metadata_json-ba kerülnek
+        # Kréta-specifikus mezők
         if "szulet" in name:
             if "hely" in name: return "szuletesi_hely"
             return "szuletesi_datum"
         if "anyja" in name: return "anyja_neve"
-        if "lakcim" in name or "lakhely" in name or "cim" in name: return "lakhely"
+        if "lakcim" in name or "lakhely" in name or "cim" in name or "lakos" in name: return "lakhely"
         if "taj" in name: return "taj_szam"
-        if "telefon" in name or "tel" == name.strip(): return "telefon"
+        if "ado" in name and "jel" in name: return "adoazonosito"
+        if "bank" in name or "szamlaszam" in name: return "bankszamlaszam"
+        if "telefon" in name or "tel" == name.strip() or "mobil" in name: return "telefon"
+        if "diakigazolvany" in name: return "diakigazolvany"
             
         return re.sub(r'[^a-z0-9_]', '', name.replace(' ', '_'))
 
@@ -93,7 +96,19 @@ class ExcelService:
         if hasattr(val, 'any'): 
             val = val.iloc[0] if len(val) > 0 else None
         if pd.isna(val): return default
+        
+        # Dátum típusú pandas mező kezelése
+        if isinstance(val, (pd.Timestamp, __import__('datetime').datetime)):
+            return val.strftime('%Y-%m-%d')
+            
         return self._clean_string(val)
+
+    def _parse_date(self, val):
+        if not val: return None
+        s = str(val).strip().replace('.', '-').replace('/', '-')
+        # Kréta formátum: 2024-09-01- (néha van a végén kötőjel)
+        s = s.rstrip('-')
+        return s
 
     def parse_students(self, file_bytes):
         header_row = self._find_header_row(file_bytes)
@@ -146,8 +161,8 @@ class ExcelService:
                 "iskola": self._get_safe_val(row, 'iskola'),
                 "szakma": szakma,
                 "evfolyam": self._get_safe_val(row, 'evfolyam'),
-                "szerzodes_kezdet": str(kezdet).replace('.', '-') if kezdet else None,
-                "szerzodes_vege": str(vege).replace('.', '-') if vege else None,
+                "szerzodes_kezdet": self._parse_date(kezdet),
+                "szerzodes_vege": self._parse_date(vege),
                 "metadata_json": {
                     # Alap meta
                     "szakma": szakma,
@@ -158,6 +173,8 @@ class ExcelService:
                     "szuletesi_hely": self._get_safe_val(row, 'szuletesi_hely'),
                     "anyja_neve": self._get_safe_val(row, 'anyja_neve'),
                     "taj_szam": self._get_safe_val(row, 'taj_szam'),
+                    "adoazonosito": self._get_safe_val(row, 'adoazonosito'),
+                    "bankszamlaszam": self._get_safe_val(row, 'bankszamlaszam'),
                     "import_date": __import__('datetime').datetime.now().isoformat()
                 }
             })
