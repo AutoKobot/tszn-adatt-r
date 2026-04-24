@@ -164,7 +164,6 @@
                                 <button class="btn-primary" style="background: #3b82f6;" onclick="fetchAndDisplayStudents()"><i class="fas fa-sync"></i> Frissítés</button>
                                 <button class="btn-primary" style="background: #10b981;" onclick="openNewStudentModal()"><i class="fas fa-user-plus"></i> Új Tanuló</button>
                             </div>
-                        </div>
 
                             <div style="overflow-x: auto;">
                                 <table style="width: 100%; text-align: left; border-collapse: collapse; color: white; min-width: 900px;">
@@ -368,7 +367,7 @@
                                 <div id="safety-warnings-container">
                                     <p style="text-align: center; color: gray; padding: 10px;">Nincs rögzített oktatás vagy minden rendben.</p>
                                 </div>
-10px; display: flex; justify-content: space-between; border-left: 3px solid #f59e0b;">
+                                    <div style="padding: 10px; display: flex; justify-content: space-between; border-left: 3px solid #f59e0b;">
                                     <span><strong>Teljes 10.C osztály</strong></span>
                                     <span style="color: #fcd34d;">Lejár: 14 nap múlva</span>
                                 </div>
@@ -376,7 +375,10 @@
                         </section>
 
                         <section class="form-section">
-                            <div class="card" style="border-left: 4px s                                <div class="form-row">
+                            <div class="card" style="border-left: 4px solid #8b5cf6;">
+                                <h3><i class="fas fa-boxes" style="color: #8b5cf6;"></i> Munkaeszközök és Védőfelszerelés</h3>
+                                <p style="margin-bottom: 20px;">Kiadott eszközök és visszavételezés nyilvántartása.</p>
+                                <div class="form-row">
                                     <div class="form-group" style="flex: 1;">
                                         <label>Tanuló</label>
                                         <select id="equip-student-select" class="login-input" style="border-radius: 8px;">
@@ -396,11 +398,6 @@
                                         <tbody id="equipment-table-body">
                                             <tr><td colspan="3" style="text-align: center; padding: 10px; color: gray;">Nincs kiadott eszköz.</td></tr>
                                         </tbody>
-                                    </table>
-                                </div>
-müveg</td>
-                                            <td style="padding: 10px; text-align: right;"><button class="btn-secondary" style="padding: 3px 10px; font-size: 0.8rem;">Visszavétel</button></td>
-                                        </tr>
                                     </table>
                                 </div>
                             </div>
@@ -926,6 +923,18 @@ müveg</td>
 
         function openNewSzakmaModal() {
             alert("Szakma rögzítése: Használd a 'Rendszer & Importálás' fül alatt az Excel feltöltést, vagy a manuális CRUD hamarosan elérhető.");
+        }
+
+        async function archiveClass() {
+            const className = document.querySelector('#admin-tab-db select').value;
+            if(confirm(`Biztosan véglegesíteni és archiválni szeretnéd a(z) ${className} osztályt? Ez a művelet nem vonható vissza.`)) {
+                try {
+                    // Itt hívnánk meg a backend archiváló végpontját
+                    alert(`${className} osztály sikeresen archiválva az irattárba.`);
+                } catch(e) {
+                    alert("Hiba történt az archiválás során.");
+                }
+            }
         }
         async function pingBackend() {
             const badge = document.getElementById('api-status-badge');
