@@ -29,7 +29,7 @@ def force_seed():
                 nev=nev,
                 email=f"force_teszt{i}@pelda.hu",
                 om_azonosito=str(78900000000 + i),
-                osztaly="12.TEST",
+                osztaly="12.A", # Átírva 12.A-ra a láthatóságért
                 tagozat="nappali",
                 szakma_torzs_id=szakma.id,
                 szerzodes_kezdet=datetime.date(2023, 9, 1),

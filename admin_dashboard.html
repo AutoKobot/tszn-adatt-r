@@ -459,6 +459,12 @@
 
                 <!-- TAB 5: Normatíva & ROI (Adat-Iker) -->
                 <div id="admin-tab-normativa" class="admin-tab-content" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: rgba(96, 165, 250, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(96, 165, 250, 0.1);">
+                        <h2 style="margin:0;"><i class="fas fa-calculator" style="color: #60a5fa;"></i> Normatíva & ROI Kalkulátor</h2>
+                        <button class="btn-primary" style="background: rgba(245, 158, 11, 0.2); border: 1px solid #f59e0b; color: #f59e0b; padding: 8px 15px;" onclick="generateTestData()">
+                            <i class="fas fa-vial"></i> [IDEIGLENES] Tesztadatok Generálása
+                        </button>
+                    </div>
                     
                     <!-- 1. Pillér: Adat-Iker Vezérlőpult -->
                     <div class="content-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
@@ -923,6 +929,26 @@
 
         function openNewSzakmaModal() {
             alert("Szakma rögzítése: Használd a 'Rendszer & Importálás' fül alatt az Excel feltöltést, vagy a manuális CRUD hamarosan elérhető.");
+        }
+
+        async function generateTestData() {
+            if(confirm("Biztosan generálsz 10 minta diákot és jelenléti adatokat az élő adatbázisba?")) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/admin/force-seed-test-data`);
+                    const data = await response.json();
+                    if(data.status === "success") {
+                        alert(data.message);
+                        // Frissítés
+                        loadSzakmaMatrix();
+                        loadNormativaSummaries();
+                        fetchAndDisplayStudents();
+                    } else {
+                        alert("Hiba: " + data.message);
+                    }
+                } catch(e) {
+                    alert("Hiba a hálózati hívás során.");
+                }
+            }
         }
 
         async function archiveClass() {
