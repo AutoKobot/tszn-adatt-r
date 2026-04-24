@@ -528,89 +528,84 @@
                         </div>
                     </div>
 
-                    <div class="grid-row-2" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem;">
+                    <!-- Szakmatörzs (Mátrix) - TELJES SZÉLESSÉG -->
+                    <div class="card" style="margin-bottom: 2rem;">
+                        <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3><i class="fas fa-list-ol" style="color: #60a5fa;"></i> Szakmaszorzók Mátrixa (S)</h3>
+                            <button class="btn-primary" style="font-size: 0.8rem; padding: 5px 15px;" onclick="openNewSzakmaModal()"><i class="fas fa-plus"></i> Új Szakma</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid #334155; color: #94a3b8;">
+                                        <th style="padding: 12px; text-align: left;">Szakmaszám</th>
+                                        <th style="padding: 12px; text-align: left;">Megnevezés</th>
+                                        <th style="padding: 12px; text-align: center;">Szorzó (S)</th>
+                                        <th style="padding: 12px; text-align: right;">Művelet</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="szakma-matrix-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Költségkezelés - TELJES SZÉLESSÉG -->
+                    <div class="card" style="border-left: 4px solid #ef4444; margin-bottom: 2rem;">
+                        <h3><i class="fas fa-money-bill-wave" style="color: #ef4444;"></i> Működési Költségek Kezelése</h3>
+                        <p style="margin-bottom: 20px; font-size: 0.9rem; color: #94a3b8;">Itt rögzítheti az iskola havi vagy egyszeri kiadásait.</p>
                         
-                        <!-- Szakmatörzs (Mátrix) -->
-                        <div class="card">
-                            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <h3><i class="fas fa-list-ol"></i> Szakmaszorzók Mátrixa (S)</h3>
-                                <button class="btn-primary" style="font-size: 0.8rem; padding: 5px 10px;" onclick="openNewSzakmaModal()"><i class="fas fa-plus"></i> Új Szakma</button>
+                        <div class="form-row" style="margin-bottom: 15px;">
+                            <div class="form-group" style="flex: 2;">
+                                <label>Megnevezés</label>
+                                <input type="text" id="cost-name" class="login-input" placeholder="pl: Műhely bérleti díj" style="border-radius: 8px;">
                             </div>
-                            <div style="overflow-y: auto; max-height: 400px;">
-                                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
-                                    <thead>
-                                        <tr style="border-bottom: 1px solid #334155; color: #94a3b8;">
-                                            <th style="padding: 10px; text-align: left;">Szakmaszám</th>
-                                            <th style="padding: 10px; text-align: left;">Megnevezés</th>
-                                            <th style="padding: 10px; text-align: center;">Szorzó (S)</th>
-                                            <th style="padding: 10px; text-align: right;">Művelet</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="szakma-matrix-body"></tbody>
-                                </table>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Összeg (Ft)</label>
+                                <input type="number" id="cost-amount" class="login-input" placeholder="Ft" style="border-radius: 8px;">
                             </div>
                         </div>
+                        <div class="form-row" style="margin-bottom: 15px;">
+                            <div class="form-group" style="flex: 1;">
+                                <label>Gyakoriság</label>
+                                <select id="cost-freq" class="login-input" style="border-radius: 8px;">
+                                    <option value="havi">Havi rendszerességű</option>
+                                    <option value="egyszeri">Egyszeri kiadás</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Kategória</label>
+                                <select id="cost-cat" class="login-input" style="border-radius: 8px;">
+                                    <option value="admin">Adminisztráció / Rezsi</option>
+                                    <option value="oktato">Oktatói extra</option>
+                                    <option value="vedofelszereles">Védőfelszerelés</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn-primary" style="width: 100%; background: #ef4444;" onclick="addExpense()"><i class="fas fa-plus"></i> Költség Hozzáadása</button>
+                        
+                        <div style="margin-top: 25px;">
+                            <h4 style="margin-bottom: 10px; color: gray;">Aktív Költségtételek</h4>
+                            <div id="expense-list" style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; max-height: 250px; overflow-y: auto;">
+                                <p style="text-align: center; color: gray; padding: 10px;">Nincs rögzített költség.</p>
+                            </div>
+                        </div>
+                    </div>
 
-                    <!-- 2. Pillér: Költségkezelés és Összesítő -->
-                    <div class="grid-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
-                        <div class="card" style="border-left: 4px solid #ef4444;">
-                            <h3><i class="fas fa-money-bill-wave" style="color: #ef4444;"></i> Működési Költségek Kezelése</h3>
-                            <p style="margin-bottom: 20px; font-size: 0.9rem;">Itt rögzítheti az iskola havi vagy egyszeri kiadásait (pl. rezsi, bérleti díj).</p>
-                            
-                            <div class="form-row" style="margin-bottom: 15px;">
-                                <div class="form-group" style="flex: 2;">
-                                    <label>Megnevezés</label>
-                                    <input type="text" id="cost-name" class="login-input" placeholder="pl: Műhely bérleti díj" style="border-radius: 8px;">
-                                </div>
-                                <div class="form-group" style="flex: 1;">
-                                    <label>Összeg (Ft)</label>
-                                    <input type="number" id="cost-amount" class="login-input" placeholder="Ft" style="border-radius: 8px;">
-                                </div>
-                            </div>
-                            <div class="form-row" style="margin-bottom: 15px;">
-                                <div class="form-group" style="flex: 1;">
-                                    <label>Gyakoriság</label>
-                                    <select id="cost-freq" class="login-input" style="border-radius: 8px;">
-                                        <option value="havi">Havi rendszerességű</option>
-                                        <option value="egyszeri">Egyszeri kiadás</option>
-                                    </select>
-                                </div>
-                                <div class="form-group" style="flex: 1;">
-                                    <label>Kategória</label>
-                                    <select id="cost-cat" class="login-input" style="border-radius: 8px;">
-                                        <option value="admin">Adminisztráció / Rezsi</option>
-                                        <option value="oktato">Oktatói extra</option>
-                                        <option value="vedofelszereles">Védőfelszerelés</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <button class="btn-primary" style="width: 100%; background: #ef4444;" onclick="addExpense()"><i class="fas fa-plus"></i> Költség Hozzáadása</button>
-                            
-                            <div style="margin-top: 25px;">
-                                <h4 style="margin-bottom: 10px; color: gray;">Aktív Költségtételek</h4>
-                                <div id="expense-list" style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; max-height: 200px; overflow-y: auto;">
-                                    <p style="text-align: center; color: gray; padding: 10px;">Nincs rögzített költség.</p>
-                                </div>
-                            </div>
+                    <!-- Alsó sor: Segédlet -->
+                    <div class="card" style="border: 1px dashed #60a5fa; background: rgba(96, 165, 250, 0.02);">
+                        <h4 style="color: #60a5fa;"><i class="fas fa-graduation-cap"></i> Hogyan számol a gép?</h4>
+                        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-family: monospace; margin: 10px 0;">
+                            <div style="color: #fbbf24;">T = Ö × S × M</div>
+                            <hr style="border: 0; border-top: 1px solid #334155; margin: 8px 0;">
+                            <ul style="list-style: none; padding: 0; font-size: 0.8rem; color: #94a3b8;">
+                                <li><strong style="color: #fff;">Ö:</strong> 1.200.000 Ft (Alapösszeg)</li>
+                                <li><strong style="color: #fff;">S:</strong> Szakmaszorzó (pl. 2.42)</li>
+                                <li><strong style="color: #fff;">M:</strong> Munkanap arány (Jelenlét)</li>
+                            </ul>
                         </div>
-
-                        <!-- Edukációs Panel -->
-                        <div class="card" style="border: 1px dashed #60a5fa; background: rgba(96, 165, 250, 0.02);">
-                            <h4 style="color: #60a5fa;"><i class="fas fa-graduation-cap"></i> Hogyan számol a gép?</h4>
-                            <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-family: monospace; margin: 10px 0;">
-                                <div style="color: #fbbf24;">T = Ö × S × M</div>
-                                <hr style="border: 0; border-top: 1px solid #334155; margin: 8px 0;">
-                                <ul style="list-style: none; padding: 0; font-size: 0.8rem; color: #94a3b8;">
-                                    <li><strong style="color: #fff;">Ö:</strong> 1.200.000 Ft (Alapösszeg)</li>
-                                    <li><strong style="color: #fff;">S:</strong> Szakmaszorzó (pl. 2.42)</li>
-                                    <li><strong style="color: #fff;">M:</strong> Munkanap arány (Jelenlét)</li>
-                                </ul>
-                            </div>
-                            <p style="font-size: 0.8rem; line-height: 1.4;">
-                                A rendszer naponta figyeli a jelenléti ívet. A <strong>betegszabadság</strong> és a 
-                                <strong>fizetett szabadság</strong> 100%-ban beleszámít a normatívába, míg az igazolatlan mulasztás csökkenti azt.
-                            </p>
-                        </div>
+                        <p style="font-size: 0.8rem; line-height: 1.4; color: #94a3b8;">
+                            A rendszer naponta figyeli a jelenléti ívet. A betegszabadság és a fizetett szabadság 100%-ban beleszámít a normatívába.
+                        </p>
                     </div>
                 </div>
 
