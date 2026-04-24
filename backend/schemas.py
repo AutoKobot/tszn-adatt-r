@@ -209,3 +209,68 @@ class StudentStats(BaseModel):
     igazolatlan_orak: int
     osztondij_javaslat: int = 0
     megfeleloseg_ok: bool = True
+
+# --- ÚJ NORMATÍVA SÉMÁK (LÉPÉS 2) ---
+
+class SzakmaBase(BaseModel):
+    megnevezes: str
+    szakma_szam: Optional[str] = None
+    agazat: Optional[str] = None
+    szorzo: float
+    onkoltsegi_alap: int
+    aktiv: bool = True
+
+class SzakmaCreate(SzakmaBase):
+    pass
+
+class SzakmaUpdate(BaseModel):
+    megnevezes: Optional[str] = None
+    szorzo: Optional[float] = None
+    onkoltsegi_alap: Optional[int] = None
+    aktiv: Optional[bool] = None
+
+class Szakma(SzakmaBase):
+    id: int
+    model_config = {"from_attributes": True}
+
+class NormativaHaviResult(BaseModel):
+    diak_id: int
+    ev: int
+    honap: int
+    havi_normativa: int
+    adokedvezmeny: int
+    sikerdij_celtar: int
+    munkanap_arany: float
+    szorzo: float
+    onkoltsegi_alap: int
+    jogosult: bool
+
+class NormativaEvesResult(BaseModel):
+    diak_id: int
+    tanev: str
+    tenyleges_osszeg: int
+    prognozis_osszeg: int
+    sikerdij_celtar_ossz: int
+    teljesitett_honapok: int
+    osszes_honapok: int
+
+class WhatIfRequest(BaseModel):
+    tervezett_diakok: List[dict] # [{"szakma_id": 1, "db": 5}, ...]
+    idoszak_kezdet: str
+
+class WhatIfResponse(BaseModel):
+    jelenlegi_havi_keret: int
+    szimulalt_havi_keret: int
+    valtozas_havi: int
+    valtozas_eves: int
+    reszletezes: List[dict]
+
+class NormativaKonfigCreate(BaseModel):
+    tanev_nev: str
+    onkoltsegi_alap_default: int
+    sikerdij_szazalek: float = 20.0
+    aktiv: bool = True
+
+class NormativaKonfig(NormativaKonfigCreate):
+    id: int
+    model_config = {"from_attributes": True}

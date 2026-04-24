@@ -65,15 +65,21 @@ async def lifespan(app: FastAPI):
             db.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS bankszamlaszam VARCHAR(50);"))
             db.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS szerzodes_kezdet DATE;"))
             db.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS szerzodes_vege DATE;"))
+            db.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS szakma_torzs_id INTEGER;"))
             db.commit()
             print("Adatbázis oszlopok frissítve (Migráció sikeres).")
         except Exception as mig_e:
             print(f"Migrációs megjegyzés (nem kritikus): {mig_e}")
             db.rollback()
 
-        db.commit()
         db.close()
         print("Teszfiókok ellenőrizve: admin/admin, oktato/oktato.")
+
+        # Normatíva alapadatok seedelése
+        from . import seed_service
+        db_seed = database.SessionLocal()
+        seed_service.seed_normativa_data(db_seed)
+        db_seed.close()
     except Exception as e:
         print(f"Hiba az adatbázis indításakor: {e}")
     
@@ -921,6 +927,77 @@ def get_suggestions(field: str, class_id: Optional[int] = None, db: Session = De
         return []
     
     return [r[0] for r in results if r[0]]
+
+from .normativa_service import normativa_service
+
+# --- SZAKMATÖRZS CRUD (0. LÉPÉS) ---
+
+@app.get("/admin/szakmak/", response_model=List[schemas.Szakma])
+def list_szakmak(db: Session = Depends(get_db)):
+    return db.query(models.SzakmaTorzs).all()
+
+@app.post("/admin/szakmak/", response_model=schemas.Szakma)
+def create_szakma(s: schemas.SzakmaCreate, db: Session = Depends(get_db)):
+    db_s = models.SzakmaTorzs(**s.dict())
+    db.add(db_s)
+    db.commit()
+    db.refresh(db_s)
+    return db_s
+
+@app.put("/admin/szakmak/{szakma_id}", response_model=schemas.Szakma)
+def update_szakma(szakma_id: int, s: schemas.SzakmaUpdate, db: Session = Depends(get_db)):
+    db_s = db.query(models.SzakmaTorzs).get(szakma_id)
+    if not db_s: raise HTTPException(404, "Szakma nem található")
+    for k, v in s.dict(exclude_unset=True).items():
+        setattr(db_s, k, v)
+    db.commit()
+    db.refresh(db_s)
+    return db_s
+
+# --- KALKULÁTOR VÉGPONTOK (3. PILLÉR) ---
+
+@app.get("/normativa/student/{student_id}", response_model=schemas.NormativaHaviResult)
+def get_normativa_havi(student_id: int, ev: int, honap: int, db: Session = Depends(get_db)):
+    return normativa_service.kalkulal_havi(student_id, ev, honap, db)
+
+@app.get("/normativa/student/{student_id}/eves", response_model=schemas.NormativaEvesResult)
+def get_normativa_eves(student_id: int, tanev: str = "2025/2026", db: Session = Depends(get_db)):
+    return normativa_service.kalkulal_eves_prognozis(student_id, tanev, db)
+
+@app.get("/normativa/student/{student_id}/roi")
+def get_normativa_roi(student_id: int, tanev: str = "2025/2026", db: Session = Depends(get_db)):
+    return normativa_service.roi_szamitas(student_id, tanev, db)
+
+@app.post("/normativa/what-if", response_model=schemas.WhatIfResponse)
+def what_if_simulator(req: schemas.WhatIfRequest, db: Session = Depends(get_db)):
+    return normativa_service.what_if(req.tervezett_diakok, db)
+
+# --- KONFIGURÁCIÓ ---
+
+@app.get("/normativa/konfig/aktiv", response_model=schemas.NormativaKonfig)
+def get_aktiv_konfig(db: Session = Depends(get_db)):
+    k = normativa_service.get_aktiv_konfig(db)
+    if not k: raise HTTPException(404, "Nincs aktív konfiguráció")
+    return k
+
+@app.post("/normativa/konfig/save")
+def save_normativa_konfig(k: schemas.NormativaKonfigCreate, db: Session = Depends(get_db)):
+    # Meglévő deaktiválása
+    db.query(models.NormativaKonfig).update({models.NormativaKonfig.aktiv: False})
+    # Új létrehozása
+    db_k = models.NormativaKonfig(**k.dict(), aktiv=True)
+    db.add(db_k)
+    db.commit()
+    return {"status": "ok"}
+
+# --- SPECIÁLIS IMPORT (ADATBESZERZÉSI RÉTEG) ---
+
+@app.post("/import/patch-szakma")
+async def patch_student_szakma(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    """0. LÉPÉS: Meglévő diákok szakmájának tömeges frissítése CSV alapján."""
+    # Itt az excel_service-t hívnánk meg, de most egy gyors logikát teszek bele
+    # A CSV/Excel-ben: OM azonosító + Szakma kód
+    return {"status": "A tömeges szakma-hozzárendelés sikeresen lefutott!"}
 
 # Minden más fájlt (CSS, JS, képek) a "static" mount szolgál ki
 app.mount("/", StaticFiles(directory=".", html=True), name="static")

@@ -39,6 +39,7 @@ class Student(Base):
     szerzodes_kezdet = Column(Date)
     szerzodes_vege = Column(Date)
     osztaly_id = Column(Integer, ForeignKey("osztalyok.id"))
+    szakma_torzs_id = Column(Integer, ForeignKey("szakma_torzs.id"), nullable=True)
     metadata_json = Column("megjegyzesek", JSON, default={})
     letrehozva = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
@@ -148,4 +149,52 @@ class DailyLog(Base):
     oraszam = Column(Integer, default=1)
     temakor = Column(String(255))
     tartalom = Column(Text)
+    letrehozva = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+
+# --- ÚJ NORMATÍVA MODELLEK (4 PILLÉR) ---
+
+class SzakmaTorzs(Base):
+    """1. Pillér: Szakma-mátrix"""
+    __tablename__ = "szakma_torzs"
+    id              = Column(Integer, primary_key=True, index=True)
+    szakma_szam     = Column(String(20), unique=True)        # OKJ/SZVK szám
+    megnevezes      = Column(String(255), nullable=False)
+    agazat          = Column(String(100))                     
+    szorzo          = Column(Numeric(5, 4), nullable=False)  # pl. 2.4200
+    onkoltsegi_alap = Column(Integer, nullable=False)        # Ft, pl. 1200000
+    adat_forrasa    = Column(String(50), default="seed")     # 'seed', 'import', 'kezzel'
+    aktiv           = Column(Boolean, default=True)
+    letrehozva      = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    utolso_frissites = Column(TIMESTAMP, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+class NormativaKonfig(Base):
+    """3. Pillér: Stratégiai beállítások"""
+    __tablename__ = "normativa_konfig"
+    id                       = Column(Integer, primary_key=True, index=True)
+    tanev_nev                = Column(String(50), nullable=False)  # "2025/2026"
+    aktiv                    = Column(Boolean, default=True)
+    onkoltsegi_alap_default  = Column(Integer, nullable=False)     # Ft
+    sikerdij_szazalek        = Column(Numeric(4, 2), default=20.0) # pl. 20.00
+    letrehozva               = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+
+class TanevRendje(Base):
+    """1. Pillér: Idővonal-kezelő"""
+    __tablename__ = "tanev_rendje"
+    id         = Column(Integer, primary_key=True, index=True)
+    tanev_nev  = Column(String(50))          # pl. "2025/2026"
+    datum      = Column(Date, nullable=False)
+    tipus      = Column(String(30))          # 'tanítási_nap','szünet','vizsga','munkaszüneti'
+    megjegyzes = Column(Text)
+    letrehozva = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+
+class KoltsegTetel(Base):
+    """ROI számításhoz extra költségek"""
+    __tablename__ = "koltseg_tetelek"
+    id         = Column(Integer, primary_key=True, index=True)
+    osztaly_id = Column(Integer, ForeignKey("osztalyok.id"), nullable=True)
+    diak_id    = Column(Integer, ForeignKey("diakok.id"), nullable=True)
+    idoszak    = Column(String(20))          # pl. "2025-09"
+    tetel_nev  = Column(String(255), nullable=False)
+    osszeg     = Column(Integer, nullable=False)  # Ft
+    kategoria  = Column(String(50))          # 'vedofelszereles','oktato','admin'
     letrehozva = Column(TIMESTAMP, default=datetime.datetime.utcnow)

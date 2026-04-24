@@ -23,6 +23,7 @@
                 <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-safety\']').click()"><i class="fas fa-shield-alt"></i> Biztonsági oktatás</a>
                 <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-safety\']').click()"><i class="fas fa-boxes"></i> Eszköz & Anyag</a>
                 <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-reports\']').click()"><i class="fas fa-chart-line"></i> Bérfeladó & Jelentések</a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-normativa\']').click()" style="color: #60a5fa;"><i class="fas fa-calculator"></i> Normatíva & ROI</a>
                 <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-reports\']').click()"><i class="fas fa-history"></i> Rendszer (Audit) Log</a>
                 <a href="index.html" style="margin-top: auto; color: #fca5a5;"><i class="fas fa-sign-out-alt" style="color: #ef4444;"></i> Kijelentkezés</a>
             </nav>
@@ -122,6 +123,7 @@
                     <button class="btn-secondary admin-tab-btn" data-target="admin-tab-mgmt" style="border-radius: 8px; white-space: nowrap;"><i class="fas fa-cogs"></i> Rendszer & Importálás</button>
                     <button class="btn-secondary admin-tab-btn" data-target="admin-tab-safety" style="border-radius: 8px; white-space: nowrap;"><i class="fas fa-hard-hat"></i> Biztonság & Eszközök</button>
                     <button class="btn-secondary admin-tab-btn" data-target="admin-tab-reports" style="border-radius: 8px; white-space: nowrap;"><i class="fas fa-chart-line"></i> Jelentések & Audit</button>
+                    <button class="btn-secondary admin-tab-btn" data-target="admin-tab-normativa" style="border-radius: 8px; white-space: nowrap; border: 1px solid #60a5fa; color: #60a5fa;"><i class="fas fa-calculator"></i> Normatíva & ROI</button>
                 </div>
 
                 <!-- TAB 1: Adatbázis & Szerződések -->
@@ -458,6 +460,110 @@ müveg</td>
                     </div>
                 </div>
 
+                <!-- TAB 5: Normatíva & ROI (Adat-Iker) -->
+                <div id="admin-tab-normativa" class="admin-tab-content" style="display: none;">
+                    
+                    <!-- 1. Pillér: Adat-Iker Vezérlőpult -->
+                    <div class="content-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                        
+                        <!-- ROI Összegző -->
+                        <div class="card" style="border-top: 4px solid #60a5fa; background: rgba(96, 165, 250, 0.05);">
+                            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3 style="margin:0;"><i class="fas fa-chart-pie"></i> ROI Prognózis</h3>
+                                <span style="font-size: 0.8rem; background: #1e293b; padding: 4px 8px; border-radius: 4px;">2025/2026 Tanév</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 4px;">Várható Normatíva</p>
+                                    <h2 id="normativa-total-income" style="color: #10b981;">0 Ft</h2>
+                                </div>
+                                <div>
+                                    <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 4px;">Kalkulált Költség</p>
+                                    <h2 id="normativa-total-cost" style="color: #ef4444;">0 Ft</h2>
+                                </div>
+                            </div>
+                            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                <div style="display:flex; justify-content: space-between; align-items: center;">
+                                    <span>Nettó Egyenleg:</span>
+                                    <strong id="normativa-net-result" style="font-size: 1.2rem;">0 Ft</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3. Pillér: What-If Szimulátor -->
+                        <div class="card" style="border-top: 4px solid #8b5cf6;">
+                            <h3><i class="fas fa-magic"></i> Stratégiai Szimulátor</h3>
+                            <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px;">Hogyan változik a bevétel új csoportok indításával?</p>
+                            <div class="form-group">
+                                <label style="font-size: 0.8rem;">Válassz szakmát:</label>
+                                <select id="what-if-szakma" class="login-input" style="padding: 6px;"></select>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="number" id="what-if-count" class="login-input" value="10" style="width: 80px; padding: 6px;">
+                                <span style="font-size: 0.9rem;">fő diák</span>
+                                <button class="btn-primary" style="background: #8b5cf6; padding: 6px 12px;" onclick="runWhatIf()"><i class="fas fa-play"></i> Futtatás</button>
+                            </div>
+                            <div id="what-if-result" style="margin-top: 10px; font-size: 0.9rem; color: #60a5fa; font-weight: bold;"></div>
+                        </div>
+
+                        <!-- 0. LÉPÉS: Konfiguráció -->
+                        <div class="card" style="border-top: 4px solid #10b981;">
+                            <h3><i class="fas fa-cog"></i> Alapbeállítások</h3>
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label style="font-size: 0.8rem;">Önköltségi alap (Ö):</label>
+                                <input type="number" id="config-base-amount" class="login-input" value="1200000" style="padding: 4px;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label style="font-size: 0.8rem;">Sikerdíj (%):</label>
+                                <input type="number" id="config-bonus-pct" class="login-input" value="20" style="padding: 4px;">
+                            </div>
+                            <button class="btn-primary" style="width: 100%; background: #10b981; font-size: 0.8rem;" onclick="saveNormativaConfig()">Beállítások Mentése</button>
+                        </div>
+                    </div>
+
+                    <div class="grid-row-2" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 1.5rem;">
+                        
+                        <!-- Szakmatörzs (Mátrix) -->
+                        <div class="card">
+                            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <h3><i class="fas fa-list-ol"></i> Szakmaszorzók Mátrixa (S)</h3>
+                                <button class="btn-primary" style="font-size: 0.8rem; padding: 5px 10px;" onclick="openNewSzakmaModal()"><i class="fas fa-plus"></i> Új Szakma</button>
+                            </div>
+                            <div style="overflow-y: auto; max-height: 400px;">
+                                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                                    <thead>
+                                        <tr style="border-bottom: 1px solid #334155; color: #94a3b8;">
+                                            <th style="padding: 10px; text-align: left;">Szakmaszám</th>
+                                            <th style="padding: 10px; text-align: left;">Megnevezés</th>
+                                            <th style="padding: 10px; text-align: center;">Szorzó (S)</th>
+                                            <th style="padding: 10px; text-align: right;">Művelet</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="szakma-matrix-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Edukációs Panel -->
+                        <div class="card" style="border: 1px dashed #60a5fa; background: rgba(96, 165, 250, 0.02);">
+                            <h4 style="color: #60a5fa;"><i class="fas fa-graduation-cap"></i> Hogyan számol a gép?</h4>
+                            <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-family: monospace; margin: 10px 0;">
+                                <div style="color: #fbbf24;">T = Ö × S × M</div>
+                                <hr style="border: 0; border-top: 1px solid #334155; margin: 8px 0;">
+                                <ul style="list-style: none; padding: 0; font-size: 0.8rem; color: #94a3b8;">
+                                    <li><strong style="color: #fff;">Ö:</strong> 1.200.000 Ft (Alapösszeg)</li>
+                                    <li><strong style="color: #fff;">S:</strong> Szakmaszorzó (pl. 2.42)</li>
+                                    <li><strong style="color: #fff;">M:</strong> Munkanap arány (Jelenlét)</li>
+                                </ul>
+                            </div>
+                            <p style="font-size: 0.8rem; line-height: 1.4;">
+                                A rendszer naponta figyeli a jelenléti ívet. A <strong>betegszabadság</strong> és a 
+                                <strong>fizetett szabadság</strong> 100%-ban beleszámít a normatívába, míg az igazolatlan mulasztás csökkenti azt.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
@@ -660,8 +766,17 @@ müveg</td>
             pingBackend();
             setInterval(pingBackend, 10 * 60 * 1000);
 
-            const badge = document.getElementById('api-status-badge');
             if(badge) badge.innerText = `API: ${window.location.host} (Unified)`;
+
+            // --- ÚJ NORMATÍVA TAB LISTENER ---
+            const tabBtn = document.querySelector('.admin-tab-btn[data-target="admin-tab-normativa"]');
+            if(tabBtn) {
+                tabBtn.addEventListener('click', () => {
+                    loadSzakmaMatrix();
+                    loadNormativaSummaries();
+                    loadNormativaConfig();
+                });
+            }
         });
 
         // --- DASHBOARD STATS & AUTOMATION ---
@@ -698,6 +813,119 @@ müveg</td>
                     document.getElementById('iskola-list').innerHTML = data.map(v => `<option value="${v}">`).join('');
                 }
             } catch(e) {}
+        }
+
+        // --- ÚJ NORMATÍVA LOGIKA (LÉPÉS 5) ---
+        async function loadSzakmaMatrix() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/admin/szakmak/`);
+                if (response.ok) {
+                    const data = await response.json();
+                    const tbody = document.getElementById('szakma-matrix-body');
+                    const select = document.getElementById('what-if-szakma');
+                    
+                    if(tbody) tbody.innerHTML = data.map(s => `
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                            <td style="padding: 10px;">${s.szakma_szam}</td>
+                            <td style="padding: 10px;">${s.megnevezes}</td>
+                            <td style="padding: 10px; text-align: center; color: #fbbf24; font-weight: bold;">${s.szorzo}</td>
+                            <td style="padding: 10px; text-align: right;">
+                                <button class="btn-secondary" style="padding: 2px 8px; font-size: 0.7rem;" onclick="editSzakma(${s.id})">Szerkesztés</button>
+                            </td>
+                        </tr>
+                    `).join('');
+
+                    if(select) {
+                        select.innerHTML = data.map(s => `<option value="${s.id}">${s.megnevezes}</option>`).join('');
+                    }
+                }
+            } catch (err) { console.error("Szakma matrix error:", err); }
+        }
+
+        async function loadNormativaSummaries() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/normativa/student/1/roi`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const incEl = document.getElementById('normativa-total-income');
+                    const costEl = document.getElementById('normativa-total-cost');
+                    const netEl = document.getElementById('normativa-net-result');
+                    
+                    if(incEl) incEl.innerText = data.bevetel_normativa.toLocaleString() + ' Ft';
+                    if(costEl) costEl.innerText = data.kiadas_osszes.toLocaleString() + ' Ft';
+                    if(netEl) {
+                        netEl.innerText = data.netto_eredmeny.toLocaleString() + ' Ft';
+                        netEl.style.color = data.netto_eredmeny >= 0 ? '#10b981' : '#ef4444';
+                    }
+                }
+            } catch(e) {}
+        }
+
+        async function runWhatIf() {
+            const szakmaId = document.getElementById('what-if-szakma').value;
+            const count = document.getElementById('what-if-count').value;
+            const resDiv = document.getElementById('what-if-result');
+            
+            if(!resDiv) return;
+            resDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Számítás...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/normativa/what-if`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tervezett_diakok: [{ szakma_id: parseInt(szakmaId), db: parseInt(count) }],
+                        idoszak_kezdet: "2025-09"
+                    })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    resDiv.innerHTML = `
+                        <div style="background: rgba(16,185,129,0.1); padding: 10px; border-radius: 4px; margin-top: 10px;">
+                            <div style="color: #10b981;">+${data.valtozas_havi.toLocaleString()} Ft / hó</div>
+                            <div style="color: #60a5fa; font-size: 0.8rem;">Éves többlet: ${data.valtozas_eves.toLocaleString()} Ft</div>
+                        </div>
+                    `;
+                }
+            } catch (err) { resDiv.innerText = "Hiba a szimuláció során."; }
+        }
+
+        async function loadNormativaConfig() {
+            try {
+                const r = await fetch(`${API_BASE_URL}/normativa/konfig/aktiv`);
+                if(r.ok) {
+                    const d = await r.json();
+                    const baseEl = document.getElementById('config-base-amount');
+                    const bonusEl = document.getElementById('config-bonus-pct');
+                    if(baseEl) baseEl.value = d.onkoltsegi_alap_default;
+                    if(bonusEl) bonusEl.value = d.sikerdij_szazalek;
+                }
+            } catch(e) {}
+        }
+
+        async function saveNormativaConfig() {
+            const base = document.getElementById('config-base-amount').value;
+            const bonus = document.getElementById('config-bonus-pct').value;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/normativa/konfig/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tanev_nev: "2025/2026", // Dinamikusan is jöhetne
+                        onkoltsegi_alap_default: parseInt(base),
+                        sikerdij_szazalek: parseFloat(bonus)
+                    })
+                });
+                if (response.ok) {
+                    alert("Konfiguráció sikeresen elmentve és aktiválva!");
+                    loadSzakmaMatrix(); // Frissítjük a nézetet is
+                }
+            } catch (err) { alert("Hiba a mentés során."); }
+        }
+
+        function openNewSzakmaModal() {
+            alert("Szakma rögzítése: Használd a 'Rendszer & Importálás' fül alatt az Excel feltöltést, vagy a manuális CRUD hamarosan elérhető.");
         }
         async function pingBackend() {
             const badge = document.getElementById('api-status-badge');

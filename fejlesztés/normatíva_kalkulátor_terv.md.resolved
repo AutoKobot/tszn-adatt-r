@@ -1,0 +1,330 @@
+# Normatíva + Költségkalkulátor – Teljes Logikai Terv
+
+## Az alapképlet
+
+```
+T = Ö × S × M
+```
+
+| Változó | Neve | Példa érték |
+|---|---|---|
+| **Ö** | Éves önköltségi alapösszeg | 1.200.000 Ft (jogszabályi) |
+| **S** | Szakmaszorzó | Hegesztő: 2.42 / Szoftverfejlesztő: 1.2 |
+| **M** | Munkanap-arány | tény. ledolgozott napok / elvárt munkanapok |
+
+> **Példa:** Hegesztő tanuló, 21 elvárt munkanapból 18-at teljesített  
+> `T = 1.200.000 × 2.42 × (18/21) = 1.663.543 Ft/év`  
+> Havi részlet: `T / 12 = ~138.629 Ft`
+
+---
+
+## 1. Adatmodell – Entitások és kapcsolatok
+
+### 1.1 Meglévő entitások (bővítendők)
+
+```
+Student ──────── ClassRoom
+   │                 │
+Attendance        DailyLog
+   │
+ExternalGrade
+```
+
+### 1.2 Új entitások
+
+#### `SzakmaTorzs` – Szakma-törzsadatbázis (admin szerkeszthető)
+
+```sql
+CREATE TABLE szakma_torzs (
+  id               SERIAL PRIMARY KEY,
+  szakma_szam      VARCHAR(20) UNIQUE,      -- OKJ/SZVK szám pl. "4-0611-16-Y"
+  megnevezes       VARCHAR(255) NOT NULL,   -- pl. "Szoftverfejlesztő, -tesztelő"
+  agaz at          VARCHAR(100),            -- pl. "Informatika", "Gépészet"
+  szorzó           NUMERIC(5,4) NOT NULL,   -- pl. 1.2000, 2.4200
+  onkoltsegi_alap  INTEGER NOT NULL,        -- Ft, pl. 1200000
+  aktiv            BOOLEAN DEFAULT TRUE,
+  ervenyes_tol     DATE,
+  ervenyes_ig      DATE,
+  megjegyzes       TEXT,
+  letrehozva       TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### `NormatívaKonfig` – Tanév-szintű konfiguráció (admin állítja be)
+
+```sql
+CREATE TABLE normativa_konfig (
+  id               SERIAL PRIMARY KEY,
+  tanev_nev        VARCHAR(50) NOT NULL,    -- pl. "2025/2026"
+  aktiv            BOOLEAN DEFAULT TRUE,
+  onkoltsegi_alap  INTEGER NOT NULL,        -- ha felülírja a szakma-törzsét
+  sikerdij_szazalek NUMERIC(4,2) DEFAULT 20.00,  -- sikerdíj %
+  sikerdij_feltetelek TEXT,                 -- pl. "vizsgán megfelelt"
+  letrehozva       TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### `KoltsegTetel` – Rugalmas egyéb költségtételek
+
+```sql
+CREATE TABLE koltseg_tetelek (
+  id               SERIAL PRIMARY KEY,
+  osztaly_id       INTEGER REFERENCES osztalyok(id),
+  diak_id          INTEGER REFERENCES diakok(id),  -- NULL = osztályszintű
+  idoszak          VARCHAR(20),             -- pl. "2025-09" vagy "2025/2026-1"
+  tetel_nev        VARCHAR(255) NOT NULL,
+  osszeg           INTEGER NOT NULL,        -- Ft
+  kategoria        VARCHAR(50),             -- 'vedofelszereles','oktato','admin','egyeb'
+  megjegyzes       TEXT,
+  letrehozva       TIMESTAMP DEFAULT NOW()
+);
+```
+
+### 1.3 Bővítendő meglévő modellek
+
+**`Student` modell** – új mező:
+```python
+szakma_torzs_id = Column(Integer, ForeignKey("szakma_torzs.id"), nullable=True)
+# A metadata_json["szakma"] string maradhat visszafelé-kompatibilitáshoz
+```
+
+**`Attendance` modell** – a `statusz` enum bővítése:
+```
+Jelenlegi: 'jelen', 'igazolt_hianyzas', 'igazolatlan_hianyzas'
+Bővítés:   + 'betegsz abadsag', 'szunet', 'munkaszuneti_nap'
+```
+
+---
+
+## 2. Kalkulátor Service – `normativa_service.py`
+
+### Osztályszerkezet
+
+```python
+class NormativaService:
+
+    def get_szakma_szorzo(self, student_id: int, db) -> float:
+        """Visszaadja a tanuló szakmájának szorzóját."""
+
+    def get_munkanap_arany(self, student_id: int, ev: int, honap: int, db) -> float:
+        """
+        Lekéri az adott hónapban:
+        - elvárt munkanapok száma (munkaszüneti napokat leszámítva)
+        - ténylegesen ledolgozott/jelenlévő napok száma
+        Visszaad: ledolgozott / elvárt arány (0.0 – 1.0)
+        """
+
+    def kalkulal_havi(self, student_id: int, ev: int, honap: int, db) -> dict:
+        """
+        Futtatja a T = Ö × S × M képletet egy adott hónapra.
+        Visszaad:
+          - havi_normativa: Ft
+          - adokedvezmeny: Ft (a havi normatíva = levonható az adóból)
+          - munkanap_arany: float
+          - jogosult: bool
+        """
+
+    def kalkulal_eves(self, student_id: int, tanev: str, db) -> dict:
+        """
+        Összesíti az összes hónapot → éves normatíva.
+        Tartalmaz prognózist a hiányzó hónapokra (várható érték).
+        """
+
+    def sikerdij_celtar alek(self, student_id: int, db) -> dict:
+        """
+        Visszaadja a várható sikerdíj-összeget.
+        Feltétel: vizsgán megfelelt AND min. jelenlét teljesül
+        """
+
+    def what_if(self, uj_tanulok: list[dict], idoszak: str, db) -> dict:
+        """
+        Szimulál: Ha x db új tanuló (adott szakmával) csatlakozna,
+        hogyan változna a cég havi adókedvezmény-kerete?
+        Input: [{"szakma_id": 3, "evfolyam": 10}, ...]
+        """
+
+    def osztaly_osszesito(self, osztaly_id: int, idoszak: str, db) -> dict:
+        """Teljes osztály összesített normatívája + egyéb cost tételek."""
+```
+
+### A `kalkulal_havi` részletes logikája
+
+```python
+def kalkulal_havi(student_id, ev, honap, db):
+    student = db.query(Student).get(student_id)
+    szakma = db.query(SzakmaTorzs).get(student.szakma_torzs_id)
+    
+    O = szakma.onkoltsegi_alap       # Éves önköltségi alap (Ft)
+    S = float(szakma.szorzo)         # Szakmaszorzó
+    M = get_munkanap_arany(...)      # Ledolgozott / elvárt napok
+    
+    eves_T = O * S * M               # Éves normatíva (arányos)
+    havi_T = eves_T / 12             # Havi részlet
+    
+    # Sikerdíj-céltartalék halmozása
+    sikerdij = havi_T * (konfig.sikerdij_szazalek / 100)
+    
+    return {
+        "havi_normativa": round(havi_T),
+        "adokedvezmeny": round(havi_T),      # 1:1 adókedvezmény duálisnál
+        "sikerdij_celtar": round(sikerdij),
+        "munkanap_arany": round(M, 4),
+        "szorzo": S,
+        "onkoltsegi_alap": O,
+        "jogosult": M >= 0.8,                # 80%-os küszöb
+    }
+```
+
+---
+
+## 3. API Endpointok
+
+### Normatíva
+
+| Method | Útvonal | Leírás |
+|---|---|---|
+| `GET` | `/normativa/student/{id}?ev=2025&honap=11` | Egy diák havi normatívája |
+| `GET` | `/normativa/student/{id}/eves?tanev=2025/2026` | Éves összesítő + prognózis |
+| `GET` | `/normativa/student/{id}/sikerdij` | Sikerdíj-céltartalék állapota |
+| `GET` | `/normativa/class/{class_id}?idoszak=2025-11` | Osztály összesítő |
+| `POST` | `/normativa/what-if` | What-if szimulátor |
+| `GET` | `/normativa/class/{class_id}/export?format=csv` | Könyvelési export |
+
+### Szakma-törzsadatbázis (admin)
+
+| Method | Útvonal | Leírás |
+|---|---|---|
+| `GET` | `/admin/szakmak/` | Összes szakma listázása |
+| `POST` | `/admin/szakmak/` | Új szakma felvétele |
+| `PUT` | `/admin/szakmak/{id}` | Szorzó / alap módosítása |
+| `DELETE` | `/admin/szakmak/{id}` | Inaktiválás (soft delete) |
+
+### Konfiguráció
+
+| Method | Útvonal | Leírás |
+|---|---|---|
+| `GET` | `/normativa/konfig/aktiv` | Aktív tanév-konfig |
+| `POST` | `/normativa/konfig` | Új tanév konfiguráció |
+
+---
+
+## 4. Frontend UI terv
+
+### 4.1 Dashboard – Vezetői nézet (aggregált)
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Normatíva Dashboard – 2025. november               │
+├──────────────┬──────────────┬──────────────┬────────┤
+│ Teljes havi  │ Ebből        │ Sikerdíj     │ Jogos. │
+│ adókedvezmény│ kifizetett   │ céltartalék  │ diákok │
+│ 2.847.320 Ft │ 1.923.000 Ft │  569.464 Ft  │ 18/21  │
+├──────────────┴──────────────┴──────────────┴────────┤
+│  [Táblázat: Osztályonként bontva]                   │
+│  [What-if Szimulátor panel]                         │
+│  [Export → CSV (könyvelés) | Excel]                 │
+└─────────────────────────────────────────────────────┘
+```
+
+### 4.2 Tanulói adatlap – „Pénzügyi fül"
+
+```
+┌────────────────────────────────────────────┐
+│  Kovács Péter – Pénzügyi összefoglaló      │
+│  Szakma: Szoftverfejlesztő (S = 1.2)       │
+├──────────────────┬─────────────────────────┤
+│  Ez a hónap      │  Éves prognózis         │
+│  138.629 Ft      │  1.663.543 Ft           │
+│  Jogosultság: ✅ │  Teljesítés: 87%        │
+├──────────────────┴─────────────────────────┤
+│  Sikerdíj-céltartalék: 33.271 Ft          │
+│  [████████░░] 4/5 hónap teljesítve         │
+│  Várható kifiz.: 2026. jún. 30.            │
+└────────────────────────────────────────────┘
+```
+
+### 4.3 What-if Szimulátor panel
+
+```
+┌──────────────────────────────────────────────────┐
+│  🔮 What-if Szimulátor                           │
+│  "Ha felveszünk még X tanulót..."                │
+├──────────────────────────────────────────────────┤
+│  Hozzáadandó tanulók:                            │
+│  [+ Sor hozzáadása]  Szakma ▼  Évf. ▼           │
+│  ┌──────────────────┬───────┬────────┐           │
+│  │ Asztalos         │  10.  │  2 fő  │ [−]      │
+│  │ Szoftverfejlesztő│  11.  │  1 fő  │ [−]      │
+│  └──────────────────┴───────┴────────┘           │
+│  Időszak: [Szeptember 2025 ▼]                    │
+│                                                  │
+│  [▶ Szimulálás futtatása]                        │
+│                                                  │
+│  Eredmény:                                       │
+│  Jelenlegi havi keret: 2.847.320 Ft              │
+│  Szimulált keret:      3.412.800 Ft  (+565.480)  │
+│  Éves változás:       +6.785.760 Ft              │
+└──────────────────────────────────────────────────┘
+```
+
+### 4.4 Admin – Szakmaszorzók szerkesztő
+
+```
+┌────────────────────────────────────────────────────┐
+│  Szakma-törzsadatbázis  [+ Új szakma]             │
+├───────────────────────┬──────────┬───────┬────────┤
+│  Szakma neve          │ Szám     │ Szorzó│ Alap   │
+├───────────────────────┼──────────┼───────┼────────┤
+│  Szoftverfejlesztő    │ 4-0611.. │ 1.20  │ 1,2M   │
+│  Hegesztő             │ 3-0521.. │ 2.42  │ 1,2M   │
+│  Asztalos             │ 3-0522.. │ 1.85  │ 1,2M   │
+└───────────────────────┴──────────┴───────┴────────┘
+│ Tanév: [2025/2026 ▼]  Önköltségi alap: [1200000] │
+│ Sikerdíj: [20]%        [Mentés]                   │
+└────────────────────────────────────────────────────┘
+```
+
+---
+
+## 5. Implementációs sorrend
+
+```mermaid
+graph TD
+    A["1. models.py – SzakmaTorzs + KoltsegTetel"] --> B["2. schemas.py – Pydantic sémák"]
+    B --> C["3. normativa_service.py – T=Ö×S×M logika"]
+    C --> D["4. main.py – API endpointok"]
+    D --> E["5. Admin UI – Szakmaszorzók szerkesztő"]
+    E --> F["6. Dashboard – Normatíva tab"]
+    F --> G["7. Diák adatlap – Pénzügyi fül"]
+    G --> H["8. What-if szimulátor"]
+    H --> I["9. Export – CSV/Excel könyveléshez"]
+```
+
+### Részletezés lépésenként
+
+| # | Fájl | Mit csinálunk | Meglévő bővítés vagy új? |
+|---|---|---|---|
+| 1 | `models.py` | `SzakmaTorzs`, `NormatívaKonfig`, `KoltsegTetel` modellek | **Új** |
+| 2 | `models.py` | `Student.szakma_torzs_id` FK, `Attendance.statusz` bővítés | **Meglévő bővítése** |
+| 3 | `schemas.py` | Új Pydantic sémák a fentiekhez | **Új** |
+| 4 | `normativa_service.py` | `NormativaService` osztály, `T = Ö × S × M` | **Új fájl** |
+| 5 | `main.py` | `/normativa/*` és `/admin/szakmak/*` endpointok | **Meglévő bővítése** |
+| 6 | `main.py` | `/normativa/what-if` POST endpoint | **Új** |
+| 7 | `admin_dashboard.html` | Normatíva tab + szakmaszorzó admin UI | **Meglévő bővítése** |
+| 8 | `admin_dashboard.html` | What-if szimulátor panel | **Új komponens** |
+| 9 | `admin_dashboard.html` | Pénzügyi fül a diák modal-ban | **Meglévő bővítése** |
+| 10 | `main.py` | CSV/XML export könyveléshez | **Meglévő `/export/payroll` bővítése** |
+
+---
+
+## 6. Nyitott kérdések (döntést igényel)
+
+> [!IMPORTANT]
+> Az implementáció előtt tisztázandó:
+
+1. **Szakmaszorzók forrása** – Megvan-e a jelenlegi szorzótáblázat (OKJ/SZVK alapján), vagy nekünk kell összeállítani néhány mintával?
+2. **Önköltségi alap** – Az 1.200.000 Ft éves, és ez ugyanaz minden szakmára, csak a szorzó tér el?
+3. **Munkanap-számítás** – A munkaszüneti napokat automatikusan számítjuk (Magyar állami munkaszünneti napok), vagy az admin adja meg manuálisan?
+4. **Sikerdíj feltétele** – Mit jelent pontosan „vizsgán megfelelt"? Van-e ehhez már adat a rendszerben (pl. `ExternalGrade`-ben valamilyen flag)?
+5. **Jelenlét granularitás** – A meglévő `Attendance` tábla óra-alapú. A normatíva nap-alapú. Ezeket össze kell hangolni – egy nap = 8 óra legyen az átváltás?
+6. **What-if kimenet** – Csak havi keretszámot mutasson, vagy cash-flow grafikont is (havi bontásban előre 12 hónapra)?
