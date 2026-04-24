@@ -195,4 +195,25 @@ class NormativaService:
             "reszletezes": reszletezes
         }
 
+    def get_global_roi_summary(self, db: Session):
+        """Összesített ROI kimutatás az összes aktív diákra."""
+        students = db.query(models.Student).all()
+        konfig = self.get_aktiv_konfig(db)
+        
+        total_income = 0
+        for s in students:
+            # Minden diákra kiszámoljuk az éves várható bevételt (M=1.0 prognózis)
+            res = self.kalkulal_eves_prognozis(db, s.id)
+            total_income += res.bevetel_osszes
+        
+        # Kiadások (Fix + Változó)
+        expenses = db.query(models.KoltsegTetel).all()
+        total_expense = sum(e.osszeg for e in expenses)
+        
+        return {
+            "bevetel_normativa": total_income,
+            "kiadas_osszes": total_expense,
+            "netto_eredmeny": total_income - total_expense
+        }
+
 normativa_service = NormativaService()

@@ -847,8 +847,8 @@
 
         async function loadNormativaSummaries() {
             try {
-                const res = await fetch(`${API_BASE_URL}/normativa/student/1/roi`);
-                if (res.ok) {
+                const res = await fetch(`${API_BASE_URL}/normativa/summary/roi`);
+                if(res.ok) {
                     const data = await res.json();
                     const incEl = document.getElementById('normativa-total-income');
                     const costEl = document.getElementById('normativa-total-cost');
@@ -861,7 +861,9 @@
                         netEl.style.color = data.netto_eredmeny >= 0 ? '#10b981' : '#ef4444';
                     }
                 }
-            } catch(e) {}
+            } catch(e) {
+                console.error("ROI Summary Error:", e);
+            }
         }
 
         async function runWhatIf() {

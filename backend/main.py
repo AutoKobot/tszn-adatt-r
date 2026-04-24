@@ -972,6 +972,11 @@ def get_normativa_roi(student_id: int, tanev: str = "2025/2026", db: Session = D
 def what_if_simulator(req: schemas.WhatIfRequest, db: Session = Depends(get_db)):
     return normativa_service.what_if(req.tervezett_diakok, db)
 
+@app.get("/normativa/summary/roi")
+def get_global_roi(db: Session = Depends(get_db)):
+    """Globális ROI adatok lekérése."""
+    return normativa_service.get_global_roi_summary(db)
+
 # --- KONFIGURÁCIÓ ---
 
 @app.get("/admin/force-seed-test-data")
