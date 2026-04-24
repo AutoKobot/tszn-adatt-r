@@ -197,4 +197,5 @@ class KoltsegTetel(Base):
     tetel_nev  = Column(String(255), nullable=False)
     osszeg     = Column(Integer, nullable=False)  # Ft
     kategoria  = Column(String(50))          # 'vedofelszereles','oktato','admin'
+    gyakorisag = Column(String(20), default="egyszeri") # 'egyszeri','havi'
     letrehozva = Column(TIMESTAMP, default=datetime.datetime.utcnow)

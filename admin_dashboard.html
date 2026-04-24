@@ -478,12 +478,16 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <div>
                                     <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 4px;">Várható Normatíva</p>
-                                    <h2 id="normativa-total-income" style="color: #10b981;">0 Ft</h2>
+                                    <h2 id="normativa-total-income" style="color: #10b981; font-size: 1.4rem;">0 Ft</h2>
                                 </div>
                                 <div>
-                                    <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 4px;">Kalkulált Költség</p>
-                                    <h2 id="normativa-total-cost" style="color: #ef4444;">0 Ft</h2>
+                                    <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 4px;">Kifizetendő Ösztöndíjak</p>
+                                    <h2 id="normativa-scholarship-cost" style="color: #fbbf24; font-size: 1.4rem;">0 Ft</h2>
                                 </div>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <p style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 4px;">Egyéb Működési Költség</p>
+                                <h2 id="normativa-total-cost" style="color: #ef4444; font-size: 1.4rem;">0 Ft</h2>
                             </div>
                             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
                                 <div style="display:flex; justify-content: space-between; align-items: center;">
@@ -544,6 +548,49 @@
                                     </thead>
                                     <tbody id="szakma-matrix-body"></tbody>
                                 </table>
+                            </div>
+                        </div>
+
+                    <!-- 2. Pillér: Költségkezelés és Összesítő -->
+                    <div class="grid-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem;">
+                        <div class="card" style="border-left: 4px solid #ef4444;">
+                            <h3><i class="fas fa-money-bill-wave" style="color: #ef4444;"></i> Működési Költségek Kezelése</h3>
+                            <p style="margin-bottom: 20px; font-size: 0.9rem;">Itt rögzítheti az iskola havi vagy egyszeri kiadásait (pl. rezsi, bérleti díj).</p>
+                            
+                            <div class="form-row" style="margin-bottom: 15px;">
+                                <div class="form-group" style="flex: 2;">
+                                    <label>Megnevezés</label>
+                                    <input type="text" id="cost-name" class="login-input" placeholder="pl: Műhely bérleti díj" style="border-radius: 8px;">
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Összeg (Ft)</label>
+                                    <input type="number" id="cost-amount" class="login-input" placeholder="Ft" style="border-radius: 8px;">
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-bottom: 15px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Gyakoriság</label>
+                                    <select id="cost-freq" class="login-input" style="border-radius: 8px;">
+                                        <option value="havi">Havi rendszerességű</option>
+                                        <option value="egyszeri">Egyszeri kiadás</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Kategória</label>
+                                    <select id="cost-cat" class="login-input" style="border-radius: 8px;">
+                                        <option value="admin">Adminisztráció / Rezsi</option>
+                                        <option value="oktato">Oktatói extra</option>
+                                        <option value="vedofelszereles">Védőfelszerelés</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="btn-primary" style="width: 100%; background: #ef4444;" onclick="addExpense()"><i class="fas fa-plus"></i> Költség Hozzáadása</button>
+                            
+                            <div style="margin-top: 25px;">
+                                <h4 style="margin-bottom: 10px; color: gray;">Aktív Költségtételek</h4>
+                                <div id="expense-list" style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px; max-height: 200px; overflow-y: auto;">
+                                    <p style="text-align: center; color: gray; padding: 10px;">Nincs rögzített költség.</p>
+                                </div>
                             </div>
                         </div>
 
@@ -778,8 +825,11 @@
                     loadSzakmaMatrix();
                     loadNormativaSummaries();
                     loadNormativaConfig();
+                    loadExpenses();
                 });
             }
+            // Kezdeti összesítés
+            setTimeout(loadNormativaSummaries, 1000);
         });
 
         // --- DASHBOARD STATS & AUTOMATION ---
@@ -852,10 +902,13 @@
                     const data = await res.json();
                     const incEl = document.getElementById('normativa-total-income');
                     const costEl = document.getElementById('normativa-total-cost');
+                    const schEl = document.getElementById('normativa-scholarship-cost');
                     const netEl = document.getElementById('normativa-net-result');
                     
                     if(incEl) incEl.innerText = data.bevetel_normativa.toLocaleString() + ' Ft';
-                    if(costEl) costEl.innerText = data.kiadas_osszes.toLocaleString() + ' Ft';
+                    if(costEl) costEl.innerText = data.kiadas_egyeb.toLocaleString() + ' Ft';
+                    if(schEl) schEl.innerText = data.kiadas_osztondij.toLocaleString() + ' Ft';
+                    
                     if(netEl) {
                         netEl.innerText = data.netto_eredmeny.toLocaleString() + ' Ft';
                         netEl.style.color = data.netto_eredmeny >= 0 ? '#10b981' : '#ef4444';
@@ -863,6 +916,77 @@
                 }
             } catch(e) {
                 console.error("ROI Summary Error:", e);
+            }
+        }
+
+        async function addExpense() {
+            const name = document.getElementById('cost-name').value;
+            const amount = document.getElementById('cost-amount').value;
+            const freq = document.getElementById('cost-freq').value;
+            const cat = document.getElementById('cost-cat').value;
+
+            if(!name || !amount) {
+                alert("Kérlek adj meg nevet és összeget!");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/normativa/expenses`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        tetel_nev: name,
+                        osszeg: parseInt(amount),
+                        gyakorisag: freq,
+                        kategoria: cat
+                    })
+                });
+                if(res.ok) {
+                    document.getElementById('cost-name').value = '';
+                    document.getElementById('cost-amount').value = '';
+                    loadExpenses();
+                    loadNormativaSummaries();
+                }
+            } catch(e) { alert("Hiba a mentés során."); }
+        }
+
+        async function loadExpenses() {
+            const container = document.getElementById('expense-list');
+            if(!container) return;
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/normativa/expenses`);
+                if(res.ok) {
+                    const data = await res.json();
+                    if(data.length === 0) {
+                        container.innerHTML = '<p style="text-align: center; color: gray; padding: 10px;">Nincs rögzített költség.</p>';
+                        return;
+                    }
+                    container.innerHTML = '';
+                    data.forEach(e => {
+                        const div = document.createElement('div');
+                        div.style.display = 'flex';
+                        div.style.justifyContent = 'space-between';
+                        div.style.padding = '8px';
+                        div.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                        div.innerHTML = `
+                            <div>
+                                <strong>${e.tetel_nev}</strong><br>
+                                <small style="color: gray;">${e.gyakorisag === 'havi' ? 'Havi' : 'Egyszeri'} | ${e.osszeg.toLocaleString()} Ft</small>
+                            </div>
+                            <button onclick="deleteExpense(${e.id})" style="background:none; border:none; color:#ef4444; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                        `;
+                        container.appendChild(div);
+                    });
+                }
+            } catch(e) {}
+        }
+
+        async function deleteExpense(id) {
+            if(confirm("Biztosan törlöd ezt a költséget?")) {
+                await fetch(`${API_BASE_URL}/normativa/expenses/${id}`, {method: 'DELETE'});
+                loadExpenses();
+                loadNormativaSummaries();
             }
         }
 

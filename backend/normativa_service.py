@@ -196,24 +196,45 @@ class NormativaService:
         }
 
     def get_global_roi_summary(self, db: Session):
-        """Összesített ROI kimutatás az összes aktív diákra."""
+        """Összesített ROI kimutatás az összes aktív diákra, levonva az ösztöndíjakat és fix költségeket."""
         students = db.query(models.Student).all()
-        konfig = self.get_aktiv_konfig(db)
         
-        total_income = 0
+        # 1. BEVÉTELI OLDAL: Normatíva (M=1.0 éves prognózis)
+        total_normativa_income = 0
+        total_monthly_scholarship = 0
         for s in students:
-            # Minden diákra kiszámoljuk az éves várható bevételt (M=1.0 prognózis)
             res = self.kalkulal_eves_prognozis(db, s.id)
-            total_income += res.bevetel_osszes
+            total_normativa_income += res.bevetel_osszes
+            # Ösztöndíj (havi kiadás)
+            if s.havi_osztondij:
+                total_monthly_scholarship += s.havi_osztondij
         
-        # Kiadások (Fix + Változó)
+        # 2. KIADÁSI OLDAL: Egyéb költségek (Adatbázisból)
         expenses = db.query(models.KoltsegTetel).all()
-        total_expense = sum(e.osszeg for e in expenses)
+        fixed_one_time_costs = 0
+        recurring_monthly_costs = 0
+        
+        for e in expenses:
+            # Ha van gyakoriság mező (havi), akkor 12-vel szorozzuk az évesítéshez
+            gyakorisag = getattr(e, "gyakorisag", "egyszeri")
+            if gyakorisag == "havi":
+                recurring_monthly_costs += e.osszeg
+            else:
+                fixed_one_time_costs += e.osszeg
+        
+        # Évesített kiadások
+        total_annual_scholarship = total_monthly_scholarship * 12
+        total_annual_recurring = recurring_monthly_costs * 12
+        total_expense = fixed_one_time_costs + total_annual_scholarship + total_annual_recurring
         
         return {
-            "bevetel_normativa": total_income,
+            "bevetel_normativa": total_normativa_income,
+            "kiadas_osztondij": total_annual_scholarship,
+            "kiadas_egyeb": fixed_one_time_costs + total_annual_recurring,
             "kiadas_osszes": total_expense,
-            "netto_eredmeny": total_income - total_expense
+            "netto_eredmeny": total_normativa_income - total_expense,
+            "havi_kiadas_osztondij": total_monthly_scholarship,
+            "havi_kiadas_egyeb": recurring_monthly_costs
         }
 
 normativa_service = NormativaService()

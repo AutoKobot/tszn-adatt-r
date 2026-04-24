@@ -1003,7 +1003,31 @@ def save_normativa_konfig(k: schemas.NormativaKonfigCreate, db: Session = Depend
     db_k = models.NormativaKonfig(**k.dict(), aktiv=True)
     db.add(db_k)
     db.commit()
-    return {"status": "ok"}
+    return db_k
+
+@app.get("/normativa/expenses")
+def get_expenses(db: Session = Depends(get_db)):
+    return db.query(models.KoltsegTetel).all()
+
+@app.post("/normativa/expenses")
+def add_expense(data: dict, db: Session = Depends(get_db)):
+    new_e = models.KoltsegTetel(
+        tetel_nev=data["tetel_nev"],
+        osszeg=data["osszeg"],
+        gyakorisag=data["gyakorisag"],
+        kategoria=data["kategoria"]
+    )
+    db.add(new_e)
+    db.commit()
+    return {"status": "success"}
+
+@app.delete("/normativa/expenses/{id}")
+def delete_expense(id: int, db: Session = Depends(get_db)):
+    e = db.query(models.KoltsegTetel).filter(models.KoltsegTetel.id == id).first()
+    if e:
+        db.delete(e)
+        db.commit()
+    return {"status": "success"}
 
 # --- SPECIÁLIS IMPORT (ADATBESZERZÉSI RÉTEG) ---
 
