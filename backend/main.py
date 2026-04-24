@@ -974,6 +974,16 @@ def what_if_simulator(req: schemas.WhatIfRequest, db: Session = Depends(get_db))
 
 # --- KONFIGURÁCIÓ ---
 
+@app.get("/admin/force-seed-test-data")
+def force_seed_api(db: Session = Depends(get_db)):
+    """Kényszerített tesztadat generálás az élő oldalon."""
+    from . import force_seed_students
+    try:
+        force_seed_students.force_seed()
+        return {"status": "success", "message": "10 teszt diák és jelenléti adatok létrehozva az élő adatbázisban!"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.get("/normativa/konfig/aktiv", response_model=schemas.NormativaKonfig)
 def get_aktiv_konfig(db: Session = Depends(get_db)):
     k = normativa_service.get_aktiv_konfig(db)
