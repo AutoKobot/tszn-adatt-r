@@ -274,3 +274,14 @@ class NormativaKonfigCreate(BaseModel):
 class NormativaKonfig(NormativaKonfigCreate):
     id: int
     model_config = {"from_attributes": True}
+
+class ClassROISummary(BaseModel):
+    osztaly_id: int
+    osztaly_nev: str
+    diak_szam: int
+    bevetel_normativa: int
+    kiadas_osztondij: int
+    kiadas_egyeb: int
+    kiadas_osszes: int
+    netto_eredmeny: int
+    roi_szazalek: float

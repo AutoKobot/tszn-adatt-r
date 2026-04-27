@@ -977,6 +977,11 @@ def get_global_roi(db: Session = Depends(get_db)):
     """Globális ROI adatok lekérése."""
     return normativa_service.get_global_roi_summary(db)
 
+@app.get("/normativa/summary/roi/classes", response_model=List[schemas.ClassROISummary])
+def get_class_roi(db: Session = Depends(get_db)):
+    """Osztályokra lebontott ROI adatok lekérése."""
+    return normativa_service.get_class_roi_summary(db)
+
 # --- KONFIGURÁCIÓ ---
 
 @app.get("/admin/force-seed-test-data")

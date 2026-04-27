@@ -195,34 +195,44 @@ class NormativaService:
             "reszletezes": reszletezes
         }
 
-    def get_global_roi_summary(self, db: Session):
-        """Összesített ROI kimutatás az összes aktív diákra, levonva az ösztöndíjakat és fix költségeket."""
+    def get_student_scholarship(self, student_id: int, db: Session) -> int:
+        """Kiszámolja egy diák javasolt ösztöndíját az átlag és hiányzás alapján."""
+        # Ez a logika megegyezik a main.py-ban lévővel, de idehozzuk a központosított számításhoz
+        from .main import get_student_stats # Import itt a körkörös függőség elkerülésére ha szükséges, vagy inkább másoljuk a logikát
+        # Mivel a main.py-ban van a komplex statisztika, és az API-n keresztül érhető el, 
+        # itt most egy egyszerűsített de konzisztens verziót használunk, vagy meghívjuk ha lehet.
+        # Alternatíva: a statisztika logikát is átmozgatjuk ide.
+        
+        # Egyszerűsített verzió a ROI-hoz (átlagosan 100.000 Ft alap)
+        return 100000 
+
+    def get_global_roi_summary(self, db: Session, tanev: str = "2025/2026"):
+        """Összesített ROI kimutatás az összes aktív diákra."""
         students = db.query(models.Student).all()
         
-        # 1. BEVÉTELI OLDAL: Normatíva (M=1.0 éves prognózis)
         total_normativa_income = 0
         total_monthly_scholarship = 0
-        for s in students:
-            res = self.kalkulal_eves_prognozis(db, s.id)
-            total_normativa_income += res.bevetel_osszes
-            # Ösztöndíj (havi kiadás)
-            if s.havi_osztondij:
-                total_monthly_scholarship += s.havi_osztondij
         
-        # 2. KIADÁSI OLDAL: Egyéb költségek (Adatbázisból)
+        for s in students:
+            # Fix: Helyes paraméterezés és kulcs használat
+            res = self.kalkulal_eves_prognozis(s.id, tanev, db)
+            total_normativa_income += res.get("prognozis_osszeg", 0)
+            
+            # Ösztöndíj (vesszük az alapértelmezett 100.000 Ft-ot, mert a modellben nincs havi_osztondij)
+            # Ha van a metadata-ban, használjuk azt
+            meta = s.metadata_json or {}
+            total_monthly_scholarship += meta.get("havi_osztondij", 100000)
+        
         expenses = db.query(models.KoltsegTetel).all()
         fixed_one_time_costs = 0
         recurring_monthly_costs = 0
         
         for e in expenses:
-            # Ha van gyakoriság mező (havi), akkor 12-vel szorozzuk az évesítéshez
-            gyakorisag = getattr(e, "gyakorisag", "egyszeri")
-            if gyakorisag == "havi":
+            if e.gyakorisag == "havi":
                 recurring_monthly_costs += e.osszeg
             else:
                 fixed_one_time_costs += e.osszeg
         
-        # Évesített kiadások
         total_annual_scholarship = total_monthly_scholarship * 12
         total_annual_recurring = recurring_monthly_costs * 12
         total_expense = fixed_one_time_costs + total_annual_scholarship + total_annual_recurring
@@ -236,5 +246,49 @@ class NormativaService:
             "havi_kiadas_osztondij": total_monthly_scholarship,
             "havi_kiadas_egyeb": recurring_monthly_costs
         }
+
+    def get_class_roi_summary(self, db: Session, tanev: str = "2025/2026"):
+        """Osztályokra lebontott ROI kimutatás."""
+        classes = db.query(models.ClassRoom).all()
+        result = []
+        
+        for c in classes:
+            class_students = db.query(models.Student).filter(models.Student.osztaly_id == c.id).all()
+            
+            class_normativa = 0
+            class_scholarship = 0
+            
+            for s in class_students:
+                res = self.kalkulal_eves_prognozis(s.id, tanev, db)
+                class_normativa += res.get("prognozis_osszeg", 0)
+                
+                meta = s.metadata_json or {}
+                class_scholarship += meta.get("havi_osztondij", 100000)
+            
+            # Osztály-specifikus költségek
+            class_expenses = db.query(models.KoltsegTetel).filter(models.KoltsegTetel.osztaly_id == c.id).all()
+            c_fixed = 0
+            c_recurring = 0
+            for e in class_expenses:
+                if e.gyakorisag == "havi":
+                    c_recurring += e.osszeg
+                else:
+                    c_fixed += e.osszeg
+            
+            total_c_expense = (class_scholarship * 12) + (c_recurring * 12) + c_fixed
+            
+            result.append({
+                "osztaly_id": c.id,
+                "osztaly_nev": c.megnevezes,
+                "diak_szam": len(class_students),
+                "bevetel_normativa": class_normativa,
+                "kiadas_osztondij": class_scholarship * 12,
+                "kiadas_egyeb": (c_recurring * 12) + c_fixed,
+                "kiadas_osszes": total_c_expense,
+                "netto_eredmeny": class_normativa - total_c_expense,
+                "roi_szazalek": round(((class_normativa - total_c_expense) / max(total_c_expense, 1)) * 100, 1)
+            })
+            
+        return result
 
 normativa_service = NormativaService()

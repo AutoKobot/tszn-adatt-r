@@ -528,6 +528,29 @@
                         </div>
                     </div>
 
+                    <!-- ÚJ: Osztályokra lebontott ROI -->
+                    <div class="card" style="margin-bottom: 2rem; border-left: 4px solid #60a5fa;">
+                        <h3><i class="fas fa-layer-group"></i> Osztályokra Lebontott Kimutatás</h3>
+                        <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 15px;">Az összesített adatok bontása képzési egységenként.</p>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid #334155; color: #94a3b8;">
+                                        <th style="padding: 10px; text-align: left;">Osztály</th>
+                                        <th style="padding: 10px; text-align: center;">Létszám</th>
+                                        <th style="padding: 10px; text-align: right;">Bevétel (Norm.)</th>
+                                        <th style="padding: 10px; text-align: right;">Kiadás (Összes)</th>
+                                        <th style="padding: 10px; text-align: right;">Eredmény</th>
+                                        <th style="padding: 10px; text-align: center;">ROI</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="class-roi-body">
+                                    <tr><td colspan="6" style="text-align: center; padding: 20px; color: gray;">Adatok betöltése...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <!-- Szakmatörzs (Mátrix) - TELJES SZÉLESSÉG -->
                     <div class="card" style="margin-bottom: 2rem;">
                         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -907,6 +930,35 @@
                     if(netEl) {
                         netEl.innerText = data.netto_eredmeny.toLocaleString() + ' Ft';
                         netEl.style.color = data.netto_eredmeny >= 0 ? '#10b981' : '#ef4444';
+                    }
+                }
+
+                // Osztályonkénti adatok lekérése
+                const classRes = await fetch(`${API_BASE_URL}/normativa/summary/roi/classes`);
+                if(classRes.ok) {
+                    const classData = await classRes.json();
+                    const classBody = document.getElementById('class-roi-body');
+                    if(classBody) {
+                        if(classData.length === 0) {
+                            classBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: gray;">Nincs adat.</td></tr>';
+                        } else {
+                            classBody.innerHTML = classData.map(c => `
+                                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding: 10px;"><strong>${c.osztaly_nev}</strong></td>
+                                    <td style="padding: 10px; text-align: center;">${c.diak_szam} fő</td>
+                                    <td style="padding: 10px; text-align: right; color: #10b981;">${c.bevetel_normativa.toLocaleString()} Ft</td>
+                                    <td style="padding: 10px; text-align: right; color: #fbbf24;">${c.kiadas_osszes.toLocaleString()} Ft</td>
+                                    <td style="padding: 10px; text-align: right; font-weight: bold; color: ${c.netto_eredmeny >= 0 ? '#10b981' : '#ef4444'};">
+                                        ${c.netto_eredmeny.toLocaleString()} Ft
+                                    </td>
+                                    <td style="padding: 10px; text-align: center;">
+                                        <span style="background: ${c.roi_szazalek >= 0 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color: ${c.roi_szazalek >= 0 ? '#10b981' : '#ef4444'}; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem;">
+                                            ${c.roi_szazalek}%
+                                        </span>
+                                    </td>
+                                </tr>
+                            `).join('');
+                        }
                     }
                 }
             } catch(e) {
