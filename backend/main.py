@@ -780,12 +780,29 @@ def delete_equipment(equip_id: int, db: Session = Depends(get_db)):
 # --- RENDKÍVÜLI ADATTÖRLÉS (Dummy adatok) ---
 @app.post("/debug/cleanup-dummy-data")
 def cleanup_dummy_data(db: Session = Depends(get_db)):
-    # Töröljük a diákokat aki neve teszt jellegű
-    dummy_names = ["Kovács Péter", "Szabó Éva", "Teszt Elek", "John Doe", "Jane Doe"]
-    deleted_students = db.query(models.Student).filter(models.Student.nev.in_(dummy_names)).delete(synchronize_session=False)
+    dummy_names = [
+        "Kovács Péter", "Szabó Éva", "Teszt Elek", "John Doe", "Jane Doe",
+        "Teszt Aladár", "Minta Beáta", "Próba Cecil", "Demo Dénes", 
+        "Fiktív Eleonóra", "Szoftver Szabolcs", "Hegesztő Hugó", 
+        "Kalkulátor Klára", "ROI Róbert", "Adat-Iker Adél"
+    ]
     
-    # Töröljük a demo osztályokat
-    dummy_classes = ["11.B (Gépészet)", "12.A (Informatika)"]
+    # 1. Diák ID-k kigyűjtése
+    dummy_students = db.query(models.Student).filter(models.Student.nev.in_(dummy_names)).all()
+    dummy_student_ids = [s.id for s in dummy_students]
+    
+    deleted_students = 0
+    if dummy_student_ids:
+        # 2. Kapcsolódó táblák törlése
+        db.query(models.ExternalGrade).filter(models.ExternalGrade.diak_id.in_(dummy_student_ids)).delete(synchronize_session=False)
+        db.query(models.Attendance).filter(models.Attendance.diak_id.in_(dummy_student_ids)).delete(synchronize_session=False)
+        db.query(models.DualisSzerzodes).filter(models.DualisSzerzodes.diak_id.in_(dummy_student_ids)).delete(synchronize_session=False)
+        
+        # 3. Diákok törlése
+        deleted_students = db.query(models.Student).filter(models.Student.id.in_(dummy_student_ids)).delete(synchronize_session=False)
+    
+    # 4. Teszt osztályok törlése
+    dummy_classes = ["11.B (Gépészet)", "12.A (Informatika)", "12.A"]
     deleted_classes = db.query(models.ClassRoom).filter(models.ClassRoom.megnevezes.in_(dummy_classes)).delete(synchronize_session=False)
     
     db.commit()

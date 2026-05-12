@@ -32,6 +32,16 @@ def force_seed():
         
         for i, nev in enumerate(nevek):
             szakma = szakmak[i % len(szakmak)]
+            
+            # Kockázati profilok beállítása teszteléshez
+            orvosi = ma + datetime.timedelta(days=365)
+            munkavedelmi = ma - datetime.timedelta(days=30)
+            
+            if i == 1: # Minta Beáta: Lejárt orvosi
+                orvosi = ma - datetime.timedelta(days=10)
+            elif i == 2: # Próba Cecil: Nincs munkavédelmi
+                munkavedelmi = None
+                
             diak = models.Student(
                 nev=nev,
                 email=f"force_teszt{i}@pelda.hu",
@@ -41,6 +51,8 @@ def force_seed():
                 szakma_torzs_id=szakma.id,
                 szerzodes_kezdet=datetime.date(2023, 9, 1),
                 szerzodes_vege=datetime.date(2025, 6, 15),
+                orvosi_alkalmassagi_lejarat=orvosi,
+                munkavedelmi_oktatas_datum=munkavedelmi,
                 metadata_json={
                     "havi_osztondij": 60000 + (i * 1500),
                     "szakma": szakma.megnevezes
@@ -49,13 +61,17 @@ def force_seed():
             db.add(diak)
             db.flush()
 
-            # Jelenlét generálás az aktuális hónapra
+            # Jelenlét és érdemjegy generálás
+            hianyzas_suly = 25
+            if i == 3: # Demo Dénes: Sok hiányzás (>15%)
+                hianyzas_suly = 4 
+            
             for nap in range(1, ma.day + 1):
                 datum = honap_eleje.replace(day=nap)
                 if datum.weekday() >= 5: continue
 
                 # Véletlenszerű státusz
-                if (i + nap) % 25 == 0: statusz = "betegszabadsag"
+                if (i + nap) % hianyzas_suly == 0: statusz = "igazolatlan" if i == 3 else "betegszabadsag"
                 elif (i + nap) % 18 == 0: statusz = "igazolt_hianyzas"
                 else: statusz = "dualis_nap" if (nap % 2 == 0) else "jelen"
 
@@ -67,10 +83,20 @@ def force_seed():
                     tipus="cég" if "dualis" in statusz else "iskola"
                 )
                 db.add(jelenlet)
+                
+            # Érdemjegy (Demo Dénes rossz jegyeket is kap)
+            jegy_ertek = 2 if i == 4 else 5 # Fiktív Eleonóra bukásra áll (átlag: 2.0)
+            jegy = models.ExternalGrade(
+                diak_id=diak.id,
+                tantargy="Szakmai gyakorlat",
+                jegy=jegy_ertek,
+                datum=ma
+            )
+            db.add(jegy)
         
         db.commit()
-        print(f"Sikeresen létrehozva {len(nevek)} diák és havi jelenléti íveik.")
-        print("Most már látnod kell az adatokat a Normatíva & ROI fülön!")
+        print(f"Sikeresen létrehozva {len(nevek)} diák, jelenlétek és érdemjegyek (kockázati profilokkal).")
+        print("Most már tesztelheted az AI Riasztásokat a felületen!")
 
     except Exception as e:
         db.rollback()
