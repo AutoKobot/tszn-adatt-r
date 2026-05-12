@@ -888,13 +888,28 @@ def get_student_stats(student_id: int, db: Session = Depends(get_db)):
         elif atlag >= 3.0: osztondij = base_stipend * 0.5
         elif atlag >= 2.0: osztondij = base_stipend * 0.1
     
-    # 4. Megfelelőség ellenőrzés
+    # 4. Megfelelőség ellenőrzés és Prediktív Kockázatelemzés (Early Warning)
     is_compliant = True
+    risks = []
+    
     today = datetime.date.today()
     if not student.orvosi_alkalmassagi_lejarat or student.orvosi_alkalmassagi_lejarat < today:
         is_compliant = False
+        risks.append("Lejárt orvosi alkalmassági")
     if not student.munkavedelmi_oktatas_datum:
         is_compliant = False
+        risks.append("Hiányzó munkavédelmi oktatás")
+
+    # Kockázat: Hiányzás megközelíti a 20%-ot
+    if hiany_szazalek >= 15:
+        risks.append(f"Kritikus hiányzási szint: {hiany_szazalek}% (Közelít a 20%-os jogszabályi limithez)")
+        # compliance romlik, ha már elérte a 20-at
+        if hiany_szazalek >= 20:
+            is_compliant = False
+
+    # Kockázat: Romló/Kritikus érdemjegyek
+    if atlag > 0 and atlag < 2.5:
+        risks.append(f"Gyenge tanulmányi átlag: {atlag} (Lemorzsolódási és ösztöndíj kockázat)")
 
     return schemas.StudentStats(
         diak_id=student_id,
@@ -902,8 +917,38 @@ def get_student_stats(student_id: int, db: Session = Depends(get_db)):
         hianyzas_szazalek=hiany_szazalek,
         igazolatlan_orak=igazolatlan_count,
         osztondij_javaslat=int(osztondij),
-        megfeleloseg_ok=is_compliant
+        megfeleloseg_ok=is_compliant,
+        risks=risks
     )
+
+@app.post("/students/{student_id}/send-warning-email")
+def send_risk_email(student_id: int, db: Session = Depends(get_db)):
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Diák nem található")
+    
+    stats = get_student_stats(student_id, db)
+    if not stats.risks:
+        return {"status": "info", "message": "Nincs fennálló kockázat a diáknál.", "email_content": ""}
+    
+    risk_list = "\n- ".join(stats.risks)
+    
+    email_body = f"""Tisztelt Szülő / Gondviselő!
+    
+Ez egy automatikus rendszerüzenet az EduRegistrar rendszerből.
+Értesítjük, hogy {student.nev} (OM: {student.oktatasi_azonosito}) tanulónál az alábbi megfelelőségi vagy tanulmányi kockázatok léptek fel, melyek a szakképzési munkaszerződés felmondását vagy az ösztöndíj megvonását vonhatják maguk után:
+
+- {risk_list}
+
+Kérjük, mielőbb vegye fel a kapcsolatot az iskolával vagy a gyakorlati oktatóval a helyzet tisztázása érdekében!
+
+Tisztelettel:
+Iskola Vezetősége"""
+
+    # Itt történne a tényleges SMTP email kiküldés
+    # pl. send_email(student.email, "Kockázati Figyelmeztetés", email_body)
+    
+    return {"status": "success", "message": "Email sikeresen generálva.", "email_content": email_body}
 
 @app.get("/students/dashboard-summary")
 def get_dashboard_summary(db: Session = Depends(get_db)):

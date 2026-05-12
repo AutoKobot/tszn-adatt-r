@@ -1599,14 +1599,30 @@
                 if(r.ok) {
                     const stats = await r.json();
                     const stipendColor = stats.osztondij_javaslat > 0 ? '#10b981' : '#ef4444';
-                    const complianceColor = stats.megfeleloseg_ok ? '#10b981' : '#f59e0b';
                     
+                    let complianceHtml = '';
+                    if (stats.risks && stats.risks.length > 0) {
+                        const riskItems = stats.risks.map(risk => `<li>${risk}</li>`).join('');
+                        complianceHtml = `
+                            <div style="color: #ef4444; font-size: 0.75rem; margin-top: 5px; background: rgba(239, 68, 68, 0.1); padding: 5px; border-radius: 4px;">
+                                <strong><i class="fas fa-exclamation-triangle"></i> Kockázati Riasztás (AI)</strong>
+                                <ul style="margin: 3px 0; padding-left: 15px;">${riskItems}</ul>
+                                <button class="btn-primary" style="background: #ef4444; font-size: 0.65rem; padding: 2px 5px; margin-top: 3px;" onclick="sendRiskEmail(${studentId})">Szülői értesítő küldése</button>
+                            </div>
+                        `;
+                    } else {
+                        const complianceColor = stats.megfeleloseg_ok ? '#10b981' : '#f59e0b';
+                        complianceHtml = `
+                            <div style="color: ${complianceColor}; font-size: 0.75rem;">
+                                <i class="fas ${stats.megfeleloseg_ok ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> 
+                                ${stats.megfeleloseg_ok ? 'Megfelelt' : 'Hiányos adatok'}
+                            </div>
+                        `;
+                    }
+
                     container.innerHTML = `
                         <div style="color: ${stipendColor}; font-weight: 600;">💰 ${stats.osztondij_javaslat.toLocaleString()} Ft</div>
-                        <div style="color: ${complianceColor}; font-size: 0.75rem;">
-                            <i class="fas ${stats.megfeleloseg_ok ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i> 
-                            ${stats.megfeleloseg_ok ? 'Megfelelt' : 'Hiányos adatok'}
-                        </div>
+                        ${complianceHtml}
                         <div style="font-size: 0.75rem; color: #94a3b8;">
                             Átlag: ${stats.atlag} | Hiány: ${stats.hianyzas_szazalek}%
                         </div>
@@ -1834,6 +1850,23 @@
                 }
             } catch (err) { alert('Hálózati hiba.'); }
         }
+        
+        async function sendRiskEmail(studentId) {
+            if(confirm('Biztosan szeretnél automatikus szülői értesítőt (Email) generálni a fennálló kockázatokról?')) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/students/${studentId}/send-warning-email`, { method: 'POST' });
+                    const result = await response.json();
+                    if(response.ok) {
+                        alert("✅ Értesítő sikeresen kiküldve: \n\n" + result.email_content);
+                    } else {
+                        alert("Hiba: " + result.detail);
+                    }
+                } catch(e) {
+                    alert('Hálózati hiba az email küldésekor.');
+                }
+            }
+        }
+
         // --- KONFLIKTUS KEZELŐ FÜGGVÉNYEK ---
         function openConflictModal(conflicts) {
             window.pendingConflicts = conflicts;

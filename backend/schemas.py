@@ -209,6 +209,7 @@ class StudentStats(BaseModel):
     igazolatlan_orak: int
     osztondij_javaslat: int = 0
     megfeleloseg_ok: bool = True
+    risks: list[str] = []
 
 # --- ÚJ NORMATÍVA SÉMÁK (LÉPÉS 2) ---
 
