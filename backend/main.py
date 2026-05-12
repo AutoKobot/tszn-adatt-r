@@ -632,6 +632,50 @@ async def generate_student_contract(student_id: int, db: Session = Depends(get_d
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Szerződés generálási hiba: {str(e)}")
 
+import zipfile
+import tempfile
+
+@app.get("/contracts/mass-generate")
+async def mass_generate_contracts(db: Session = Depends(get_db)):
+    """Összes aktív diákhoz generál egy ZIP fájlt a kitöltött szerződésekkel."""
+    students = db.query(models.Student).all()
+    if not students:
+        raise HTTPException(status_code=404, detail="Nincs diák az adatbázisban.")
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        for student in students:
+            meta = student.metadata_json or {}
+            data = {
+                "nev": student.nev,
+                "email": student.email or "",
+                "om_azonosito": student.oktatasi_azonosito or "",
+                "diakigazolvany": student.diakigazolvany_szam or "",
+                "szerzodes_kezdet": student.szerzodes_kezdet or "",
+                "szerzodes_vege": student.szerzodes_vege or "",
+                "tagozat": student.tagozat,
+                "szakma": meta.get("szakma", ""),
+                "iskola": meta.get("iskola", ""),
+                "evfolyam": meta.get("evfolyam", ""),
+                "lakhely": student.lakhely or ""
+            }
+            template_name = "dualis_nappali.docx" if student.tagozat == "nappali" else "dualis_felnott.docx"
+            try:
+                output_path = doc_service.generate_contract(template_name, data)
+                # Fájl hozzáadása a ZIP-hez
+                zip_file.write(output_path, arcname=os.path.basename(output_path))
+            except Exception as e:
+                # Ha nincs sablon, vagy hiba van, kihagyjuk a diákot
+                continue
+
+    if zip_buffer.tell() == 0:
+        raise HTTPException(status_code=400, detail="Nem sikerült egyetlen szerződést sem generálni. Biztosan feltöltötted a sablonokat (.docx)?")
+
+    zip_buffer.seek(0)
+    response = StreamingResponse(zip_buffer, media_type="application/zip")
+    response.headers["Content-Disposition"] = "attachment; filename=Szerzodesek_Tomeges_Export.zip"
+    return response
+
 # --- PARTNEREK ---
 @app.get("/partners/", response_model=list[schemas.Partner])
 def read_partners(db: Session = Depends(get_db)):

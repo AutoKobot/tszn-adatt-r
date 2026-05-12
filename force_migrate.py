@@ -29,10 +29,17 @@ with engine.begin() as conn:
 
     try:
         # 2. Osztályok tábla frissítése
-        conn.execute(text("ALTER TABLE osztalyok ADD COLUMN elvart_szakiranyu_oraszam INTEGER DEFAULT 400;"))
-        conn.execute(text("ALTER TABLE osztalyok ADD COLUMN max_hianyzas_szazalek INTEGER DEFAULT 20;"))
+        conn.execute(text("ALTER TABLE osztalyok ADD COLUMN IF NOT EXISTS elvart_szakiranyu_oraszam INTEGER DEFAULT 400;"))
+        conn.execute(text("ALTER TABLE osztalyok ADD COLUMN IF NOT EXISTS max_hianyzas_szazalek INTEGER DEFAULT 20;"))
         print("✅ Osztályok tábla kiegészítve.")
     except Exception as e:
         print(f"Megjegyzés (osztalyok): Az osztály oszlopok feltehetőleg már léteznek vagy hiba történt: {e}")
+
+    try:
+        # 3. Szakmatörzs tábla frissítése
+        conn.execute(text("ALTER TABLE szakma_torzs ADD COLUMN IF NOT EXISTS adat_forrasa VARCHAR(50) DEFAULT 'seed';"))
+        print("✅ Szakmatörzs tábla kiegészítve.")
+    except Exception as e:
+        pass
 
 print("\nKész! A böngészőben nyomhatsz egy F5-öt és most már jónak kell lennie az adatok listázásának!")

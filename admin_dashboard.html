@@ -105,8 +105,8 @@
                         </div>
                     </div>
                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                        <button class="btn-primary" style="background: #4f46e5; flex: 1; min-width: 250px; padding: 12px;" onclick="document.querySelector('.admin-tab-btn[data-target=\'admin-tab-mgmt\']').click(); alert('Tömeges generálás indítása...');">
-                            <i class="fas fa-file-signature"></i> Tömeges szerződés generálás
+                        <button class="btn-primary" style="background: #4f46e5; flex: 1; min-width: 250px; padding: 12px;" onclick="massGenerateContracts()">
+                            <i class="fas fa-file-signature"></i> Tömeges szerződés generálás (.ZIP)
                         </button>
                         <button class="btn-primary" style="background: #10b981; flex: 1; min-width: 250px; padding: 12px;" onclick="exportCSVData()">
                             <i class="fas fa-file-excel"></i> Havi bérfeladó export (.csv)
@@ -902,6 +902,7 @@
             pingBackend();
             setInterval(pingBackend, 10 * 60 * 1000);
 
+            const badge = document.getElementById('api-status-badge');
             if(badge) badge.innerText = `API: ${window.location.host} (Unified)`;
 
             // --- ÚJ NORMATÍVA TAB LISTENER ---
@@ -937,6 +938,32 @@
         async function exportCSVData() {
             // Tömeges export kérése a backend felé
             window.location.href = `${API_BASE_URL}/export/payroll`;
+        }
+
+        async function massGenerateContracts() {
+            if (confirm("Biztosan generálni szeretnéd az összes diák szerződését egy ZIP fájlba? Ez eltarthat egy ideig.")) {
+                try {
+                    const res = await fetch(`${API_BASE_URL}/contracts/mass-generate`, { method: 'GET' });
+                    
+                    if (!res.ok) {
+                        const errorData = await res.json();
+                        throw new Error(errorData.detail || "Hiba a generálás során.");
+                    }
+                    
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'Szerzodesek_Tomeges_Export.zip';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    alert("A szerződések generálása sikeres, a letöltés megkezdődött!");
+                } catch (error) {
+                    alert("Sikertelen generálás: " + error.message);
+                }
+            }
         }
 
         async function loadAdminSuggestions() {
