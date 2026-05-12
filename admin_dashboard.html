@@ -17,15 +17,15 @@
                 <span>EduRegistrar</span>
             </div>
             <nav>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-db\']').click()" class="active"><i class="fas fa-database"></i> Adatbázis Kezelő</a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-db\']').click()"><i class="fas fa-file-contract"></i> Felhasználók & Szerződések</a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-mgmt\']').click()"><i class="fas fa-building"></i> Cégek & Paraméterek</a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-safety\']').click()"><i class="fas fa-shield-alt"></i> Biztonsági oktatás</a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-safety\']').click()"><i class="fas fa-boxes"></i> Eszköz & Anyag</a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-reports\']').click()"><i class="fas fa-chart-line"></i> Bérfeladó & Jelentések</a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-normativa\']').click()" style="color: #60a5fa;"><i class="fas fa-calculator"></i> Normatíva & ROI</a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-reports\']').click()"><i class="fas fa-history"></i> Rendszer (Audit) Log</a>
-                <a href="index.html" style="margin-top: auto; color: #fca5a5;"><i class="fas fa-sign-out-alt" style="color: #ef4444;"></i> Kijelentkezés</a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-db\']').click()" class="active"><i class="fas fa-database"></i> <span>Adatbázis</span></a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-db\']').click()"><i class="fas fa-file-contract"></i> <span>Szerződések</span></a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-mgmt\']').click()"><i class="fas fa-building"></i> <span>Cégek</span></a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-safety\']').click()"><i class="fas fa-shield-alt"></i> <span>Biztonság</span></a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-safety\']').click()"><i class="fas fa-boxes"></i> <span>Eszközök</span></a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-reports\']').click()"><i class="fas fa-chart-line"></i> <span>Riportok</span></a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-normativa\']').click()" style="color: #60a5fa;"><i class="fas fa-calculator"></i> <span>Normatíva</span></a>
+                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-reports\']').click()"><i class="fas fa-history"></i> <span>Audit</span></a>
+                <a href="index.html" style="margin-top: auto; color: #fca5a5;"><i class="fas fa-sign-out-alt" style="color: #ef4444;"></i> <span>Kilépés</span></a>
             </nav>
             <div class="user-profile">
                 <div class="avatar">A</div>
@@ -556,7 +556,10 @@
                     <div class="card" style="margin-bottom: 2rem;">
                         <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                             <h3><i class="fas fa-list-ol" style="color: #60a5fa;"></i> Szakmaszorzók Mátrixa (S)</h3>
-                            <button class="btn-primary" style="font-size: 0.8rem; padding: 5px 15px;" onclick="openNewSzakmaModal()"><i class="fas fa-plus"></i> Új Szakma</button>
+                            <div>
+                                <button class="btn-primary" style="background: #10b981; font-size: 0.8rem; padding: 5px 15px; margin-right: 10px;" onclick="syncMkikData()"><i class="fas fa-sync"></i> MKIK Szinkronizálás</button>
+                                <button class="btn-primary" style="font-size: 0.8rem; padding: 5px 15px;" onclick="openNewSzakmaModal()"><i class="fas fa-plus"></i> Új Szakma</button>
+                            </div>
                         </div>
                         <div style="overflow-x: auto;">
                             <table style="width: 100%; border-collapse: collapse; font-size: 0.95rem;">
@@ -1242,6 +1245,33 @@
                 }
             } catch (err) { alert("Hálózati hiba."); }
         }
+
+        async function syncMkikData() {
+            if(confirm("Szeretnéd automatikusan letölteni és frissíteni a hivatalos szakmaszorzókat az IKK/MKIK rendszeréből?")) {
+                try {
+                    const btn = event.target;
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Szinkronizálás...';
+                    btn.disabled = true;
+
+                    const res = await fetch(`${API_BASE_URL}/admin/szakmak/sync-mkik`, { method: 'POST' });
+                    const data = await res.json();
+                    
+                    if(data.status === 'success') {
+                        alert(data.message);
+                        loadSzakmaMatrix();
+                    } else {
+                        alert("Hiba történt: " + data.message);
+                    }
+                    
+                    btn.innerHTML = originalHtml;
+                    btn.disabled = false;
+                } catch(e) {
+                    alert("Sikertelen hálózati kapcsolat.");
+                }
+            }
+        }
+
 
         async function generateTestData() {
             if(confirm("Biztosan generálsz 10 minta diákot és jelenléti adatokat az élő adatbázisba?")) {

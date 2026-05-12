@@ -954,6 +954,13 @@ def update_szakma(szakma_id: int, s: schemas.SzakmaUpdate, db: Session = Depends
     db.refresh(db_s)
     return db_s
 
+from .mkik_sync_service import mkik_sync_service
+
+@app.post("/admin/szakmak/sync-mkik")
+def sync_szakmak_from_mkik(db: Session = Depends(get_db)):
+    """Automatikus szakmaszorzó szinkronizáció az MKIK adatbázisából."""
+    return mkik_sync_service.sync_szakmak(db)
+
 # --- KALKULÁTOR VÉGPONTOK (3. PILLÉR) ---
 
 @app.get("/normativa/student/{student_id}", response_model=schemas.NormativaHaviResult)
