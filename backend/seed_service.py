@@ -57,6 +57,13 @@ def seed_normativa_data(db: Session):
             szakmak = db.query(models.SzakmaTorzs).all()
             if not szakmak: return
 
+            # Biztosítsuk, hogy létezik osztály a diákoknak
+            teszt_osztaly = db.query(models.ClassRoom).filter(models.ClassRoom.megnevezes == "12.C").first()
+            if not teszt_osztaly:
+                teszt_osztaly = models.ClassRoom(megnevezes="12.C", statusz="aktív")
+                db.add(teszt_osztaly)
+                db.flush()
+
             ma = datetime.date.today()
             honap_eleje = ma.replace(day=1)
             
@@ -67,13 +74,16 @@ def seed_normativa_data(db: Session):
                 diak = models.Student(
                     nev=nev,
                     email=f"teszt{i}@iskola.hu",
-                    om_azonosito=str(78600000000 + i),
-                    osztaly="12.C",
+                    oktatasi_azonosito=str(78600000000 + i),
+                    osztaly_id=teszt_osztaly.id,
                     tagozat="nappali",
                     szakma_torzs_id=szakma.id,
                     szerzodes_kezdet=datetime.date(2023, 9, 1),
                     szerzodes_vege=datetime.date(2025, 6, 15),
-                    havi_osztondij=50000 + (i * 2000)
+                    metadata_json={
+                        "havi_osztondij": 50000 + (i * 2000),
+                        "szakma": szakma.megnevezes
+                    }
                 )
                 db.add(diak)
                 db.flush() # Hogy megkapjuk a diák ID-ját
@@ -81,26 +91,27 @@ def seed_normativa_data(db: Session):
                 # Generáljunk jelenlétet a hónap eddigi napjaira
                 for nap in range(1, ma.day + 1):
                     datum = honap_eleje.replace(day=nap)
-                    # Hétvégéket hagyjuk ki (opcionális, de élethűbb)
+                    # Hétvégéket hagyjuk ki
                     if datum.weekday() >= 5: continue
 
-                    # Véletlenszerű státusz (90% jelen, 5% beteg, 5% igazolt hiányzás)
+                    # Véletlenszerű státusz
                     rand = i + nap
-                    if rand % 20 == 0: statusz = "beteg"
-                    elif rand % 15 == 0: statusz = "igazolt"
-                    else: statusz = "jelen"
+                    if rand % 20 == 0: statusz = "betegszabadsag"
+                    elif rand % 15 == 0: statusz = "igazolt_hianyzas"
+                    else: statusz = "dualis_nap" if (nap % 2 == 0) else "jelen"
 
-                    jelenlet = models.Presence(
-                        student_id=diak.id,
+                    jelenlet = models.Attendance(
+                        diak_id=diak.id,
                         datum=datum,
                         statusz=statusz,
-                        dualis_nap=True if (nap % 2 == 0) else False # Minden második nap duális
+                        oraszam=8,
+                        tipus="cég" if "dualis" in statusz else "iskola"
                     )
                     db.add(jelenlet)
             
             db.commit()
             print(f"[SEED] {len(nevek)} minta diák és jelenléti adatok sikeresen létrehozva.")
 
-    except Exception as e:
-        db.rollback()
-        print(f"[SEED] Hiba a betöltés során: {e}")
+        except Exception as e:
+            db.rollback()
+            print(f"[SEED] Hiba a betöltés során: {e}")
