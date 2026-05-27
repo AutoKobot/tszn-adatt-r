@@ -40,15 +40,8 @@ async def lifespan(app: FastAPI):
     try:
         database.Base.metadata.create_all(bind=database.engine)
         
-        # Alapértelmezett tesztfiókok létrehozása (Titkárság és Oktató)
+        # 1. Adatbázis sémák frissítése (Migráció meglévő táblákon) - EZT ELŐREHOZZUK!
         db = database.SessionLocal()
-        from . import auth
-        if not db.query(models.User).filter(models.User.username == "admin").first():
-            admin_user = models.User(username="admin", hashed_password=auth.get_password_hash("admin"), role="admin", full_name="Adminisztrátor")
-            db.add(admin_user)
-        # Eltávolítva a "Teszt Oktató" automatikus létrehozása
-            
-        # Adatbázis sémák frissítése (Migráció meglévő táblákon)
         from sqlalchemy import text
         try:
             # Multi-tenancy sémamigráció (DDL)
@@ -62,12 +55,12 @@ async def lifespan(app: FastAPI):
             """))
             db.commit()
 
-            db.execute(text("ALTER TABLE public.felhasznalok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.iskolak(id);"))
-            db.execute(text("ALTER TABLE public.diakok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.iskolak(id);"))
-            db.execute(text("ALTER TABLE public.osztalyok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.iskolak(id);"))
-            db.execute(text("ALTER TABLE public.oktatok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.iskolak(id);"))
-            db.execute(text("ALTER TABLE public.kulso_jegyek ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.iskolak(id);"))
-            db.execute(text("ALTER TABLE public.jelenlet ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.iskolak(id);"))
+            db.execute(text("ALTER TABLE public.felhasznalok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.schools(id);"))
+            db.execute(text("ALTER TABLE public.diakok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.schools(id);"))
+            db.execute(text("ALTER TABLE public.osztalyok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.schools(id);"))
+            db.execute(text("ALTER TABLE public.oktatok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.schools(id);"))
+            db.execute(text("ALTER TABLE public.kulso_jegyek ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.schools(id);"))
+            db.execute(text("ALTER TABLE public.jelenlet ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.schools(id);"))
             
             db.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS oktatasi_azonosito VARCHAR(11) UNIQUE;"))
             db.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS diakigazolvany_szam VARCHAR(50) UNIQUE;"))
@@ -90,10 +83,22 @@ async def lifespan(app: FastAPI):
             print(f"Migrációs megjegyzés (nem kritikus): {mig_e}")
             db.rollback()
 
-        db.close()
-        print("Teszfiókok ellenőrizve: admin/admin, oktato/oktato.")
+        # 2. Alapértelmezett tesztfiókok létrehozása (csak a sikeres migráció után)
+        try:
+            from . import auth
+            if not db.query(models.User).filter(models.User.username == "admin").first():
+                admin_user = models.User(username="admin", hashed_password=auth.get_password_hash("admin"), role="admin", full_name="Adminisztrátor")
+                db.add(admin_user)
+                db.commit()
+                print("Default admin user created.")
+        except Exception as auth_e:
+            print(f"Hiba a tesztfiókok létrehozásakor: {auth_e}")
+            db.rollback()
 
-        # Normatíva alapadatok seedelése
+        db.close()
+        print("Teszfiókok ellenőrizve: admin/admin.")
+
+        # 3. Normatíva alapadatok seedelése
         from . import seed_service
         db_seed = database.SessionLocal()
         seed_service.seed_normativa_data(db_seed)
@@ -226,16 +231,22 @@ def delete_student(student_id: int, db: Session = Depends(get_db)):
 
 # --- OSZTÁLYOK / KÉPZÉSI PARAMÉTEREK ---
 @app.get("/classes/", response_model=list[schemas.ClassRoom])
-def read_classes(db: Session = Depends(get_db)):
-    classes = db.query(models.ClassRoom).all()
+def read_classes(db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    query = db.query(models.ClassRoom)
+    if current_user.get("school_id") is not None:
+        query = query.filter(models.ClassRoom.iskola_id == current_user["school_id"])
+    classes = query.all()
     # Eltávolítva a dummy osztályok automatikus létrehozása
     return classes
 
 from fastapi import HTTPException
 
 @app.put("/classes/{class_id}/parameters", response_model=schemas.ClassRoom)
-def update_class_parameters(class_id: int, params: schemas.ClassRoomUpdate, db: Session = Depends(get_db)):
-    db_class = db.query(models.ClassRoom).filter(models.ClassRoom.id == class_id).first()
+def update_class_parameters(class_id: int, params: schemas.ClassRoomUpdate, db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    query = db.query(models.ClassRoom).filter(models.ClassRoom.id == class_id)
+    if current_user.get("school_id") is not None:
+        query = query.filter(models.ClassRoom.iskola_id == current_user["school_id"])
+    db_class = query.first()
     if not db_class:
         raise HTTPException(status_code=404, detail="Osztály nem található")
     
@@ -253,8 +264,11 @@ def update_class_parameters(class_id: int, params: schemas.ClassRoomUpdate, db: 
     return db_class
 
 @app.put("/classes/{class_id}/archive")
-def archive_class(class_id: int, db: Session = Depends(get_db)):
-    db_class = db.query(models.ClassRoom).filter(models.ClassRoom.id == class_id).first()
+def archive_class(class_id: int, db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    query = db.query(models.ClassRoom).filter(models.ClassRoom.id == class_id)
+    if current_user.get("school_id") is not None:
+        query = query.filter(models.ClassRoom.iskola_id == current_user["school_id"])
+    db_class = query.first()
     if not db_class:
         raise HTTPException(status_code=404, detail="Osztály nem található")
     db_class.statusz = "archivált"
@@ -606,8 +620,11 @@ async def import_instructors_excel(file: UploadFile = File(...), db: Session = D
     }
 
 @app.get("/instructors/", response_model=list[schemas.Instructor])
-def read_instructors(db: Session = Depends(get_db)):
-    return db.query(models.Instructor).all()
+def read_instructors(db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    query = db.query(models.Instructor)
+    if current_user.get("school_id") is not None:
+        query = query.filter(models.Instructor.iskola_id == current_user["school_id"])
+    return query.all()
 
 # --- TEMPLATE FELTÖLTÉS ---
 @app.post("/templates/upload")
@@ -738,6 +755,69 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
+# --- ISKOLAI BELÉPÉS ÉS AUTOCOMPLETE ---
+
+@app.get("/schools/public")
+def get_public_schools(db: Session = Depends(get_db)):
+    # Csak az ID-t és a Nevet adjuk vissza biztonsági okokból!
+    schools = db.query(models.School).filter(models.School.nev != None).all()
+    return [{"id": s.id, "nev": s.nev} for s in schools]
+
+@app.post("/login/school")
+def login_school(req: schemas.SchoolLoginRequest, db: Session = Depends(get_db)):
+    school = db.query(models.School).filter(models.School.id == req.school_id).first()
+    if not school:
+        raise HTTPException(status_code=404, detail="Az iskola nem található")
+    
+    # Unified School Admin hitelesítés (InteractiveLearning/schools/users alapon):
+    from sqlalchemy import text
+    from . import auth
+    is_valid = False
+    
+    try:
+        user_row = db.execute(
+            text("SELECT password FROM public.users WHERE role = 'school_admin' AND school_id = :school_id LIMIT 1"),
+            {"school_id": req.school_id}
+        ).first()
+        if user_row and user_row[0]:
+            hashed_password = user_row[0]
+            is_valid = auth.verify_scrypt_password(req.password, hashed_password)
+    except Exception as e:
+        print("Unified school admin auth error:", e)
+        is_valid = False
+        
+    # Fallback a lokális iskolai api_key ellenőrzésre (ha van ilyen mező a schools táblában átmenetileg vagy korábban)
+    if not is_valid:
+        try:
+            # Megnézzük, hogy van-e api_key oszlop a schools táblában
+            col_check = db.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name='schools' AND column_name='api_key' AND table_schema='public'")).first()
+            if col_check:
+                api_key_row = db.execute(text("SELECT api_key FROM public.schools WHERE id = :school_id"), {"school_id": req.school_id}).first()
+                if api_key_row and api_key_row[0]:
+                    key = api_key_row[0]
+                    if req.password == key:
+                        is_valid = True
+                    else:
+                        is_valid = auth.verify_password(req.password, key)
+        except Exception:
+            pass
+            
+    if not is_valid:
+        raise HTTPException(status_code=400, detail="Hibás belépési jelszó")
+        
+    # JWT Token generálása az iskola azonosítójával
+    access_token = auth.create_access_token(
+        data={
+            "sub": f"school_{school.id}", 
+            "role": "admin",
+            "school_id": school.id,
+            "app_metadata": {
+                "school_id": school.id
+            }
+        }
+    )
+    return {"access_token": access_token, "token_type": "bearer", "school_name": school.nev}
+
 @app.post("/users/", response_model=schemas.User)
 def create_instructor_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     # Ellenőrizzük, hogy létezik-e már a felhasználó
@@ -777,11 +857,29 @@ def add_grade(grade: schemas.GradeCreate, db: Session = Depends(get_db)):
 
 # --- BIZTONSÁG ÉS ESZKÖZÖK ---
 @app.get("/safety-trainings/", response_model=list[schemas.SafetyTraining])
-def read_safety_trainings(db: Session = Depends(get_db)):
-    return db.query(models.SafetyTraining).all()
+def read_safety_trainings(db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    query = db.query(models.SafetyTraining)
+    if current_user.get("school_id") is not None:
+        from sqlalchemy import or_
+        query = query.outerjoin(models.Student, models.SafetyTraining.diak_id == models.Student.id)\
+                     .outerjoin(models.ClassRoom, models.SafetyTraining.osztaly_id == models.ClassRoom.id)\
+                     .filter(or_(
+                         models.Student.iskola_id == current_user["school_id"],
+                         models.ClassRoom.iskola_id == current_user["school_id"]
+                     ))
+    return query.all()
 
 @app.post("/safety-trainings/", response_model=schemas.SafetyTraining)
-def create_safety_training(training: schemas.SafetyTrainingCreate, db: Session = Depends(get_db)):
+def create_safety_training(training: schemas.SafetyTrainingCreate, db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    if current_user.get("school_id") is not None:
+        if training.diak_id:
+            student = db.query(models.Student).filter(models.Student.id == training.diak_id).first()
+            if not student or student.iskola_id != current_user["school_id"]:
+                raise HTTPException(status_code=400, detail="Nem engedélyezett diák")
+        if training.osztaly_id:
+            classroom = db.query(models.ClassRoom).filter(models.ClassRoom.id == training.osztaly_id).first()
+            if not classroom or classroom.iskola_id != current_user["school_id"]:
+                raise HTTPException(status_code=400, detail="Nem engedélyezett osztály")
     db_training = models.SafetyTraining(**training.dict())
     db.add(db_training)
     db.commit()
@@ -789,11 +887,19 @@ def create_safety_training(training: schemas.SafetyTrainingCreate, db: Session =
     return db_training
 
 @app.get("/equipment/", response_model=list[schemas.Equipment])
-def read_equipment(db: Session = Depends(get_db)):
-    return db.query(models.Equipment).all()
+def read_equipment(db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    query = db.query(models.Equipment)
+    if current_user.get("school_id") is not None:
+        query = query.join(models.Student, models.Equipment.diak_id == models.Student.id)\
+                     .filter(models.Student.iskola_id == current_user["school_id"])
+    return query.all()
 
 @app.post("/equipment/", response_model=schemas.Equipment)
-def create_equipment(equip: schemas.EquipmentCreate, db: Session = Depends(get_db)):
+def create_equipment(equip: schemas.EquipmentCreate, db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    if current_user.get("school_id") is not None:
+        student = db.query(models.Student).filter(models.Student.id == equip.diak_id).first()
+        if not student or student.iskola_id != current_user["school_id"]:
+            raise HTTPException(status_code=400, detail="Nem engedélyezett diák")
     db_equip = models.Equipment(**equip.dict())
     db.add(db_equip)
     db.commit()
@@ -801,8 +907,12 @@ def create_equipment(equip: schemas.EquipmentCreate, db: Session = Depends(get_d
     return db_equip
 
 @app.delete("/equipment/{equip_id}")
-def delete_equipment(equip_id: int, db: Session = Depends(get_db)):
-    db_equip = db.query(models.Equipment).filter(models.Equipment.id == equip_id).first()
+def delete_equipment(equip_id: int, db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    query = db.query(models.Equipment).filter(models.Equipment.id == equip_id)
+    if current_user.get("school_id") is not None:
+        query = query.join(models.Student, models.Equipment.diak_id == models.Student.id)\
+                     .filter(models.Student.iskola_id == current_user["school_id"])
+    db_equip = query.first()
     if not db_equip:
         raise HTTPException(status_code=404, detail="Eszköz nem található")
     db.delete(db_equip)
@@ -842,41 +952,73 @@ def cleanup_dummy_data(db: Session = Depends(get_db)):
 
 # --- JELENLÉT ENDPOINTOK ---
 @app.get("/attendance/", response_model=list[schemas.Attendance])
-def get_all_attendance(db: Session = Depends(get_db)):
-    return db.query(models.Attendance).all()
+def get_all_attendance(db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    query = db.query(models.Attendance)
+    if current_user.get("school_id") is not None:
+        query = query.filter(models.Attendance.iskola_id == current_user["school_id"])
+    return query.all()
 
 @app.get("/students/{student_id}/attendance", response_model=list[schemas.Attendance])
-def get_student_attendance(student_id: int, db: Session = Depends(get_db)):
+def get_student_attendance(student_id: int, db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    if current_user.get("school_id") is not None:
+        student = db.query(models.Student).filter(models.Student.id == student_id).first()
+        if not student or student.iskola_id != current_user["school_id"]:
+            raise HTTPException(status_code=404, detail="Diák nem található")
     return db.query(models.Attendance).filter(models.Attendance.diak_id == student_id).all()
 
 @app.post("/attendance/", response_model=schemas.Attendance)
-def create_attendance(att: schemas.AttendanceCreate, db: Session = Depends(get_db)):
-    db_att = models.Attendance(**att.dict())
+def create_attendance(att: schemas.AttendanceCreate, db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    att_data = att.dict()
+    if current_user.get("school_id") is not None:
+        student = db.query(models.Student).filter(models.Student.id == att.diak_id).first()
+        if not student or student.iskola_id != current_user["school_id"]:
+            raise HTTPException(status_code=400, detail="Nem engedélyezett diák")
+        att_data["iskola_id"] = current_user["school_id"]
+    db_att = models.Attendance(**att_data)
     db.add(db_att)
     db.commit()
     db.refresh(db_att)
     return db_att
 
 @app.post("/attendance/bulk")
-def create_bulk_attendance(attendances: list[schemas.AttendanceCreate], db: Session = Depends(get_db)):
+def create_bulk_attendance(attendances: list[schemas.AttendanceCreate], db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
     try:
         for att in attendances:
-            db_att = models.Attendance(**att.dict())
+            att_data = att.dict()
+            if current_user.get("school_id") is not None:
+                student = db.query(models.Student).filter(models.Student.id == att.diak_id).first()
+                if not student or student.iskola_id != current_user["school_id"]:
+                    raise HTTPException(status_code=400, detail="Nem engedélyezett diák")
+                att_data["iskola_id"] = current_user["school_id"]
+            db_att = models.Attendance(**att_data)
             db.add(db_att)
         db.commit()
         return {"status": "success", "count": len(attendances)}
+    except HTTPException:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
 # --- ÉRTÉKELÉS (JEGYEK) ---
 @app.get("/students/{student_id}/grades", response_model=list[schemas.Grade])
-def get_student_grades(student_id: int, db: Session = Depends(get_db)):
+def get_student_grades(student_id: int, db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    if current_user.get("school_id") is not None:
+        student = db.query(models.Student).filter(models.Student.id == student_id).first()
+        if not student or student.iskola_id != current_user["school_id"]:
+            raise HTTPException(status_code=404, detail="Diák nem található")
     return db.query(models.ExternalGrade).filter(models.ExternalGrade.diak_id == student_id).all()
 
 @app.post("/grades/", response_model=schemas.Grade)
-def create_grade(grade: schemas.GradeCreate, db: Session = Depends(get_db)):
-    db_grade = models.ExternalGrade(**grade.dict())
+def create_grade(grade: schemas.GradeCreate, db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    grade_data = grade.dict()
+    if current_user.get("school_id") is not None:
+        student = db.query(models.Student).filter(models.Student.id == grade.diak_id).first()
+        if not student or student.iskola_id != current_user["school_id"]:
+            raise HTTPException(status_code=400, detail="Nem engedélyezett diák")
+        grade_data["iskola_id"] = current_user["school_id"]
+    db_grade = models.ExternalGrade(**grade_data)
     db.add(db_grade)
     db.commit()
     db.refresh(db_grade)
@@ -884,7 +1026,11 @@ def create_grade(grade: schemas.GradeCreate, db: Session = Depends(get_db)):
 
 # --- HALADÁSI NAPLÓ ---
 @app.post("/dailylog/", response_model=schemas.DailyLog)
-def create_daily_log(log: schemas.DailyLogCreate, db: Session = Depends(get_db)):
+def create_daily_log(log: schemas.DailyLogCreate, db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    if current_user.get("school_id") is not None:
+        classroom = db.query(models.ClassRoom).filter(models.ClassRoom.id == log.osztaly_id).first()
+        if not classroom or classroom.iskola_id != current_user["school_id"]:
+            raise HTTPException(status_code=400, detail="Nem engedélyezett osztály")
     db_log = models.DailyLog(**log.dict())
     db.add(db_log)
     db.commit()
@@ -892,7 +1038,11 @@ def create_daily_log(log: schemas.DailyLogCreate, db: Session = Depends(get_db))
     return db_log
 
 @app.get("/classes/{class_id}/logs", response_model=list[schemas.DailyLog])
-def get_class_logs(class_id: int, db: Session = Depends(get_db)):
+def get_class_logs(class_id: int, db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    if current_user.get("school_id") is not None:
+        classroom = db.query(models.ClassRoom).filter(models.ClassRoom.id == class_id).first()
+        if not classroom or classroom.iskola_id != current_user["school_id"]:
+            raise HTTPException(status_code=404, detail="Osztály nem található")
     return db.query(models.DailyLog).filter(models.DailyLog.osztaly_id == class_id).order_by(models.DailyLog.datum.desc()).all()
 
 # --- ÖSSZESÍTETT STATISZTIKÁK (Súlyozott átlag, hiányzás) ---
@@ -1058,9 +1208,23 @@ def get_suggestions(field: str, class_id: Optional[int] = None, db: Session = De
             query = query.filter(models.DailyLog.osztaly_id == class_id)
         results = query.all()
     elif field == "szakma":
-        results = db.query(models.Student.metadata_json["szakma"].astext).distinct().all()
+        all_meta = db.query(models.Student.metadata_json).all()
+        values = set()
+        for r in all_meta:
+            if r[0] and isinstance(r[0], dict):
+                val = r[0].get("szakma") or r[0].get("Szakma")
+                if val:
+                    values.add(val)
+        results = [(v,) for v in values]
     elif field == "iskola":
-        results = db.query(models.Student.metadata_json["iskola"].astext).distinct().all()
+        all_meta = db.query(models.Student.metadata_json).all()
+        values = set()
+        for r in all_meta:
+            if r[0] and isinstance(r[0], dict):
+                val = r[0].get("iskola") or r[0].get("Iskola")
+                if val:
+                    values.add(val)
+        results = [(v,) for v in values]
     else:
         return []
     
@@ -1102,15 +1266,27 @@ def sync_szakmak_from_mkik(db: Session = Depends(get_db)):
 # --- KALKULÁTOR VÉGPONTOK (3. PILLÉR) ---
 
 @app.get("/normativa/student/{student_id}", response_model=schemas.NormativaHaviResult)
-def get_normativa_havi(student_id: int, ev: int, honap: int, db: Session = Depends(get_db)):
+def get_normativa_havi(student_id: int, ev: int, honap: int, db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    if current_user.get("school_id") is not None:
+        student = db.query(models.Student).filter(models.Student.id == student_id).first()
+        if not student or student.iskola_id != current_user["school_id"]:
+            raise HTTPException(status_code=404, detail="Tanuló nem található")
     return normativa_service.kalkulal_havi(student_id, ev, honap, db)
 
 @app.get("/normativa/student/{student_id}/eves", response_model=schemas.NormativaEvesResult)
-def get_normativa_eves(student_id: int, tanev: str = "2025/2026", db: Session = Depends(get_db)):
+def get_normativa_eves(student_id: int, tanev: str = "2025/2026", db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    if current_user.get("school_id") is not None:
+        student = db.query(models.Student).filter(models.Student.id == student_id).first()
+        if not student or student.iskola_id != current_user["school_id"]:
+            raise HTTPException(status_code=404, detail="Tanuló nem található")
     return normativa_service.kalkulal_eves_prognozis(student_id, tanev, db)
 
 @app.get("/normativa/student/{student_id}/roi")
-def get_normativa_roi(student_id: int, tanev: str = "2025/2026", db: Session = Depends(get_db)):
+def get_normativa_roi(student_id: int, tanev: str = "2025/2026", db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
+    if current_user.get("school_id") is not None:
+        student = db.query(models.Student).filter(models.Student.id == student_id).first()
+        if not student or student.iskola_id != current_user["school_id"]:
+            raise HTTPException(status_code=404, detail="Tanuló nem található")
     return normativa_service.roi_szamitas(student_id, tanev, db)
 
 @app.post("/normativa/what-if", response_model=schemas.WhatIfResponse)
@@ -1118,14 +1294,16 @@ def what_if_simulator(req: schemas.WhatIfRequest, db: Session = Depends(get_db))
     return normativa_service.what_if(req.tervezett_diakok, db)
 
 @app.get("/normativa/summary/roi")
-def get_global_roi(db: Session = Depends(get_db)):
+def get_global_roi(db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
     """Globális ROI adatok lekérése."""
-    return normativa_service.get_global_roi_summary(db)
+    school_id = current_user.get("school_id")
+    return normativa_service.get_global_roi_summary(db, school_id=school_id)
 
 @app.get("/normativa/summary/roi/classes", response_model=List[schemas.ClassROISummary])
-def get_class_roi(db: Session = Depends(get_db)):
+def get_class_roi(db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
     """Osztályokra lebontott ROI adatok lekérése."""
-    return normativa_service.get_class_roi_summary(db)
+    school_id = current_user.get("school_id")
+    return normativa_service.get_class_roi_summary(db, school_id=school_id)
 
 # --- KONFIGURÁCIÓ ---
 

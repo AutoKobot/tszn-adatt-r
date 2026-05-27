@@ -206,9 +206,12 @@ class NormativaService:
         # Egyszerűsített verzió a ROI-hoz (átlagosan 100.000 Ft alap)
         return 100000 
 
-    def get_global_roi_summary(self, db: Session, tanev: str = "2025/2026"):
+    def get_global_roi_summary(self, db: Session, school_id: int = None, tanev: str = "2025/2026"):
         """Összesített ROI kimutatás az összes aktív diákra."""
-        students = db.query(models.Student).all()
+        student_query = db.query(models.Student)
+        if school_id is not None:
+            student_query = student_query.filter(models.Student.iskola_id == school_id)
+        students = student_query.all()
         
         total_normativa_income = 0
         total_monthly_scholarship = 0
@@ -223,7 +226,16 @@ class NormativaService:
             meta = s.metadata_json or {}
             total_monthly_scholarship += meta.get("havi_osztondij", 100000)
         
-        expenses = db.query(models.KoltsegTetel).all()
+        expense_query = db.query(models.KoltsegTetel)
+        if school_id is not None:
+            from sqlalchemy import or_
+            expense_query = expense_query.outerjoin(models.Student, models.KoltsegTetel.diak_id == models.Student.id)\
+                                         .outerjoin(models.ClassRoom, models.KoltsegTetel.osztaly_id == models.ClassRoom.id)\
+                                         .filter(or_(
+                                             models.Student.iskola_id == school_id,
+                                             models.ClassRoom.iskola_id == school_id
+                                         ))
+        expenses = expense_query.all()
         fixed_one_time_costs = 0
         recurring_monthly_costs = 0
         
@@ -247,9 +259,12 @@ class NormativaService:
             "havi_kiadas_egyeb": recurring_monthly_costs
         }
 
-    def get_class_roi_summary(self, db: Session, tanev: str = "2025/2026"):
+    def get_class_roi_summary(self, db: Session, school_id: int = None, tanev: str = "2025/2026"):
         """Osztályokra lebontott ROI kimutatás."""
-        classes = db.query(models.ClassRoom).all()
+        class_query = db.query(models.ClassRoom)
+        if school_id is not None:
+            class_query = class_query.filter(models.ClassRoom.iskola_id == school_id)
+        classes = class_query.all()
         result = []
         
         for c in classes:

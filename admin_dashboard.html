@@ -25,7 +25,7 @@
                 <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-reports\']').click()"><i class="fas fa-chart-line"></i> <span>Riportok</span></a>
                 <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-normativa\']').click()" style="color: #60a5fa;"><i class="fas fa-calculator"></i> <span>Normatíva</span></a>
                 <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-reports\']').click()"><i class="fas fa-history"></i> <span>Audit</span></a>
-                <a href="index.html" style="margin-top: auto; color: #fca5a5;"><i class="fas fa-sign-out-alt" style="color: #ef4444;"></i> <span>Kilépés</span></a>
+                <a href="index.html" onclick="localStorage.removeItem('token'); localStorage.removeItem('school_name');" style="margin-top: auto; color: #fca5a5;"><i class="fas fa-sign-out-alt" style="color: #ef4444;"></i> <span>Kilépés</span></a>
             </nav>
             <div class="user-profile">
                 <div class="avatar">A</div>
@@ -869,12 +869,44 @@
     </div>
 
     <script>
+        // Globális Fetch Interceptor a JWT token automatikus injektálásához és 401 kezeléshez
+        const originalFetch = window.fetch;
+        window.fetch = async function(...args) {
+            let [url, config] = args;
+            const token = localStorage.getItem('token');
+            if (token) {
+                config = config || {};
+                config.headers = config.headers || {};
+                if (config.headers instanceof Headers) {
+                    config.headers.set('Authorization', `Bearer ${token}`);
+                } else {
+                    config.headers['Authorization'] = `Bearer ${token}`;
+                }
+            }
+            const response = await originalFetch(url, config);
+            if (response.status === 401) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('school_name');
+                window.location.href = 'index.html';
+            }
+            return response;
+        };
+
         const API_BASE_URL = '';
         window.allStudents = {}; 
         window.pendingConflicts = []; // Globális lista a feloldáshoz
 
         // Tab Váltó Logika
         document.addEventListener('DOMContentLoaded', () => {
+            // Iskola nevének megjelenítése a fejlécben
+            const schoolName = localStorage.getItem('school_name');
+            if (schoolName) {
+                const headerTitle = document.querySelector('header h1');
+                if (headerTitle) {
+                    headerTitle.innerHTML += ` <span style="font-size: 1.2rem; font-weight: normal; color: #a5b4fc; display: block; margin-top: 5px;"><i class="fas fa-school" style="font-size: 1rem; margin-right: 5px;"></i> ${schoolName}</span>`;
+                }
+            }
+            
             const adminTabs = document.querySelectorAll('.admin-tab-btn');
             const adminContents = document.querySelectorAll('.admin-tab-content');
             

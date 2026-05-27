@@ -16,7 +16,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            overflow: hidden;
+            overflow-y: auto;
             font-family: 'Outfit', sans-serif;
             position: relative;
         }
@@ -57,16 +57,17 @@
             position: relative;
             z-index: 1;
             width: 100%;
-            max-width: 1200px;
+            max-width: 550px;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 2rem;
+            box-sizing: border-box;
         }
 
         .landing-header {
             text-align: center;
-            margin-bottom: 4rem;
+            margin-bottom: 2.5rem;
             animation: slideDown 0.8s ease-out;
         }
 
@@ -74,7 +75,7 @@
             font-size: 3.5rem;
             font-weight: 800;
             color: #ffffff;
-            margin-bottom: 0.5rem;
+            margin: 0 0 0.5rem 0;
             letter-spacing: -1px;
             background: linear-gradient(to right, #ffffff, #a5b4fc);
             -webkit-background-clip: text;
@@ -82,31 +83,28 @@
         }
 
         .landing-header p {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #9ca3af;
-            max-width: 600px;
+            max-width: 450px;
             margin: 0 auto;
-        }
-
-        .login-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 2rem;
-            width: 100%;
-            animation: slideUp 0.8s ease-out 0.2s both;
+            line-height: 1.5;
         }
 
         .login-card {
-            background: rgba(30, 30, 47, 0.6);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 2.5rem;
+            background: rgba(30, 30, 47, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 3rem 2.5rem;
             text-align: center;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.4s ease;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+            animation: slideUp 0.8s ease-out 0.2s both;
         }
 
         .login-card::before {
@@ -116,15 +114,14 @@
             left: 0;
             width: 100%;
             height: 4px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.3), transparent);
             transform: translateX(-100%);
             transition: transform 0.6s ease;
         }
 
         .login-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            border-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(99, 102, 241, 0.2);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
         }
 
         .login-card:hover::before {
@@ -132,64 +129,60 @@
         }
 
         .login-icon-wrapper {
-            width: 80px;
-            height: 80px;
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 1.5rem;
-            font-size: 2rem;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .instructor-card .login-icon-wrapper {
-            background: linear-gradient(135deg, #3b82f6, #4f46e5);
-            color: white;
-        }
-
-        .admin-card .login-icon-wrapper {
-            background: linear-gradient(135deg, #10b981, #059669);
+            font-size: 2.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
             color: white;
         }
 
         .login-card h2 {
             color: #ffffff;
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+            margin: 0 0 0.5rem 0;
+            font-weight: 700;
         }
 
-        .login-card p {
+        .login-card p.card-desc {
             color: #9ca3af;
-            font-size: 0.95rem;
-            margin-bottom: 2rem;
+            font-size: 1rem;
+            margin: 0 0 2rem 0;
+            line-height: 1.4;
         }
 
         .login-form {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.2rem;
+            text-align: left;
         }
 
         .input-group {
             position: relative;
         }
 
-        .input-group i {
+        .input-group i.input-icon {
             position: absolute;
-            left: 1rem;
+            left: 1.2rem;
             top: 50%;
             transform: translateY(-50%);
             color: #6b7280;
             transition: color 0.3s;
+            z-index: 10;
         }
 
         .login-input {
             width: 100%;
-            padding: 1rem 1rem 1rem 3rem;
-            background: rgba(15, 15, 22, 0.5);
+            padding: 1.1rem 1rem 1.1rem 3.2rem;
+            background: rgba(15, 15, 22, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+            border-radius: 14px;
             color: #ffffff;
             font-family: inherit;
             font-size: 1rem;
@@ -200,45 +193,102 @@
         .login-input:focus {
             outline: none;
             border-color: #6366f1;
-            background: rgba(15, 15, 22, 0.8);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            background: rgba(15, 15, 22, 0.9);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
         }
 
         .login-input:focus + i {
             color: #6366f1;
         }
 
+        /* Autocomplete dropdown stílusok */
+        .autocomplete-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #1e1e2f;
+            border-radius: 14px;
+            z-index: 999;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 220px;
+            overflow-y: auto;
+            margin-top: 8px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            padding: 5px;
+        }
+
+        .autocomplete-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            color: #e5e7eb;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .autocomplete-item i {
+            color: #818cf8;
+            font-size: 0.9rem;
+        }
+
+        .autocomplete-item:hover {
+            background-color: rgba(99, 102, 241, 0.25);
+            color: #ffffff;
+            transform: translateX(4px);
+        }
+
+        .autocomplete-no-result {
+            padding: 12px;
+            color: #9ca3af;
+            text-align: center;
+            font-style: italic;
+        }
+
+        /* Password section animáció */
+        #password-section {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
         .login-btn {
-            margin-top: 1rem;
-            padding: 1rem;
+            padding: 1.1rem;
             border: none;
-            border-radius: 12px;
-            font-weight: 600;
+            border-radius: 14px;
+            font-weight: 700;
             font-size: 1rem;
             cursor: pointer;
             transition: all 0.3s;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .instructor-card .login-btn {
-            background: #4f46e5;
+            letter-spacing: 0.8px;
+            background: linear-gradient(90deg, #6366f1, #4f46e5);
             color: white;
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.3);
+            width: 100%;
         }
 
-        .instructor-card .login-btn:hover {
-            background: #4338ca;
-            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.4);
+        .login-btn:hover {
+            background: linear-gradient(90deg, #4f46e5, #4338ca);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.5);
+            transform: translateY(-2px);
         }
 
-        .admin-card .login-btn {
-            background: #059669;
-            color: white;
-        }
-
-        .admin-card .login-btn:hover {
-            background: #047857;
-            box-shadow: 0 5px 15px rgba(5, 150, 105, 0.4);
+        .login-btn:active {
+            transform: translateY(0);
         }
 
         @keyframes slideDown {
@@ -256,50 +306,175 @@
     <div class="landing-container">
         <header class="landing-header">
             <h1>EduRegistrar</h1>
-            <p>Intelligens Duális Képzési és Iskolai Nyilvántartó Rendszer. Kérjük jelentkezzen be a megfelelő felületen.</p>
+            <p>Intelligens Duális Képzési és Iskolai Nyilvántartó Rendszer.</p>
         </header>
 
-        <div class="login-grid">
-            <!-- Oktatói Belépés -->
-            <div class="login-card instructor-card">
-                <div class="login-icon-wrapper">
-                    <i class="fas fa-chalkboard-teacher"></i>
-                </div>
-                <h2>Oktatói Portál</h2>
-                <p>Értékelések, képzési naplók és diákok haladásának követése.</p>
-                <form class="login-form" action="oktato_dashboard.html">
-                    <div class="input-group">
-                        <i class="fas fa-user"></i>
-                        <input type="text" class="login-input" placeholder="Oktatói azonosító / Email" required>
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" class="login-input" placeholder="Jelszó" required>
-                    </div>
-                    <button type="submit" class="login-btn">Belépés Oktatóként</button>
-                </form>
+        <!-- Központi Iskolai Bejelentkező Kártya -->
+        <div class="login-card">
+            <div class="login-icon-wrapper">
+                <i class="fas fa-university"></i>
             </div>
+            <h2>Intézményi Bejelentkezés</h2>
+            <p class="card-desc">Kezdje el beírni az iskola nevét, válassza ki a listából, majd adja meg a belépési kulcsot.</p>
+            
+            <form class="login-form" id="login-form" autocomplete="off">
+                <!-- Autocomplete Iskola Kereső -->
+                <div class="autocomplete-wrapper">
+                    <div class="input-group">
+                        <i class="fas fa-search input-icon"></i>
+                        <input type="text" id="school-input" class="login-input" placeholder="Kezdje el gépelni az iskola nevét..." required autocomplete="off">
+                    </div>
+                    <div id="autocomplete-list" class="autocomplete-items" style="display: none;"></div>
+                </div>
 
-            <!-- Adminisztrátori Belépés -->
-            <div class="login-card admin-card">
-                <div class="login-icon-wrapper">
-                    <i class="fas fa-user-shield"></i>
+                <!-- Animáltan Megjelenő Jelszó Mező és Gomb -->
+                <div id="password-section">
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="password-input" class="login-input" placeholder="Belépési jelszó / API kulcs" required>
+                    </div>
+                    <button type="submit" class="login-btn">Belépés az Intézménybe</button>
                 </div>
-                <h2>Titkárság & Admin</h2>
-                <p>Szerződések, OCR beolvasás, rendszerbeállítások és teljes körű menedzsment.</p>
-                <form class="login-form" action="admin_dashboard.html">
-                    <div class="input-group">
-                        <i class="fas fa-user-tie"></i>
-                        <input type="text" class="login-input" placeholder="Admin azonosító" required>
-                    </div>
-                    <div class="input-group">
-                        <i class="fas fa-lock"></i>
-                        <input type="password" class="login-input" placeholder="Jelszó" required>
-                    </div>
-                    <button type="submit" class="login-btn">Belépés Adminként</button>
-                </form>
-            </div>
+            </form>
         </div>
     </div>
+
+    <script>
+        let allSchools = [];
+        let selectedSchoolId = null;
+
+        const schoolInput = document.getElementById('school-input');
+        const autocompleteList = document.getElementById('autocomplete-list');
+        const passwordSection = document.getElementById('password-section');
+        const passwordInput = document.getElementById('password-input');
+        const loginForm = document.getElementById('login-form');
+
+        // Nyilvános iskolalista lekérése
+        async function fetchSchools() {
+            try {
+                const response = await fetch('/schools/public');
+                if (response.ok) {
+                    allSchools = await response.json();
+                } else {
+                    console.error("Nem sikerült lekérni a nyilvános iskolalistát");
+                }
+            } catch (err) {
+                console.error("Hálózati hiba az iskolalista lekérésekor:", err);
+            }
+        }
+
+        // Keresés és autocomplete megjelenítés
+        schoolInput.addEventListener('input', function() {
+            const val = this.value.trim().toLowerCase();
+            closeAllLists();
+            
+            // Ha a felhasználó szerkeszti az inputot, visszavonjuk a kiválasztást
+            if (selectedSchoolId) {
+                selectedSchoolId = null;
+                hidePasswordSection();
+            }
+
+            if (!val) return;
+
+            const filtered = allSchools.filter(school => 
+                school.nev.toLowerCase().includes(val)
+            );
+
+            if (filtered.length === 0) {
+                const noResultDiv = document.createElement('div');
+                noResultDiv.className = 'autocomplete-no-result';
+                noResultDiv.innerText = 'Nem található ilyen iskola';
+                autocompleteList.appendChild(noResultDiv);
+                autocompleteList.style.display = 'block';
+                return;
+            }
+
+            filtered.forEach(school => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.innerHTML = `<i class="fas fa-graduation-cap"></i> <span>${school.nev}</span>`;
+                item.addEventListener('click', function() {
+                    schoolInput.value = school.nev;
+                    selectedSchoolId = school.id;
+                    closeAllLists();
+                    showPasswordSection();
+                });
+                autocompleteList.appendChild(item);
+            });
+
+            autocompleteList.style.display = 'block';
+        });
+
+        function closeAllLists() {
+            autocompleteList.innerHTML = '';
+            autocompleteList.style.display = 'none';
+        }
+
+        function showPasswordSection() {
+            passwordSection.style.maxHeight = '200px';
+            passwordSection.style.opacity = '1';
+            passwordInput.setAttribute('required', 'true');
+            // Fókusz a jelszómezőre
+            setTimeout(() => passwordInput.focus(), 300);
+        }
+
+        function hidePasswordSection() {
+            passwordSection.style.maxHeight = '0';
+            passwordSection.style.opacity = '0';
+            passwordInput.removeAttribute('required');
+            passwordInput.value = '';
+        }
+
+        // Kattintásra bezárjuk a listát
+        document.addEventListener('click', function(e) {
+            if (e.target !== schoolInput && e.target !== autocompleteList) {
+                closeAllLists();
+            }
+        });
+
+        // Belépés elküldése
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            if (!selectedSchoolId) {
+                alert("Kérjük válasszon ki egy intézményt a javaslatok közül!");
+                return;
+            }
+
+            const password = passwordInput.value;
+
+            try {
+                const response = await fetch('/login/school', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        school_id: selectedSchoolId,
+                        password: password
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Token és iskola név elmentése
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('school_name', data.school_name);
+                    
+                    // Átirányítás az Admin Dashboardra
+                    window.location.href = 'admin_dashboard.html';
+                } else {
+                    const errorData = await response.json();
+                    alert(errorData.detail || "Sikertelen bejelentkezés! Ellenőrizze a kulcsot.");
+                }
+            } catch (err) {
+                console.error("Hiba a belépés során:", err);
+                alert("Hálózati hiba történt. Győződjön meg róla, hogy a szerver fut.");
+            }
+        });
+
+        // Iskolák betöltése indításkor
+        fetchSchools();
+    </script>
 </body>
 </html>

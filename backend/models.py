@@ -4,11 +4,10 @@ import datetime
 from .database import Base
 
 class School(Base):
-    __tablename__ = "iskolak"
+    __tablename__ = "schools"
     id = Column(Integer, primary_key=True, index=True)
-    nev = Column(String(255), nullable=False)
-    api_key = Column(String(255), unique=True)
-    created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    nev = Column("name", String(255), nullable=False)
+    created_at = Column("created_at", TIMESTAMP, default=datetime.datetime.utcnow)
 
 class User(Base):
     __tablename__ = "felhasznalok"
@@ -20,7 +19,7 @@ class User(Base):
     szakma_id = Column(Integer, ForeignKey("szakmak.id"))
     status = Column("statusz", Boolean, default=True)
     last_login = Column("utolso_bejelentkezes", TIMESTAMP)
-    iskola_id = Column("iskola_id", Integer, ForeignKey("iskolak.id"), nullable=True)
+    iskola_id = Column("iskola_id", Integer, ForeignKey("schools.id"), nullable=True)
 
 class Student(Base):
     __tablename__ = "diakok"
@@ -50,7 +49,7 @@ class Student(Base):
     szakma_torzs_id = Column(Integer, ForeignKey("szakma_torzs.id"), nullable=True)
     metadata_json = Column("megjegyzesek", JSON, default={})
     letrehozva = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    iskola_id = Column("iskola_id", Integer, ForeignKey("iskolak.id"), nullable=True, index=True)
+    iskola_id = Column("iskola_id", Integer, ForeignKey("schools.id"), nullable=True, index=True)
 
     # Kapcsolatok
     dualis_szerzodesek = relationship("DualisSzerzodes", back_populates="diak")
@@ -86,7 +85,7 @@ class ExternalGrade(Base):
     datum = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     forras = Column(String(50), default="EduRegistrar")
     kulso_azonosito = Column(String(100))
-    iskola_id = Column("iskola_id", Integer, ForeignKey("iskolak.id"), nullable=True, index=True)
+    iskola_id = Column("iskola_id", Integer, ForeignKey("schools.id"), nullable=True, index=True)
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
@@ -110,7 +109,7 @@ class ClassRoom(Base):
     # --- ÁKK és Duális Képzési Paraméterek ---
     elvart_szakiranyu_oraszam = Column(Integer, default=400, comment="Félévi vagy éves elvárt gyakorlati óraszám")
     max_hianyzas_szazalek = Column(Integer, default=20, comment="A megengedett hiányzás %-os határa")
-    iskola_id = Column("iskola_id", Integer, ForeignKey("iskolak.id"), nullable=True, index=True)
+    iskola_id = Column("iskola_id", Integer, ForeignKey("schools.id"), nullable=True, index=True)
 
 class Instructor(Base):
     __tablename__ = "oktatok"
@@ -120,7 +119,7 @@ class Instructor(Base):
     telefon = Column(String(20))
     szakterulet = Column(String(255))
     metadata_json = Column("metadata", JSON, default={})
-    iskola_id = Column("iskola_id", Integer, ForeignKey("iskolak.id"), nullable=True, index=True)
+    iskola_id = Column("iskola_id", Integer, ForeignKey("schools.id"), nullable=True, index=True)
 
 class SafetyTraining(Base):
     __tablename__ = "biztonsagi_oktatasok"
@@ -151,7 +150,7 @@ class Attendance(Base) :
     statusz = Column(String(20), default="jelen") # 'jelen', 'igazolt_hianyzas', 'igazolatlan_hianyzas'
     megjegyzes = Column(Text)
     letrehozva = Column(TIMESTAMP, default=datetime.datetime.utcnow)
-    iskola_id = Column("iskola_id", Integer, ForeignKey("iskolak.id"), nullable=True, index=True)
+    iskola_id = Column("iskola_id", Integer, ForeignKey("schools.id"), nullable=True, index=True)
 
 class DailyLog(Base):
     __tablename__ = "haladasi_naplo"

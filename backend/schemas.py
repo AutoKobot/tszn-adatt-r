@@ -15,6 +15,10 @@ class School(SchoolBase):
     created_at: datetime
     model_config = {"from_attributes": True}
 
+class SchoolLoginRequest(BaseModel):
+    school_id: int
+    password: str
+
 # --- DIÁK SÉMÁK ---
 class StudentBase(BaseModel):
     oktatasi_azonosito: Optional[str] = None
