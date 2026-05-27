@@ -197,28 +197,36 @@ def read_students(skip: int = 0, limit: int = 100, class_id: Optional[int] = Non
 @app.post("/students/", response_model=schemas.Student)
 def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db), 
                    current_user: dict = Depends(auth.get_current_user)):
-    student_data = student.dict()
-    if current_user.get("school_id") is not None:
-        student_data["iskola_id"] = current_user["school_id"]
-    db_student = models.Student(**student_data)
-    db.add(db_student)
-    db.commit()
-    db.refresh(db_student)
-    return db_student
+    try:
+        student_data = student.dict()
+        if current_user.get("school_id") is not None:
+            student_data["iskola_id"] = current_user["school_id"]
+        db_student = models.Student(**student_data)
+        db.add(db_student)
+        db.commit()
+        db.refresh(db_student)
+        return db_student
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Hiba a diák létrehozásakor: {str(e)}")
 
 @app.put("/students/{student_id}", response_model=schemas.Student)
 def update_student(student_id: int, student_update: schemas.StudentUpdate, db: Session = Depends(get_db)):
-    db_student = db.query(models.Student).filter(models.Student.id == student_id).first()
-    if not db_student:
-        raise HTTPException(status_code=404, detail="Diák nem található")
-    
-    update_data = student_update.dict(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(db_student, key, value)
-    
-    db.commit()
-    db.refresh(db_student)
-    return db_student
+    try:
+        db_student = db.query(models.Student).filter(models.Student.id == student_id).first()
+        if not db_student:
+            raise HTTPException(status_code=404, detail="Diák nem található")
+        
+        update_data = student_update.dict(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(db_student, key, value)
+        
+        db.commit()
+        db.refresh(db_student)
+        return db_student
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Hiba a diák frissítésekor: {str(e)}")
 
 @app.delete("/students/{student_id}")
 def delete_student(student_id: int, db: Session = Depends(get_db)):

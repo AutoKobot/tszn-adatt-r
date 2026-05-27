@@ -28,6 +28,8 @@ class StudentBase(BaseModel):
     telefon: Optional[str] = None
     lakhely: Optional[str] = None
     tagozat: Optional[str] = "nappali"
+    orvosi_alkalmassagi_lejarat: Optional[date] = None
+    munkavedelmi_oktatas_datum: Optional[date] = None
     szuletesi_hely: Optional[str] = None
     szuletesi_datum: Optional[date] = None
     anyja_neve: Optional[str] = None
