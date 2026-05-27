@@ -18,7 +18,7 @@ if "pooler.supabase.com" in db_url and "@" in db_url:
     userinfo = db_url.split("@")[0].split("//")[1]   # pl: "postgres:jelszo"
     username = userinfo.split(":")[0]                 # pl: "postgres"
     if "." not in username:
-        correct = f"{username}.upghcvosvrafiogfrxiq"
+        correct = f"{username}.epbyruyoblszmbcgpfvh"
         db_url = db_url.replace(f"//{username}:", f"//{correct}:", 1)
         print(f"[DB] Supabase felhasználónév javítva: {correct}")
     else:

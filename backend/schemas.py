@@ -2,6 +2,19 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional, List, Any
 from datetime import date, datetime
 
+# --- ISKOLA SÉMÁK ---
+class SchoolBase(BaseModel):
+    name: str
+    api_key: Optional[str] = None
+
+class SchoolCreate(SchoolBase):
+    pass
+
+class School(SchoolBase):
+    id: int
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
 # --- DIÁK SÉMÁK ---
 class StudentBase(BaseModel):
     oktatasi_azonosito: Optional[str] = None
@@ -20,6 +33,7 @@ class StudentBase(BaseModel):
     szerzodes_kezdet: Optional[date] = None
     szerzodes_vege: Optional[date] = None
     metadata_json: Optional[dict] = {}
+    iskola_id: Optional[int] = None
 
 class StudentCreate(StudentBase):
     pass
@@ -43,6 +57,7 @@ class StudentUpdate(BaseModel):
     szerzodes_kezdet: Optional[date] = None
     szerzodes_vege: Optional[date] = None
     metadata_json: Optional[dict] = None
+    iskola_id: Optional[int] = None
 
 class Student(StudentBase):
     id: int
@@ -63,12 +78,14 @@ class ClassRoomBase(BaseModel):
     statusz: Optional[str] = "aktív"
     elvart_szakiranyu_oraszam: Optional[int] = 400
     max_hianyzas_szazalek: Optional[int] = 20
+    iskola_id: Optional[int] = None
 
 class ClassRoomUpdate(BaseModel):
     megnevezes: Optional[str] = None
     statusz: Optional[str] = None
     elvart_szakiranyu_oraszam: Optional[int] = None
     max_hianyzas_szazalek: Optional[int] = None
+    iskola_id: Optional[int] = None
 
 class ClassRoom(ClassRoomBase):
     id: int
@@ -90,6 +107,7 @@ class GradeCreate(BaseModel):
     suly: Optional[int] = 100
     tipus: Optional[str] = "elmélet"
     datum: Optional[datetime] = None
+    iskola_id: Optional[int] = None
 
 class Grade(GradeCreate):
     id: int
@@ -102,6 +120,7 @@ class InstructorBase(BaseModel):
     telefon: Optional[str] = None
     szakterulet: Optional[str] = None
     metadata_json: Optional[dict] = {}
+    iskola_id: Optional[int] = None
 
 class InstructorCreate(InstructorBase):
     pass
@@ -159,6 +178,7 @@ class UserBase(BaseModel):
     full_name: Optional[str] = None
     role: str
     status: Optional[bool] = True
+    iskola_id: Optional[int] = None
 
 class UserCreate(UserBase):
     password: str
@@ -177,6 +197,7 @@ class AttendanceBase(BaseModel):
     tipus: Optional[str] = "iskola"
     statusz: Optional[str] = "jelen"
     megjegyzes: Optional[str] = None
+    iskola_id: Optional[int] = None
 
 class AttendanceCreate(AttendanceBase):
     pass

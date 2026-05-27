@@ -43,9 +43,16 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         role: str = payload.get("role")
+        
+        # Supabase RLS kompatibilitás
+        app_metadata = payload.get("app_metadata", {})
+        school_id: Optional[int] = app_metadata.get("school_id") if isinstance(app_metadata, dict) else None
+        if school_id is None:
+            school_id = payload.get("school_id") # Közvetlen fallback
+            
         if username is None:
             raise credentials_exception
-        return {"username": username, "role": role}
+        return {"username": username, "role": role, "school_id": school_id}
     except JWTError:
         raise credentials_exception
 

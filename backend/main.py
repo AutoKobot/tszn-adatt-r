@@ -10,7 +10,7 @@ import asyncio
 import shutil
 import os
 import datetime
-from . import models, schemas, database, sync_service
+from . import models, schemas, database, sync_service, auth
 from fastapi.staticfiles import StaticFiles
 
 # --- ÜTEMEZETT FELADATOK (asyncio alapú, APScheduler nélkül) ---
@@ -51,6 +51,24 @@ async def lifespan(app: FastAPI):
         # Adatbázis sémák frissítése (Migráció meglévő táblákon)
         from sqlalchemy import text
         try:
+            # Multi-tenancy sémamigráció (DDL)
+            db.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.iskolak (
+                    id SERIAL PRIMARY KEY,
+                    nev VARCHAR(255) NOT NULL,
+                    api_key VARCHAR(255) UNIQUE,
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+                );
+            """))
+            db.commit()
+
+            db.execute(text("ALTER TABLE public.felhasznalok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.iskolak(id);"))
+            db.execute(text("ALTER TABLE public.diakok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.iskolak(id);"))
+            db.execute(text("ALTER TABLE public.osztalyok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.iskolak(id);"))
+            db.execute(text("ALTER TABLE public.oktatok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.iskolak(id);"))
+            db.execute(text("ALTER TABLE public.kulso_jegyek ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.iskolak(id);"))
+            db.execute(text("ALTER TABLE public.jelenlet ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.iskolak(id);"))
+            
             db.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS oktatasi_azonosito VARCHAR(11) UNIQUE;"))
             db.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS diakigazolvany_szam VARCHAR(50) UNIQUE;"))
             db.execute(text("ALTER TABLE osztalyok ADD COLUMN IF NOT EXISTS elvart_szakiranyu_oraszam INTEGER DEFAULT 400;"))
@@ -67,7 +85,7 @@ async def lifespan(app: FastAPI):
             db.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS szerzodes_vege DATE;"))
             db.execute(text("ALTER TABLE diakok ADD COLUMN IF NOT EXISTS szakma_torzs_id INTEGER;"))
             db.commit()
-            print("Adatbázis oszlopok frissítve (Migráció sikeres).")
+            print("Adatbázis oszlopok és Multi-tenancy táblák frissítve (Migráció sikeres).")
         except Exception as mig_e:
             print(f"Migrációs megjegyzés (nem kritikus): {mig_e}")
             db.rollback()
@@ -156,10 +174,13 @@ def debug_database(db: Session = Depends(get_db)):
         return {"error": str(e)}
 
 @app.get("/students/", response_model=list[schemas.Student])
-def read_students(skip: int = 0, limit: int = 100, class_id: Optional[int] = None, db: Session = Depends(get_db)):
+def read_students(skip: int = 0, limit: int = 100, class_id: Optional[int] = None, 
+                  db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
     try:
         print("[API] Diákok listázása (GET /students/)")
         query = db.query(models.Student)
+        if current_user.get("school_id") is not None:
+            query = query.filter(models.Student.iskola_id == current_user["school_id"])
         if class_id:
             query = query.filter(models.Student.osztaly_id == class_id)
         students = query.offset(skip).limit(limit).all()
@@ -169,8 +190,12 @@ def read_students(skip: int = 0, limit: int = 100, class_id: Optional[int] = Non
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/students/", response_model=schemas.Student)
-def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
-    db_student = models.Student(**student.dict())
+def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db), 
+                   current_user: dict = Depends(auth.get_current_user)):
+    student_data = student.dict()
+    if current_user.get("school_id") is not None:
+        student_data["iskola_id"] = current_user["school_id"]
+    db_student = models.Student(**student_data)
     db.add(db_student)
     db.commit()
     db.refresh(db_student)
@@ -700,9 +725,16 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     if not user or not auth.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Hibás felhasználónév vagy jelszó")
     
-    # 2. JWT Token generálása a szerepkörrel
+    # 2. JWT Token generálása a szerepkörrel és iskola azonosítóval
     access_token = auth.create_access_token(
-        data={"sub": user.username, "role": user.role}
+        data={
+            "sub": user.username, 
+            "role": user.role,
+            "school_id": user.iskola_id,
+            "app_metadata": {
+                "school_id": user.iskola_id
+            }
+        }
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
