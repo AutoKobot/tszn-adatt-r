@@ -102,6 +102,67 @@ async def lifespan(app: FastAPI):
         db.close()
         print("Teszfiókok ellenőrizve: admin/admin.")
 
+        # DIAGNOSZTIKAI JELENTÉS GENERÁLÁSA
+        try:
+            from sqlalchemy import text
+            db_diag = database.SessionLocal()
+            
+            report = "# Adatbázis Diagnosztikai Jelentés 📊\n\n"
+            
+            # 1. Schools tábla
+            report += "## 🏢 1. Schools Tábla Tartalma\n"
+            try:
+                schools_res = db_diag.execute(text("SELECT id, name FROM public.schools")).all()
+                report += "| ID | Név (Name) |\n| :--- | :--- |\n"
+                for r in schools_res:
+                    report += f"| {r[0]} | {r[1]} |\n"
+            except Exception as e_sch:
+                report += f"Hiba/Nem létezik: {e_sch}\n"
+            report += "\n"
+            
+            # 2. Iskolak tábla (ha van)
+            report += "## 🏢 2. Iskolak Tábla Tartalma\n"
+            try:
+                iskolak_res = db_diag.execute(text("SELECT id, nev FROM public.iskolak")).all()
+                report += "| ID | Név (Nev) |\n| :--- | :--- |\n"
+                for r in iskolak_res:
+                    report += f"| {r[0]} | {r[1]} |\n"
+            except Exception as e_isk:
+                report += f"Hiba/Nem létezik: {e_isk}\n"
+            report += "\n"
+            
+            # 3. Users tábla
+            report += "## 👥 3. Public.users Tábla Tartalma\n"
+            try:
+                users_res = db_diag.execute(text("SELECT id, username, email, school_id, role FROM public.users")).all()
+                report += "| ID | Felhasználónév | Email | School ID | Szerepkör (Role) |\n| :--- | :--- | :--- | :--- | :--- |\n"
+                for r in users_res:
+                    report += f"| {r[0]} | {r[1]} | {r[2]} | {r[3]} | {r[4]} |\n"
+            except Exception as e_usr:
+                report += f"Hiba/Nem létezik: {e_usr}\n"
+            report += "\n"
+            
+            # 4. Diakok tábla
+            report += "## 🎓 4. Diakok Tábla Tartalma\n"
+            try:
+                diakok_res = db_diag.execute(text("SELECT id, nev, oktatasi_azonosito, email, iskola_id FROM public.diakok")).all()
+                report += "| ID | Név | OM azonosító | Email | Iskola ID |\n| :--- | :--- | :--- | :--- | :--- |\n"
+                for r in diakok_res:
+                    report += f"| {r[0]} | {r[1]} | {r[2]} | {r[3]} | {r[4]} |\n"
+            except Exception as e_diak:
+                report += f"Hiba/Nem létezik: {e_diak}\n"
+            report += "\n"
+            
+            # Fájl kiírása
+            report_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scratch", "db_report.md")
+            os.makedirs(os.path.dirname(report_path), exist_ok=True)
+            with open(report_path, "w", encoding="utf-8") as rf:
+                rf.write(report)
+            print(f"[DIAGNOSZTIKA] Jelentés sikeresen elmentve: {report_path}")
+            db_diag.close()
+        except Exception as e_diag:
+            print(f"[DIAGNOSZTIKA HIBA] Nem sikerült a jelentés: {e_diag}")
+
         # 3. Normatíva alapadatok seedelése
         from . import seed_service
         db_seed = database.SessionLocal()
@@ -174,10 +235,24 @@ def debug_database(db: Session = Depends(get_db)):
             "osztalyok_szama": db.query(models.ClassRoom).count(),
             "adatbazis_url_eleje": str(database.engine.url).split('@')[-1],
             "elso_3_diak_nyers_adata": [
-                {"id": s.id, "nev": s.nev, "meta": s.metadata_json} 
+                {"id": s.id, "nev": s.nev, "meta": s.metadata_json, "iskola_id": s.iskola_id} 
                 for s in db.query(models.Student).limit(3).all()
             ]
         }
+        
+        # Lekérdezzük a public.users táblát is diagnosztikának
+        try:
+            from sqlalchemy import text
+            users_students = db.execute(
+                text("SELECT id, username, email, school_id, role FROM public.users")
+            ).all()
+            counts["users_table_sample"] = [
+                {"id": r[0], "username": r[1], "email": r[2], "school_id": r[3], "role": r[4]}
+                for r in users_students[:20]
+            ]
+        except Exception as e_users:
+            counts["users_table_error"] = str(e_users)
+            
         return counts
     except Exception as e:
         return {"error": str(e)}
@@ -190,65 +265,79 @@ def read_students(skip: int = 0, limit: int = 100, class_id: Optional[int] = Non
         
         # 1. Automatikusan szinkronizáljuk a public.users-ben lévő diákokat a diakok (models.Student) táblába!
         school_id = current_user.get("school_id")
-        if school_id is not None:
-            try:
-                from sqlalchemy import text
+        try:
+            from sqlalchemy import text
+            if school_id is not None:
                 users_res = db.execute(
-                    text("SELECT username, email, id FROM public.users WHERE role = 'student' AND school_id = :school_id"),
+                    text("SELECT username, email, id, school_id FROM public.users WHERE role = 'student' AND school_id = :school_id"),
                     {"school_id": school_id}
                 ).all()
+            else:
+                users_res = db.execute(
+                    text("SELECT username, email, id, school_id FROM public.users WHERE role = 'student'")
+                ).all()
                 
-                for u_row in users_res:
-                    u_username = u_row[0] # OM id vagy felhasználónév
-                    u_email = u_row[1]
-                    u_id = u_row[2] # Pl: student_72345678901
-                    
-                    # Ellenőrizzük, létezik-e már ilyen diák a diakok táblában (oktatasi_azonosito vagy email alapján)
-                    existing = None
-                    if u_username:
-                        existing = db.query(models.Student).filter(models.Student.oktatasi_azonosito == u_username).first()
-                    if not existing and u_email:
-                        existing = db.query(models.Student).filter(models.Student.email == u_email).first()
-                    
-                    if not existing:
-                        # Próbáljuk kideríteni a nevét a public.users-ből (első és vezetéknevét)
+            for u_row in users_res:
+                u_username = u_row[0] # OM id vagy felhasználónév
+                u_email = u_row[1]
+                u_id = u_row[2] # Pl: student_72345678901
+                db_school_id = u_row[3] or school_id
+                
+                # Ellenőrizzük, létezik-e már ilyen diák a diakok táblában (oktatasi_azonosito vagy email alapján)
+                existing = None
+                if u_username:
+                    existing = db.query(models.Student).filter(models.Student.oktatasi_azonosito == u_username).first()
+                if not existing and u_email:
+                    existing = db.query(models.Student).filter(models.Student.email == u_email).first()
+                
+                if not existing:
+                    # Próbáljuk kideríteni a nevét a public.users-ből (első és vezetéknevét)
+                    nev = "Ismeretlen Diák"
+                    try:
                         name_row = db.execute(
                             text("SELECT last_name, first_name FROM public.users WHERE id = :user_id"),
                             {"user_id": u_id}
                         ).first()
                         
-                        nev = "Ismeretlen Diák"
                         if name_row:
                             l_name = name_row[0] or ""
                             f_name = name_row[1] or ""
                             if l_name or f_name:
                                 nev = f"{l_name} {f_name}".strip()
-                        
-                        # Megpróbáljuk a class_id-t is lekérni
+                    except Exception as e_name:
+                        print(f"[API SYNC WARNING] Nem sikerült lekérni a nevet: {e_name}")
+                        # Fallback: használjuk a username-t vagy emailt névként
+                        nev = u_username or (u_email.split('@')[0] if u_email else "Ismeretlen Diák")
+                    
+                    # Megpróbáljuk a class_id-t is lekérni
+                    db_class_id = None
+                    try:
                         class_id_row = db.execute(
                             text("SELECT class_id FROM public.users WHERE id = :user_id"),
                             {"user_id": u_id}
                         ).first()
                         db_class_id = class_id_row[0] if class_id_row else None
-                        
-                        print(f"[API] Új diák szinkronizálása portálról: {nev} ({u_username})")
-                        new_s = models.Student(
-                            nev=nev,
-                            email=u_email,
-                            oktatasi_azonosito=u_username if (u_username and len(u_username) == 11 and u_username.isdigit()) else None,
-                            iskola_id=school_id,
-                            osztaly_id=db_class_id,
-                            tagozat="nappali",
-                            metadata_json={
-                                "forras": "InteractiveLearning",
-                                "portal_id": u_id
-                            }
-                        )
-                        db.add(new_s)
-                db.commit()
-            except Exception as e_sync:
-                print(f"[SYNCHRONIZE WARNING] Nem sikerült a portálos diákok szinkronizálása: {e_sync}")
-                db.rollback()
+                    except Exception as e_class:
+                        print(f"[API SYNC WARNING] Nem sikerült lekérni a class_id-t: {e_class}")
+                    
+                    print(f"[API] Új diák szinkronizálása portálról: {nev} ({u_username})")
+                    new_s = models.Student(
+                        nev=nev,
+                        email=u_email,
+                        oktatasi_azonosito=u_username if (u_username and len(u_username) == 11 and u_username.isdigit()) else None,
+                        iskola_id=db_school_id,
+                        osztaly_id=db_class_id,
+                        tagozat="nappali",
+                        metadata_json={
+                            "forras": "InteractiveLearning",
+                            "portal_id": u_id
+                        }
+                    )
+                    db.add(new_s)
+            db.commit()
+        except Exception as e_sync:
+            print(f"[SYNCHRONIZE WARNING] Nem sikerült a portálos diákok szinkronizálása: {e_sync}")
+            db.rollback()
 
         # 2. Lekérjük a diákokat a diakok táblából
         query = db.query(models.Student)
