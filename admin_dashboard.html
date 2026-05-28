@@ -1694,12 +1694,35 @@
                     badge = `<span class="badge-official" style="display: inline-block; font-size: 0.7rem; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 4px; margin-left: 8px; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 600;" title="Hivatalos KRÉTA / FAR szinkronizációból rögzített tanuló"><i class="fas fa-check-circle"></i> Hivatalos (KRÉTA/FAR)</span>`;
                 }
 
+                // Ellenőrizzük a hiányzó adatokat
+                const missingFields = [];
+                if (!s.oktatasi_azonosito) missingFields.push("OM azonosító");
+                if (!s.tajszam) missingFields.push("TAJ szám");
+                if (!s.adoazonosito) missingFields.push("Adóazonosító");
+                if (!s.bankszamlaszam) missingFields.push("Bankszámlaszám");
+                if (!s.szuletesi_datum) missingFields.push("Születési dátum");
+                if (!s.anyja_neve) missingFields.push("Anyja neve");
+                if (!s.szerzodes_kezdet) missingFields.push("Szerződés kezdete");
+                if (!s.telefon) missingFields.push("Telefonszám");
+                if (!s.email) missingFields.push("Email cím");
+                if (!szakmaRaw || szakmaRaw === '-') missingFields.push("Szakma");
+
+                let missingBadge = '';
+                if (missingFields.length > 0) {
+                    const missingList = missingFields.join(", ");
+                    const badgeColor = missingFields.length > 4 ? '#ef4444' : '#f59e0b';
+                    const bgOpacityColor = missingFields.length > 4 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)';
+                    const borderOpacityColor = missingFields.length > 4 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)';
+                    missingBadge = `<span class="badge-incomplete" style="display: inline-block; font-size: 0.7rem; background: ${bgOpacityColor}; color: ${badgeColor}; padding: 2px 8px; border-radius: 4px; margin-left: 8px; border: 1px solid ${borderOpacityColor}; font-weight: 600;" title="Hiányzó adatok: ${missingList}"><i class="fas fa-exclamation-triangle"></i> Hiányos (${missingFields.length})</span>`;
+                }
+
                 html += `
                     <tr style="border-bottom: 1px solid rgba(255,255,255,0.05)">
                         <td style="padding: 15px;">
                             <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 5px;">
                                 <strong>${s.nev}</strong>
                                 ${badge}
+                                ${missingBadge}
                             </div>
                             <small style="color: gray;">${azonosito}</small><br>
                             <small style="color: #60a5fa;">${iskolaDisplay}</small>

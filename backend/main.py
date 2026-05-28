@@ -57,6 +57,32 @@ async def lifespan(app: FastAPI):
             """))
             db.commit()
 
+            # Szinkronizáljuk a schools tábla tartalmát a helyi iskolak táblába a ForeignKey-ek kielégítésére
+            try:
+                db.execute(text("""
+                    INSERT INTO public.iskolak (id, nev, created_at)
+                    SELECT id, name, created_at FROM public.schools
+                    ON CONFLICT (id) DO UPDATE SET nev = EXCLUDED.nev;
+                """))
+                db.commit()
+                print("[MIGRATION] Schools table synced to Iskolak table successfully.")
+            except Exception as e_sync_sch:
+                print(f"[MIGRATION WARNING] Failed to sync schools: {e_sync_sch}")
+                db.rollback()
+
+            # Szinkronizáljuk a classes tábla tartalmát a helyi osztalyok táblába a ForeignKey-ek kielégítésére
+            try:
+                db.execute(text("""
+                    INSERT INTO public.osztalyok (id, megnevezes, statusz, iskola_id)
+                    SELECT id, name, 'aktív', school_id FROM public.classes
+                    ON CONFLICT (id) DO UPDATE SET megnevezes = EXCLUDED.megnevezes, iskola_id = EXCLUDED.iskola_id;
+                """))
+                db.commit()
+                print("[MIGRATION] Classes table synced to Osztalyok table successfully.")
+            except Exception as e_sync_cls:
+                print(f"[MIGRATION WARNING] Failed to sync classes: {e_sync_cls}")
+                db.rollback()
+
             db.execute(text("ALTER TABLE public.felhasznalok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.schools(id);"))
             db.execute(text("ALTER TABLE public.felhasznalok ADD COLUMN IF NOT EXISTS partner_id INTEGER REFERENCES public.partnerek(id);"))
             db.execute(text("ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS kreta_subdomain VARCHAR(100);"))
@@ -1579,7 +1605,7 @@ async def import_kreta_api(req: schemas.KretaLoginRequest, current_user: dict = 
     raw_students = await kreta_service.fetch_students(req.school_subdomain, token)
     
     # 3. Képzőhely-specifikus szűrés (ha a felhasználó egy partner képviselője)
-    db_user = db.query(models.User).filter(models.User.username == current_user["sub"]).first()
+    db_user = db.query(models.User).filter(models.User.username == current_user["username"]).first()
     partner_name = None
     if db_user and db_user.partner_id:
         partner = db.query(models.Partner).get(db_user.partner_id)
@@ -1609,7 +1635,7 @@ async def import_kreta_file(file: UploadFile = File(...), current_user: dict = D
     raw_students = excel_service.parse_students(content)
     
     # Képzőhely szűrés
-    db_user = db.query(models.User).filter(models.User.username == current_user["sub"]).first()
+    db_user = db.query(models.User).filter(models.User.username == current_user["username"]).first()
     partner_name = None
     if db_user and db_user.partner_id:
         partner = db.query(models.Partner).get(db_user.partner_id)
@@ -1644,7 +1670,7 @@ async def import_far_file(file: UploadFile = File(...), current_user: dict = Dep
         raw_students = far_service.parse_far_excel(content)
         
     # Képzőhely szűrés
-    db_user = db.query(models.User).filter(models.User.username == current_user["sub"]).first()
+    db_user = db.query(models.User).filter(models.User.username == current_user["username"]).first()
     partner_name = None
     if db_user and db_user.partner_id:
         partner = db.query(models.Partner).get(db_user.partner_id)
