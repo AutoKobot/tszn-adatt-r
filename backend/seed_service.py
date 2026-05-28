@@ -48,70 +48,8 @@ def seed_normativa_data(db: Session):
                 db.rollback()
                 print(f"[SEED] Hiba az alap seed során: {e}")
 
-    # 2. MINTA DIÁKOK ÉS JELENLÉT SEED (Külön csekk, ha a DB üres)
-    if db.query(models.Student).count() == 0:
-        try:
-            print("[SEED] Minta diákok generálása a teszteléshez...")
-            # ... (itt folytatódik a diák generáló kód amit az előbb írtam)
-            print("[SEED] Minta diákok generálása a teszteléshez...")
-            szakmak = db.query(models.SzakmaTorzs).all()
-            if not szakmak: return
-
-            # Biztosítsuk, hogy létezik osztály a diákoknak
-            teszt_osztaly = db.query(models.ClassRoom).filter(models.ClassRoom.megnevezes == "12.C").first()
-            if not teszt_osztaly:
-                teszt_osztaly = models.ClassRoom(megnevezes="12.C", statusz="aktív")
-                db.add(teszt_osztaly)
-                db.flush()
-
-            ma = datetime.date.today()
-            honap_eleje = ma.replace(day=1)
-            
-            nevek = ["Kovács Adél", "Nagy Barnabás", "Szabó Csenge", "Tóth Dániel", "Kiss Enikő", "Molnár Ferenc", "Varga Gábor", "Fekete Hanna", "Németh Imre", "Papp Júlia"]
-            
-            for i, nev in enumerate(nevek):
-                szakma = szakmak[i % len(szakmak)]
-                diak = models.Student(
-                    nev=nev,
-                    email=f"teszt{i}@iskola.hu",
-                    oktatasi_azonosito=str(78600000000 + i),
-                    osztaly_id=teszt_osztaly.id,
-                    tagozat="nappali",
-                    szakma_torzs_id=szakma.id,
-                    szerzodes_kezdet=datetime.date(2023, 9, 1),
-                    szerzodes_vege=datetime.date(2025, 6, 15),
-                    metadata_json={
-                        "havi_osztondij": 50000 + (i * 2000),
-                        "szakma": szakma.megnevezes
-                    }
-                )
-                db.add(diak)
-                db.flush() # Hogy megkapjuk a diák ID-ját
-
-                # Generáljunk jelenlétet a hónap eddigi napjaira
-                for nap in range(1, ma.day + 1):
-                    datum = honap_eleje.replace(day=nap)
-                    # Hétvégéket hagyjuk ki
-                    if datum.weekday() >= 5: continue
-
-                    # Véletlenszerű státusz
-                    rand = i + nap
-                    if rand % 20 == 0: statusz = "betegszabadsag"
-                    elif rand % 15 == 0: statusz = "igazolt_hianyzas"
-                    else: statusz = "dualis_nap" if (nap % 2 == 0) else "jelen"
-
-                    jelenlet = models.Attendance(
-                        diak_id=diak.id,
-                        datum=datum,
-                        statusz=statusz,
-                        oraszam=8,
-                        tipus="cég" if "dualis" in statusz else "iskola"
-                    )
-                    db.add(jelenlet)
-            
-            db.commit()
-            print(f"[SEED] {len(nevek)} minta diák és jelenléti adatok sikeresen létrehozva.")
-
-        except Exception as e:
-            db.rollback()
-            print(f"[SEED] Hiba a betöltés során: {e}")
+    # 2. MINTA DIÁKOK ÉS JELENLÉT SEED (KIKAPCSOLVA)
+    # Az automatikus startup diák generálás ki lett kapcsolva, mert a szerver leállása/ébredése után
+    # a korábban törölt fiktív tanulók mindig újragenerálódtak (ha a diákszám 0 volt).
+    # A manuális tesztadat generálás továbbra is elérhető a Beállítások menüből.
+    print("[SEED] Automatikus minta diákok betöltése kikapcsolva. Használd a kézi generálást ha szükséges.")
