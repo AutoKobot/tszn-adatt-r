@@ -2503,8 +2503,8 @@
 
             const selectedStudents = checkedIndices.map(idx => window.pendingRosterStudents[idx]);
             const token = localStorage.getItem('token');
-            let partnerId = 1;
-            let schoolId = 1;
+            let partnerId = null;  // null = nincs partnercég szűrés / nincs szerződés automatikusan
+            let schoolId = null;
             
             if (token) {
                 try {

@@ -1782,21 +1782,26 @@ async def import_commit(req: schemas.StudentImportCommit, db: Session = Depends(
             saved_count += 1
             
         if req.partner_id and db_student.id:
-            existing_contract = db.query(models.DualisSzerzodes).filter(
-                models.DualisSzerzodes.diak_id == db_student.id,
-                models.DualisSzerzodes.partner_id == req.partner_id
-            ).first()
-            
-            if not existing_contract:
-                new_contract = models.DualisSzerzodes(
-                    diak_id=db_student.id,
-                    partner_id=req.partner_id,
-                    szerzodes_szama=f"SZERZ-{db_student.oktatasi_azonosito or 'NEW'}-{datetime.date.today().year}",
-                    kezdeti_datum=db_student.szerzodes_kezdet or datetime.date.today(),
-                    vege_datum=db_student.szerzodes_vege,
-                    statusz="aktív"
-                )
-                db.add(new_contract)
+            # Ellenőrizzük, hogy a partner tényleg létezik-e a partnerek táblában
+            partner_exists = db.query(models.Partner).filter(models.Partner.id == req.partner_id).first()
+            if not partner_exists:
+                print(f"[IMPORT COMMIT] Partner ID {req.partner_id} nem található a partnerek táblában — szerződés kihagyva.")
+            else:
+                existing_contract = db.query(models.DualisSzerzodes).filter(
+                    models.DualisSzerzodes.diak_id == db_student.id,
+                    models.DualisSzerzodes.partner_id == req.partner_id
+                ).first()
+                
+                if not existing_contract:
+                    new_contract = models.DualisSzerzodes(
+                        diak_id=db_student.id,
+                        partner_id=req.partner_id,
+                        szerzodes_szama=f"SZERZ-{db_student.oktatasi_azonosito or 'NEW'}-{datetime.date.today().year}",
+                        kezdeti_datum=db_student.szerzodes_kezdet or datetime.date.today(),
+                        vege_datum=db_student.szerzodes_vege,
+                        statusz="aktív"
+                    )
+                    db.add(new_contract)
                 
     db.commit()
     return {
@@ -1805,6 +1810,60 @@ async def import_commit(req: schemas.StudentImportCommit, db: Session = Depends(
         "imported": saved_count,
         "updated": updated_count
     }
+
+# ═══════════════════════════════════════════════════════════════
+# API: PARTNEREK (KÉPZŐINTÉZMÉNY ADATOK) - EduRegistrar Szinkron
+# ═══════════════════════════════════════════════════════════════
+
+class PartnerUpsertSchema(schemas.BaseModel):
+    cegnev: str
+    adoszam: str
+    szekhely: Optional[str] = None
+    metadata: Optional[dict] = None
+
+@app.post("/api/partners/upsert")
+def upsert_partner(
+    data: PartnerUpsertSchema,
+    db: Session = Depends(database.get_db)
+):
+    """
+    Létrehozza vagy frissíti a képzőintézmény adatait a partnerek táblában.
+    Az adószám alapján azonosítja a partnert (upsert logika).
+    """
+    if not data.cegnev or not data.adoszam:
+        raise HTTPException(status_code=400, detail="A cégnév és az adószám megadása kötelező.")
+
+    # Keresés adószám alapján
+    partner = db.query(models.Partner).filter(models.Partner.adoszam == data.adoszam).first()
+
+    if partner:
+        # Frissítés
+        partner.cegnev = data.cegnev
+        if data.szekhely:
+            partner.szekhely = data.szekhely
+        db.commit()
+        db.refresh(partner)
+        return {"id": partner.id, "action": "updated", "cegnev": partner.cegnev}
+    else:
+        # Létrehozás
+        new_partner = models.Partner(
+            cegnev=data.cegnev,
+            adoszam=data.adoszam,
+            szekhely=data.szekhely or ""
+        )
+        db.add(new_partner)
+        db.commit()
+        db.refresh(new_partner)
+        return {"id": new_partner.id, "action": "created", "cegnev": new_partner.cegnev}
+
+@app.get("/api/partners")
+def list_partners(
+    db: Session = Depends(database.get_db),
+    current_user: dict = Depends(auth.get_current_user)
+):
+    """Lista az összes partnerről (képzőintézményről)."""
+    partners = db.query(models.Partner).all()
+    return [{"id": p.id, "cegnev": p.cegnev, "adoszam": p.adoszam, "szekhely": p.szekhely} for p in partners]
 
 # Minden más fájlt (CSS, JS, képek) a "static" mount szolgál ki
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
