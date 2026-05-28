@@ -185,6 +185,7 @@ class UserBase(BaseModel):
     role: str
     status: Optional[bool] = True
     iskola_id: Optional[int] = None
+    partner_id: Optional[int] = None
 
 class UserCreate(UserBase):
     password: str
@@ -194,6 +195,17 @@ class User(UserBase):
     id: int
     last_login: Optional[datetime] = None
     model_config = {"from_attributes": True}
+
+# --- KRÉTA / FAR INTEGRÁCIÓS SÉMÁK ---
+class KretaLoginRequest(BaseModel):
+    school_subdomain: str
+    username: str
+    password: str
+
+class StudentImportCommit(BaseModel):
+    students: List[dict]  # A normalizált tanulói objektumok listája
+    partner_id: int
+    school_id: Optional[int] = None
 
 # --- JELENLÉT SÉMÁK ---
 class AttendanceBase(BaseModel):

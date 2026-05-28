@@ -163,6 +163,12 @@ class ExcelService:
                 "evfolyam": self._get_safe_val(row, 'evfolyam'),
                 "szerzodes_kezdet": self._parse_date(kezdet),
                 "szerzodes_vege": self._parse_date(vege),
+                "szuletesi_hely": self._get_safe_val(row, 'szuletesi_hely'),
+                "szuletesi_datum": self._parse_date(self._get_safe_val(row, 'szuletesi_datum')),
+                "anyja_neve": self._get_safe_val(row, 'anyja_neve'),
+                "tajszam": self._get_safe_val(row, 'taj_szam'),
+                "adoazonosito": self._get_safe_val(row, 'adoazonosito'),
+                "bankszamlaszam": self._get_safe_val(row, 'bankszamlaszam'),
                 "metadata_json": {
                     # Alap meta
                     "szakma": szakma,

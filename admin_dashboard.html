@@ -17,14 +17,13 @@
                 <span>EduRegistrar</span>
             </div>
             <nav>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-db\']').click()" class="active"><i class="fas fa-database"></i> <span>Adatbázis</span></a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-db\']').click()"><i class="fas fa-file-contract"></i> <span>Szerződések</span></a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-mgmt\']').click()"><i class="fas fa-building"></i> <span>Cégek</span></a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-safety\']').click()"><i class="fas fa-shield-alt"></i> <span>Biztonság</span></a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-safety\']').click()"><i class="fas fa-boxes"></i> <span>Eszközök</span></a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-reports\']').click()"><i class="fas fa-chart-line"></i> <span>Riportok</span></a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-normativa\']').click()" style="color: #60a5fa;"><i class="fas fa-calculator"></i> <span>Normatíva</span></a>
-                <a href="#" onclick="document.querySelector('[data-target=\'admin-tab-reports\']').click()"><i class="fas fa-history"></i> <span>Audit</span></a>
+                <a href="#" id="nav-dashboard" onclick="switchMainTab('dashboard')" class="active"><i class="fas fa-chart-pie"></i> <span>Vezérlőpult</span></a>
+                <a href="#" id="nav-students" onclick="switchMainTab('students')"><i class="fas fa-user-graduate"></i> <span>Tanulók & Szerződések</span></a>
+                <a href="#" id="nav-integrations" onclick="switchMainTab('integrations')"><i class="fas fa-network-wired"></i> <span>Kréta & FAR Integráció</span></a>
+                <a href="#" id="nav-partners" onclick="switchMainTab('partners')"><i class="fas fa-building"></i> <span>Duális Partnerek</span></a>
+                <a href="#" id="nav-safety" onclick="switchMainTab('safety')"><i class="fas fa-shield-alt"></i> <span>Biztonság & Eszközök</span></a>
+                <a href="#" id="nav-normativa" onclick="switchMainTab('normativa')" style="color: #60a5fa;"><i class="fas fa-calculator"></i> <span>Normatíva & ROI</span></a>
+                <a href="#" id="nav-system" onclick="switchMainTab('system')"><i class="fas fa-cogs"></i> <span>Rendszer & Beállítások</span></a>
                 <a href="index.html" onclick="localStorage.removeItem('token'); localStorage.removeItem('school_name');" style="margin-top: auto; color: #fca5a5;"><i class="fas fa-sign-out-alt" style="color: #ef4444;"></i> <span>Kilépés</span></a>
             </nav>
             <div class="user-profile">
@@ -49,85 +48,79 @@
                 </div>
             </header>
 
-            <!-- INTELLIGENS ÖSSZEGZŐ KÁRTYÁK -->
-            <div class="content-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: 2rem;">
-                <div class="card" style="border-left: 4px solid #4f46e5; background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(0,0,0,0) 100%);">
-                    <div style="display: flex; justify-content: space-between;">
-                        <div>
-                            <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Aktív Tanulók</h4>
-                            <h2 style="font-size: 2rem; margin: 5px 0;" id="stat-total-students">0</h2>
+            <!-- TAB 1: Vezérlőpult (Dashboard Overview) -->
+            <div id="admin-tab-dashboard" class="admin-tab-content">
+                <!-- INTELLIGENS ÖSSZEGZŐ KÁRTYÁK -->
+                <div class="content-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: 2rem;">
+                    <div class="card" style="border-left: 4px solid #4f46e5; background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(0,0,0,0) 100%);">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>
+                                <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Aktív Tanulók</h4>
+                                <h2 style="font-size: 2rem; margin: 5px 0;" id="stat-total-students">0</h2>
+                            </div>
+                            <i class="fas fa-user-graduate" style="color: #4f46e5; font-size: 1.5rem;"></i>
                         </div>
-                        <i class="fas fa-user-graduate" style="color: #4f46e5; font-size: 1.5rem;"></i>
+                    </div>
+
+                    <div class="card" style="border-left: 4px solid #f59e0b; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(0,0,0,0) 100%);">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>
+                                <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Mulasztási Átlag</h4>
+                                <h2 style="font-size: 2rem; margin: 5px 0;" id="stat-absent-avg">0%</h2>
+                            </div>
+                            <i class="fas fa-calendar-times" style="color: #f59e0b; font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+
+                    <div class="card" style="border-left: 4px solid #10b981; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(0,0,0,0) 100%);">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>
+                                <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Becsült Ösztöndíj</h4>
+                                <h2 style="font-size: 1.5rem; margin: 5px 0;" id="stat-total-stipend">0 Ft</h2>
+                            </div>
+                            <i class="fas fa-coins" style="color: #10b981; font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+
+                    <div class="card" style="border-left: 4px solid #ef4444; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(0,0,0,0) 100%);">
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>
+                                <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Compliance Riasztás</h4>
+                                <h2 style="font-size: 2rem; margin: 5px 0;" id="stat-compliance-alerts">0</h2>
+                            </div>
+                            <i class="fas fa-shield-alt" style="color: #ef4444; font-size: 1.5rem;"></i>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card" style="border-left: 4px solid #f59e0b; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(0,0,0,0) 100%);">
-                    <div style="display: flex; justify-content: space-between;">
-                        <div>
-                            <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Mulasztási Átlag</h4>
-                            <h2 style="font-size: 2rem; margin: 5px 0;" id="stat-absent-avg">0%</h2>
+                <!-- OKOS ASSZISZTENS PANEL -->
+                <section style="margin-bottom: 2rem;">
+                    <div class="card" style="border: 1px solid rgba(79, 70, 229, 0.3); background: rgba(79, 70, 229, 0.05); border-radius: 12px; transition: transform 0.2s;">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                            <div style="background: #4f46e5; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin: 0;">Intelligens Asszisztens</h3>
+                                <p style="margin: 0; font-size: 0.85rem; color: #94a3b8;">Javasolt automatizált műveletek az adatok alapján</p>
+                            </div>
                         </div>
-                        <i class="fas fa-calendar-times" style="color: #f59e0b; font-size: 1.5rem;"></i>
-                    </div>
-                </div>
-
-                <div class="card" style="border-left: 4px solid #10b981; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(0,0,0,0) 100%);">
-                    <div style="display: flex; justify-content: space-between;">
-                        <div>
-                            <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Becsült Ösztöndíj</h4>
-                            <h2 style="font-size: 1.5rem; margin: 5px 0;" id="stat-total-stipend">0 Ft</h2>
+                        <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                            <button class="btn-primary" style="background: #4f46e5; flex: 1; min-width: 250px; padding: 12px;" onclick="massGenerateContracts()">
+                                <i class="fas fa-file-signature"></i> Tömeges szerződés generálás (.ZIP)
+                            </button>
+                            <button class="btn-primary" style="background: #10b981; flex: 1; min-width: 250px; padding: 12px;" onclick="exportCSVData()">
+                                <i class="fas fa-file-excel"></i> Havi bérfeladó export (.csv)
+                            </button>
                         </div>
-                        <i class="fas fa-coins" style="color: #10b981; font-size: 1.5rem;"></i>
                     </div>
-                </div>
-
-                <div class="card" style="border-left: 4px solid #ef4444; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(0,0,0,0) 100%);">
-                    <div style="display: flex; justify-content: space-between;">
-                        <div>
-                            <h4 style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Compliance Riasztás</h4>
-                            <h2 style="font-size: 2rem; margin: 5px 0;" id="stat-compliance-alerts">0</h2>
-                        </div>
-                        <i class="fas fa-shield-alt" style="color: #ef4444; font-size: 1.5rem;"></i>
-                    </div>
-                </div>
+                </section>
             </div>
 
-            <!-- OKOS ASSZISZTENS PANEL -->
-            <section style="margin-bottom: 2rem;">
-                <div class="card" style="border: 1px solid rgba(79, 70, 229, 0.3); background: rgba(79, 70, 229, 0.05); border-radius: 12px; transition: transform 0.2s;">
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
-                        <div style="background: #4f46e5; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);">
-                            <i class="fas fa-robot"></i>
-                        </div>
-                        <div>
-                            <h3 style="margin: 0;">Intelligens Asszisztens</h3>
-                            <p style="margin: 0; font-size: 0.85rem; color: #94a3b8;">Javasolt automatizált műveletek az adatok alapján</p>
-                        </div>
-                    </div>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                        <button class="btn-primary" style="background: #4f46e5; flex: 1; min-width: 250px; padding: 12px;" onclick="massGenerateContracts()">
-                            <i class="fas fa-file-signature"></i> Tömeges szerződés generálás (.ZIP)
-                        </button>
-                        <button class="btn-primary" style="background: #10b981; flex: 1; min-width: 250px; padding: 12px;" onclick="exportCSVData()">
-                            <i class="fas fa-file-excel"></i> Havi bérfeladó export (.csv)
-                        </button>
-                    </div>
-                </div>
-            </section>
-
             <div class="content-grid" style="grid-template-columns: 1fr;">
-                
-                <!-- Tab Navigáció -->
-                <div style="display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-top: 20px; overflow-x: auto;">
-                    <button class="btn-primary admin-tab-btn" data-target="admin-tab-db" style="background: #4f46e5; border-radius: 8px; white-space: nowrap;"><i class="fas fa-database"></i> Adatbázis & Szerződések</button>
-                    <button class="btn-secondary admin-tab-btn" data-target="admin-tab-mgmt" style="border-radius: 8px; white-space: nowrap;"><i class="fas fa-cogs"></i> Rendszer & Importálás</button>
-                    <button class="btn-secondary admin-tab-btn" data-target="admin-tab-safety" style="border-radius: 8px; white-space: nowrap;"><i class="fas fa-hard-hat"></i> Biztonság & Eszközök</button>
-                    <button class="btn-secondary admin-tab-btn" data-target="admin-tab-reports" style="border-radius: 8px; white-space: nowrap;"><i class="fas fa-chart-line"></i> Jelentések & Audit</button>
-                    <button class="btn-secondary admin-tab-btn" data-target="admin-tab-normativa" style="border-radius: 8px; white-space: nowrap; border: 1px solid #60a5fa; color: #60a5fa;"><i class="fas fa-calculator"></i> Normatíva & ROI</button>
-                </div>
 
-                <!-- TAB 1: Adatbázis & Szerződések -->
-                <div id="admin-tab-db" class="admin-tab-content">
+                <!-- TAB 2: Tanulók & Szerződések -->
+                <div id="admin-tab-students" class="admin-tab-content">
                     <section class="data-section">
                         <div style="background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05);">
                             <h4 style="margin-top: 0; margin-bottom: 15px; color: #60a5fa;"><i class="fas fa-filter"></i> Intelligens Szűrőközpont</h4>
@@ -204,138 +197,179 @@
                     </section>
                 </div>
 
-                <!-- TAB 2: Rendszer & Importálás -->
-                <div id="admin-tab-mgmt" class="admin-tab-content" style="display: none;">
+                <!-- TAB 3: Kréta & FAR Integráció -->
+                <div id="admin-tab-integrations" class="admin-tab-content" style="display: none;">
+                    <div class="card" style="border-top: 4px solid #10b981; position: relative;">
+                        <h3><i class="fas fa-network-wired" style="color: #10b981;"></i> Kréta & FAR Integrációs Központ</h3>
+                        <p style="margin-bottom: 20px;">Automatizált és hibrid diák-szinkronizációs modul duális képzőhelyeknek és felnőttoktatásnak.</p>
+                        
+                        <!-- Importálási Típus Kiválasztása -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; overflow-x: auto;">
+                            <button class="btn-primary" id="btn-mode-kreta-api" style="background: #4f46e5; border-radius: 6px; font-size: 0.85rem; padding: 6px 12px; white-space: nowrap;" onclick="switchImportMode('kreta-api')">
+                                <i class="fas fa-plug"></i> KRÉTA Live API
+                            </button>
+                            <button class="btn-secondary" id="btn-mode-kreta-file" style="border-radius: 6px; font-size: 0.85rem; padding: 6px 12px; white-space: nowrap;" onclick="switchImportMode('kreta-file')">
+                                <i class="fas fa-file-excel"></i> KRÉTA Fájl Import
+                            </button>
+                            <button class="btn-secondary" id="btn-mode-far-file" style="border-radius: 6px; font-size: 0.85rem; padding: 6px 12px; white-space: nowrap;" onclick="switchImportMode('far-file')">
+                                <i class="fas fa-file-code"></i> FAR XML / Excel
+                            </button>
+                        </div>
+
+                        <!-- MODE 1: KRÉTA API SZINKRONIZÁCIÓ -->
+                        <div id="panel-kreta-api" class="import-panel">
+                            <div style="background: rgba(79, 70, 229, 0.05); border: 1px solid rgba(79, 70, 229, 0.2); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                                <h4 style="margin: 0 0 10px; color: #818cf8;"><i class="fas fa-info-circle"></i> KRÉTA API Kapcsolat</h4>
+                                <p style="font-size: 0.8rem; margin: 0; color: #94a3b8; line-height: 1.4;">
+                                    Adja meg az iskola nevét vagy KRÉTA szubdomain azonosítóját, majd lépjen be az intézményi azonosítójával a tanulók automatikus lekéréséhez. <i>Tipp: Teszteléshez adja meg a "mock_school" szubdomain-t!</i>
+                                </p>
+                            </div>
+                            <div class="form-group" style="position: relative;">
+                                <label>1. Iskola Keresése / Kréta Aldomain</label>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" id="kreta-school-search" class="login-input" placeholder="Gépeljen az iskola nevének kereséséhez..." style="flex: 1; border-radius: 6px;" oninput="searchKretaSchools()">
+                                    <input type="text" id="kreta-school-subdomain" class="login-input" placeholder="szubdomain" style="width: 140px; border-radius: 6px;" readonly>
+                                </div>
+                                <div id="kreta-schools-results" style="background: rgba(30,30,47,0.98); border: 1px solid #444; border-radius: 6px; max-height: 180px; overflow-y: auto; display: none; position: absolute; z-index: 1000; width: 100%; box-shadow: 0 10px 25px rgba(0,0,0,0.6); margin-top: 5px;"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Kréta Felhasználónév</label>
+                                    <input type="text" id="kreta-username" class="login-input" placeholder="Kréta azonosító" style="border-radius: 6px;">
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label>Kréta Jelszó</label>
+                                    <input type="password" id="kreta-password" class="login-input" placeholder="••••••••" style="border-radius: 6px;">
+                                </div>
+                            </div>
+                            <button class="btn-primary" style="width: 100%; background: #4f46e5; margin-top: 5px; padding: 10px; border-radius: 6px;" onclick="syncKretaApi()">
+                                <i class="fas fa-sync fa-spin" id="spinner-kreta-api" style="display: none; margin-right: 5px;"></i>
+                                <i class="fas fa-cloud-download-alt" id="icon-kreta-api"></i> Tanulók Lekérése Kréta API-ból
+                            </button>
+                        </div>
+
+                        <!-- MODE 2: KRÉTA FÁJL IMPORT -->
+                        <div id="panel-kreta-file" class="import-panel" style="display: none;">
+                            <div class="drop-zone" id="studentExcelZone" style="padding: 25px 15px; cursor: pointer; border: 2px dashed #10b981; border-radius: 8px; text-align: center; background: rgba(16,185,129,0.02);">
+                                <i class="fas fa-file-excel" style="font-size: 2.5rem; color: #10b981; margin-bottom: 10px;"></i>
+                                <span style="display: block; font-weight: bold; color: white;">Húzza ide a Kréta Export (.xlsx / .csv) fájlt</span>
+                                <span style="font-size: 0.8rem; color: #64748b; display: block; margin-top: 5px;">Vagy kattintson a tallózáshoz</span>
+                            </div>
+                            <input type="file" id="studentExcelInput" style="display: none;" accept=".xlsx, .xls, .csv">
+                            
+                            <div style="display: flex; align-items: center; gap: 10px; margin-top: 15px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                                <label style="margin-bottom: 0; white-space: nowrap;">Tagozat:</label>
+                                <select id="import-tagozat-select" class="login-input" style="padding: 5px; border-radius: 5px; background: rgba(30,30,47,0.9);">
+                                    <option value="nappali">Nappali tagozat</option>
+                                    <option value="felnott">Felnőttképzés</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- MODE 3: FAR XML / EXCEL IMPORT -->
+                        <div id="panel-far-file" class="import-panel" style="display: none;">
+                            <div class="drop-zone" id="farFileZone" style="padding: 25px 15px; cursor: pointer; border: 2px dashed #f59e0b; border-radius: 8px; text-align: center; background: rgba(245,158,11,0.02);">
+                                <i class="fas fa-file-code" style="font-size: 2.5rem; color: #f59e0b; margin-bottom: 10px;"></i>
+                                <span style="display: block; font-weight: bold; color: white;">Húzza ide a FAR XML vagy Excel fájlt</span>
+                                <span style="font-size: 0.8rem; color: #64748b; display: block; margin-top: 5px;">Támogatott formátumok: .xml és .xlsx</span>
+                            </div>
+                            <input type="file" id="farFileInput" style="display: none;" accept=".xml, .xlsx, .csv">
+                        </div>
+
+                        <!-- Szakma Javítás -->
+                        <div style="background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 15px; margin-top: 20px; margin-bottom: 10px;">
+                            <h4 style="margin:0 0 8px; color:#fbbf24;"><i class="fas fa-wrench"></i> Gyors Szakma Javító</h4>
+                            <p style="font-size:0.8rem; color: rgba(255,255,255,0.6); margin-bottom:12px; line-height: 1.4;">Ha a diákok már bent vannak, de a szakmai besorolásuk hiányzik, töltsön fel egy Excel-t itt az adatok pótlásához.</p>
+                            <div class="drop-zone" id="patchSzakmaZone" style="padding: 12px; cursor: pointer; border: 1px dashed rgba(245,158,11,0.3);">
+                                <i class="fas fa-band-aid" style="color:#fbbf24; margin-right: 5px;"></i>
+                                <span>Szakma javítás (CSV/XLSX)</span>
+                            </div>
+                            <input type="file" id="patchSzakmaInput" style="display: none;" accept=".xlsx, .xls, .csv">
+                        </div>
+
+                        <!-- ROSTER SELECTOR MODAL -->
+                        <div id="rosterModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 20px; backdrop-filter: blur(8px);">
+                            <div class="card" style="width: 100%; max-width: 900px; background: #1e1e2f; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; display: flex; flex-direction: column; max-height: 85vh; box-shadow: 0 20px 50px rgba(0,0,0,0.7); padding: 25px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 15px;">
+                                    <h3 style="margin: 0; color: #10b981; font-size: 1.2rem;"><i class="fas fa-tasks"></i> Kijelölt Tanulók Importálása (Roster Selector)</h3>
+                                    <span style="cursor: pointer; font-size: 1.8rem; color: #94a3b8;" onclick="closeRosterModal()">&times;</span>
+                                </div>
+                                <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 0; margin-bottom: 15px; line-height: 1.4;">
+                                    Az alábbi diákok adatait sikerült betölteni az integrációs forrásból. Jelölje be a rendszerünkbe importálni kívánt tanulókat! A kiválasztott diákokhoz a duális munkaszerződés automatikusan legenerálásra kerül.
+                                </p>
+                                <div style="flex: 1; overflow-y: auto; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; background: rgba(0,0,0,0.25);">
+                                    <table style="width: 100%; text-align: left; border-collapse: collapse; font-size: 0.8rem; color: white;">
+                                        <thead>
+                                            <tr style="border-bottom: 2px solid #333; background: rgba(0,0,0,0.4); color: #94a3b8;">
+                                                <th style="padding: 12px; text-align: center; width: 50px;">
+                                                    <input type="checkbox" id="roster-select-all" onchange="toggleAllRoster(this)" checked>
+                                                </th>
+                                                <th style="padding: 12px;">Tanuló Neve</th>
+                                                <th style="padding: 12px;">OM Azonosító</th>
+                                                <th style="padding: 12px;">Szakma</th>
+                                                <th style="padding: 12px;">Lakhely</th>
+                                                <th style="padding: 12px;">Gyakorlati Képzőhely (Kréta)</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="rosterTableBody">
+                                            <!-- Dinamikus sorok jönnek ide -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                                    <button class="btn-secondary" style="border-radius: 8px; padding: 10px 20px; font-size: 0.9rem;" onclick="closeRosterModal()">Mégse</button>
+                                    <button class="btn-primary" style="background: #10b981; border-radius: 8px; padding: 10px 20px; font-size: 0.9rem;" onclick="commitRosterImport()">
+                                        <i class="fas fa-check-double"></i> Kijelöltek Betöltése
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: Duális Partnerek -->
+                <div id="admin-tab-partners" class="admin-tab-content" style="display: none;">
                     <div class="grid-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                        <section class="form-section">
-                            <div class="card">
-                                <h3><i class="fas fa-file-excel" style="color: #10b981;"></i> Adatok Importálása (Kréta / Excel)</h3>
-                                <p style="margin-bottom: 20px;">Intelligens import adatbázis frissítéshez oszlopsorrendtől függetlenül.</p>
-                                
-                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
-                                    <label style="margin-bottom: 0; white-space: nowrap;">Célcsoport:</label>
-                                    <select id="import-tagozat-select" class="login-input" style="padding: 5px; border-radius: 5px;">
-                                        <option value="nappali">Nappali tagozat</option>
-                                        <option value="felnott">Felnőttképzés</option>
-                                    </select>
+                        <!-- ÚJ: Parnercég Felvitele -->
+                        <div class="card" style="border-left: 4px solid #f59e0b;">
+                            <h3><i class="fas fa-industry" style="color: #f59e0b;"></i> Új Partnercég (Képzőhely) Rögzítése</h3>
+                            <p style="margin-bottom: 20px;">Duális partnercégek adatbázisának építése.</p>
+                            <div class="form-group">
+                                <label>Cégjegyzéknév</label>
+                                <input type="text" id="partner-nev" class="login-input" placeholder="pl: Vasvári Gépészeti Kft." style="border-radius: 8px;">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group" style="flex:1;">
+                                    <label>Adószám</label>
+                                    <input type="text" id="partner-adoszam" class="login-input" placeholder="12345678-2-12" style="border-radius: 8px;">
                                 </div>
-                                <div class="import-zones" style="display:flex; gap:10px; margin-bottom: 20px;">
-                                    <div class="drop-zone" id="studentExcelZone" style="flex:1; padding: 15px; cursor: pointer;">
-                                        <i class="fas fa-user-graduate"></i>
-                                        <span>Tanulók CSV/XLSX</span>
-                                    </div>
-                                    <input type="file" id="studentExcelInput" style="display: none;" accept=".xlsx, .xls, .csv">
-                                    
-                                    <div class="drop-zone" id="instructorExcelZone" style="flex:1; padding: 15px; cursor: pointer;">
-                                        <i class="fas fa-chalkboard-teacher"></i>
-                                        <span>Oktatók CSV/XLSX</span>
-                                    </div>
-                                    <input type="file" id="instructorExcelInput" style="display: none;" accept=".xlsx, .xls, .csv">
-                                </div>
-
-                                <!-- Szakma Javítás -->
-                                <div style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                                    <h4 style="margin:0 0 8px; color:#fbbf24;"><i class="fas fa-wrench"></i> Szakma Javítás</h4>
-                                    <p style="font-size:0.85rem; color: rgba(255,255,255,0.6); margin-bottom:12px;">Ha a diákok már bent vannak de a szakma hiányzik, töltsd fel az eredeti CSV-t itt.</p>
-                                    <div class="drop-zone" id="patchSzakmaZone" style="padding: 12px; cursor: pointer;">
-                                        <i class="fas fa-band-aid" style="color:#fbbf24;"></i>
-                                        <span>Szakma javítás (CSV/XLSX)</span>
-                                    </div>
-                                    <input type="file" id="patchSzakmaInput" style="display: none;" accept=".xlsx, .xls, .csv">
-                                </div>
-
-                                </div>
-                                
-                                <hr style="border-color: rgba(255,255,255,0.1); margin-bottom: 20px;">
-                                
-                                <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                                    <h4 style="margin:0 0 8px; color:#ef4444;"><i class="fas fa-trash-alt"></i> Adattisztítás</h4>
-                                    <p style="font-size:0.85rem; color: rgba(255,255,255,0.6); margin-bottom:12px;">Tanuló/AI által létrehozott kamú (teszt) adatok végleges törlése az adatbázisból.</p>
-                                    <button class="btn-secondary" style="background: #ef4444; color: white; border: none; width: 100%;" onclick="cleanupDummyData()"><i class="fas fa-biohazard"></i> Kamú adatok törlése</button>
-                                </div>
-    
-                                <h3><i class="fas fa-file-word" style="color: #3b82f6;"></i> Szerződésminták (Sablon) Feltöltése</h3>
-                                <p style="margin-bottom: 20px;">Tölts fel alapértelmezett Word sablonokat a generátorhoz.</p>
-                                
-                                <div class="import-zones" style="display:flex; gap:10px;">
-                                    <div class="drop-zone" id="templateZone" style="flex:1; padding: 15px; cursor: pointer;">
-                                        <i class="fas fa-upload"></i>
-                                        <span>Sablon (.docx)</span>
-                                    </div>
-                                    <input type="file" id="templateInput" style="display: none;" accept=".docx">
-                                    <select id="templateTypeSelect" class="login-input" style="flex:1; padding: 10px; border-radius: 8px;">
-                                        <option value="dualis_nappali">Duális szerződés (nappali)</option>
-                                        <option value="dualis_felnott">Duális szerződés (felnőtt)</option>
-                                        <option value="oktatoi_megbizasi">Oktatói megbízási</option>
-                                    </select>
+                                <div class="form-group" style="flex:1;">
+                                    <label>Székhely</label>
+                                    <input type="text" id="partner-szekhely" class="login-input" placeholder="4440 Tiszavasvári..." style="border-radius: 8px;">
                                 </div>
                             </div>
-                        </section>
-    
-                        <section class="form-section" style="display: flex; flex-direction: column; gap: 2rem;">
-                            <!-- ÚJ: Parnercég Felvitele -->
-                            <div class="card" style="border-left: 4px solid #f59e0b;">
-                                <h3><i class="fas fa-industry" style="color: #f59e0b;"></i> Új Partnercég (Képzőhely) Rögzítése</h3>
-                                <p style="margin-bottom: 20px;">Duális partnercégek adatbázisának építése.</p>
-                                <div class="form-group">
-                                    <label>Cégjegyzéknév</label>
-                                    <input type="text" id="partner-nev" class="login-input" placeholder="pl: Vasvári Gépészeti Kft." style="border-radius: 8px;">
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group" style="flex:1;">
-                                        <label>Adószám</label>
-                                        <input type="text" id="partner-adoszam" class="login-input" placeholder="12345678-2-12" style="border-radius: 8px;">
-                                    </div>
-                                    <div class="form-group" style="flex:1;">
-                                        <label>Székhely</label>
-                                        <input type="text" id="partner-szekhely" class="login-input" placeholder="4440 Tiszavasvári..." style="border-radius: 8px;">
-                                    </div>
-                                </div>
-                                <button type="button" class="btn-primary" style="width: 100%; background: #f59e0b;" onclick="registerPartner()"><i class="fas fa-save"></i> Partnercég Rögzítése</button>
-                            </div>
+                            <button type="button" class="btn-primary" style="width: 100%; background: #f59e0b;" onclick="registerPartner()"><i class="fas fa-save"></i> Partnercég Rögzítése</button>
+                        </div>
 
-                            <!-- Paraméterek -->
-                            <div class="card">
-                                <h3><i class="fas fa-sliders-h"></i> Képzési Paraméterek (Osztály szintű)</h3>
-                                <div class="form-row" style="margin-top: 15px;">
-                                    <div class="form-group" style="flex:1;">
-                                        <label>Osztály</label>
-                                        <select id="param-class-select" class="login-input"><option>Betöltés...</option></select>
-                                    </div>
-                                    <div class="form-group" style="flex:1;">
-                                        <label>Max. hiányzás (%)</label>
-                                        <input type="number" id="param-max-absence" class="login-input" value="20" title="Kritikus hiányzási riasztási határ">
-                                    </div>
-                                    <div class="form-group" style="flex:1;">
-                                        <label>Éves Elvárt Óra</label>
-                                        <input type="number" id="param-expected-hours" class="login-input" value="400" title="Félévi vagy éves elvárt gyakorlati kinttöltött óra">
-                                    </div>
+                        <!-- Paraméterek -->
+                        <div class="card">
+                            <h3><i class="fas fa-sliders-h"></i> Képzési Paraméterek (Osztály szintű)</h3>
+                            <div class="form-row" style="margin-top: 15px;">
+                                <div class="form-group" style="flex:1;">
+                                    <label>Osztály</label>
+                                    <select id="param-class-select" class="login-input"><option>Betöltés...</option></select>
                                 </div>
-                                <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="saveClassParameters()">Paraméterek Mentése</button>
+                                <div class="form-group" style="flex:1;">
+                                    <label>Max. hiányzás (%)</label>
+                                    <input type="number" id="param-max-absence" class="login-input" value="20" title="Kritikus hiányzási riasztási határ">
+                                </div>
+                                <div class="form-group" style="flex:1;">
+                                    <label>Éves Elvárt Óra</label>
+                                    <input type="number" id="param-expected-hours" class="login-input" value="400" title="Félévi vagy éves elvárt gyakorlati kinttöltött óra">
+                                </div>
                             </div>
-
-                            <!-- Oktatói Fiókok -->
-                            <div class="card" style="border-left: 4px solid #3b82f6;">
-                                <h3><i class="fas fa-user-plus" style="color: #3b82f6;"></i> Oktatói Hozzáférés Kiosztása</h3>
-                                <div class="form-group" style="margin-top: 15px;">
-                                    <label>Oktató kiválasztása listából</label>
-                                    <select id="user-instructor-select" class="login-input" style="width: 100%; border-radius: 8px;">
-                                        <option value="">-- Válassz oktatót --</option>
-                                    </select>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group" style="flex:1;">
-                                        <label>Felhasználónév</label>
-                                        <input type="text" id="user-username" placeholder="felhasznalonev" class="login-input">
-                                    </div>
-                                    <div class="form-group" style="flex:1;">
-                                        <label>Jelszó</label>
-                                        <input type="text" id="user-password" value="Oktato2024!" class="login-input">
-                                    </div>
-                                </div>
-                                <button type="button" class="btn-primary" style="width: 100%; background: #3b82f6;" onclick="assignInstructorAccount()"><i class="fas fa-key"></i> Fiók Kiosztása</button>
-                            </div>
-                        </section>
+                            <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="saveClassParameters()">Paraméterek Mentése</button>
+                        </div>
                     </div>
                 </div>
 
@@ -405,10 +439,11 @@
                     </div>
                 </div>
 
-                <!-- TAB 4: Jelentések & Audit -->
-                <div id="admin-tab-reports" class="admin-tab-content" style="display: none;">
+                <!-- TAB 7: Rendszer & Hozzáférések -->
+                <div id="admin-tab-system" class="admin-tab-content" style="display: none;">
                     <div class="grid-row-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                        <section class="form-section">
+                        <section class="form-section" style="display: flex; flex-direction: column; gap: 2rem;">
+                            <!-- 1. Jelenléti Bérfeladó Előkészítése -->
                             <div class="card" style="border-left: 4px solid #10b981;">
                                 <h3><i class="fas fa-file-invoice-dollar" style="color: #10b981;"></i> Jelenléti Bérfeladó Előkészítése</h3>
                                 <p style="margin-bottom: 20px;">Havi jelenléti igazolások és (pre-kalkulált) bérfeladók generálása a partnercégek könyvelőinek (Duális ösztöndíjak).</p>
@@ -442,9 +477,51 @@
                                     </ul>
                                 </div>
                             </div>
+
+                            <!-- 2. Oktatói Hozzáférés Kiosztása -->
+                            <div class="card" style="border-left: 4px solid #3b82f6;">
+                                <h3><i class="fas fa-user-plus" style="color: #3b82f6;"></i> Oktatói Hozzáférés Kiosztása</h3>
+                                <div class="form-group" style="margin-top: 15px;">
+                                    <label>Oktató kiválasztása listából</label>
+                                    <select id="user-instructor-select" class="login-input" style="width: 100%; border-radius: 8px;">
+                                        <option value="">-- Válassz oktatót --</option>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group" style="flex:1;">
+                                        <label>Felhasználónév</label>
+                                        <input type="text" id="user-username" placeholder="felhasznalonev" class="login-input">
+                                    </div>
+                                    <div class="form-group" style="flex:1;">
+                                        <label>Jelszó</label>
+                                        <input type="text" id="user-password" value="Oktato2024!" class="login-input">
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-primary" style="width: 100%; background: #3b82f6;" onclick="assignInstructorAccount()"><i class="fas fa-key"></i> Fiók Kiosztása</button>
+                            </div>
+
+                            <!-- 3. Szerződésminták (Sablon) Feltöltése -->
+                            <div class="card" style="border-left: 4px solid #3b82f6;">
+                                <h3><i class="fas fa-file-word" style="color: #3b82f6;"></i> Szerződésminták (Sablon) Feltöltése</h3>
+                                <p style="margin-bottom: 20px;">Tölts fel alapértelmezett Word sablonokat a generátorhoz.</p>
+                                
+                                <div class="import-zones" style="display:flex; gap:10px;">
+                                    <div class="drop-zone" id="templateZone" style="flex:1; padding: 15px; cursor: pointer;">
+                                        <i class="fas fa-upload"></i>
+                                        <span>Sablon (.docx)</span>
+                                    </div>
+                                    <input type="file" id="templateInput" style="display: none;" accept=".docx">
+                                    <select id="templateTypeSelect" class="login-input" style="flex:1; padding: 10px; border-radius: 8px;">
+                                        <option value="dualis_nappali">Duális szerződés (nappali)</option>
+                                        <option value="dualis_felnott">Duális szerződés (felnőtt)</option>
+                                        <option value="oktatoi_megbizasi">Oktatói megbízási</option>
+                                    </select>
+                                </div>
+                            </div>
                         </section>
 
-                        <section class="form-section">
+                        <section class="form-section" style="display: flex; flex-direction: column; gap: 2rem;">
+                            <!-- 4. Rendszernapló (Audit Log) -->
                             <div class="card" style="border-left: 4px solid #64748b;">
                                 <h3><i class="fas fa-list-alt" style="color: #64748b;"></i> Rendszernapló (Audit Log)</h3>
                                 <p style="margin-bottom: 20px;">Intézményi szintű tevékenységek követése (GDPR megfelelőség).</p>
@@ -452,6 +529,13 @@
                                 <div id="audit-log-container" style="background: rgba(0,0,0,0.3); border-radius: 8px; padding: 10px; max-height: 250px; overflow-y: auto;">
                                     <p style="text-align: center; color: gray; padding: 20px;">Napló betöltése...</p>
                                 </div>
+                            </div>
+
+                            <!-- 5. Adattisztítás -->
+                            <div class="card" style="border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.05);">
+                                <h4 style="margin:0 0 8px; color:#ef4444; font-size:1.1rem; font-weight:bold;"><i class="fas fa-trash-alt"></i> Adattisztítás és Karbantartás</h4>
+                                <p style="font-size:0.85rem; color: rgba(255,255,255,0.6); margin-bottom:12px;">Tanuló/AI által létrehozott kamú (teszt) adatok végleges törlése az adatbázisból.</p>
+                                <button class="btn-secondary" style="background: #ef4444; color: white; border: none; width: 100%;" onclick="cleanupDummyData()"><i class="fas fa-biohazard"></i> Kamú adatok törlése</button>
                             </div>
                         </section>
                     </div>
@@ -907,48 +991,58 @@
                 }
             }
             
-            const adminTabs = document.querySelectorAll('.admin-tab-btn');
-            const adminContents = document.querySelectorAll('.admin-tab-content');
-            
-            adminTabs.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    adminTabs.forEach(b => {
-                        b.className = 'btn-secondary admin-tab-btn';
-                        b.style.background = '';
-                    });
-                    btn.className = 'btn-primary admin-tab-btn';
-                    btn.style.background = '#4f46e5';
-                    
-                    adminContents.forEach(content => content.style.display = 'none');
-                    const targetId = btn.getAttribute('data-target');
-                    const targetEl = document.getElementById(targetId);
-                    if (targetEl) targetEl.style.display = 'block';
+            // Központi navigáció és lusta betöltés
+            window.switchMainTab = function(tabId) {
+                // Minden tab konténer elrejtése
+                document.querySelectorAll('.admin-tab-content').forEach(content => {
+                    content.style.display = 'none';
                 });
-            });
+                
+                // A kiválasztott tab megjelenítése
+                const targetEl = document.getElementById(`admin-tab-${tabId}`);
+                if (targetEl) {
+                    targetEl.style.display = 'block';
+                }
+                
+                // Sidebar linkek aktív állapotának frissítése
+                document.querySelectorAll('.sidebar nav a').forEach(a => {
+                    a.classList.remove('active');
+                });
+                const activeNav = document.getElementById(`nav-${tabId}`);
+                if (activeNav) {
+                    activeNav.classList.add('active');
+                }
+                
+                // Mentés localStorage-ba
+                localStorage.setItem('active_admin_tab', tabId);
+                
+                // Lusta betöltés (Lazy loading) a nehéz API hívásokhoz
+                if (tabId === 'normativa') {
+                    loadSzakmaMatrix();
+                    loadNormativaSummaries();
+                    loadNormativaConfig();
+                    loadExpenses();
+                } else if (tabId === 'system') {
+                    fetchAuditLogs();
+                } else if (tabId === 'students') {
+                    fetchAndDisplayStudents();
+                    loadClasses();
+                } else if (tabId === 'dashboard') {
+                    loadDashboardStats();
+                    loadAdminSuggestions();
+                }
+            };
+
+            // Alapértelmezett tab betöltése localStorage-ból vagy Vezérlőpult
+            const storedTab = localStorage.getItem('active_admin_tab') || 'dashboard';
+            switchMainTab(storedTab);
 
             // Kezdeti adatok betöltése
-            fetchAndDisplayStudents();
-            loadClasses();
-            loadDashboardStats();
-            loadAdminSuggestions();
             pingBackend();
             setInterval(pingBackend, 10 * 60 * 1000);
 
             const badge = document.getElementById('api-status-badge');
             if(badge) badge.innerText = `API: ${window.location.host} (Unified)`;
-
-            // --- ÚJ NORMATÍVA TAB LISTENER ---
-            const tabBtn = document.querySelector('.admin-tab-btn[data-target="admin-tab-normativa"]');
-            if(tabBtn) {
-                tabBtn.addEventListener('click', () => {
-                    loadSzakmaMatrix();
-                    loadNormativaSummaries();
-                    loadNormativaConfig();
-                    loadExpenses();
-                });
-            }
-            // Kezdeti összesítés
-            setTimeout(loadNormativaSummaries, 1000);
         });
 
         // --- DASHBOARD STATS & AUTOMATION ---
@@ -1823,7 +1917,8 @@
         }
 
         // Init
-        setupDropZone('studentExcelZone', 'studentExcelInput', '/import/students', false);
+        setupAdvancedImportDropZone('studentExcelZone', 'studentExcelInput', '/api/import/kreta/file');
+        setupAdvancedImportDropZone('farFileZone', 'farFileInput', '/api/import/far/file');
         setupDropZone('instructorExcelZone', 'instructorExcelInput', '/import/instructors', true);  // isInstructor = true
         setupDropZone('patchSzakmaZone', 'patchSzakmaInput', '/import/patch-szakma');
         setupTemplateDropZone('templateZone', 'templateInput');
@@ -2214,6 +2309,256 @@
                     });
                 }
             } catch(e) {}
+        }
+
+        // --- KRÉTA & FAR INTEGRÁCIÓS FÜGGVÉNYEK ---
+        function switchImportMode(mode) {
+            document.querySelectorAll('.import-panel').forEach(panel => panel.style.display = 'none');
+            const targetPanel = document.getElementById(`panel-${mode}`);
+            if (targetPanel) targetPanel.style.display = 'block';
+
+            const modes = ['kreta-api', 'kreta-file', 'far-file'];
+            modes.forEach(m => {
+                const btn = document.getElementById(`btn-mode-${m}`);
+                if (btn) {
+                    if (m === mode) {
+                        btn.className = 'btn-primary';
+                        btn.style.background = '#4f46e5';
+                    } else {
+                        btn.className = 'btn-secondary';
+                        btn.style.background = '';
+                    }
+                }
+            });
+        }
+
+        async function searchKretaSchools() {
+            const query = document.getElementById('kreta-school-search').value.trim().toLowerCase();
+            const resultsBox = document.getElementById('kreta-schools-results');
+            if (!query) {
+                resultsBox.style.display = 'none';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/import/schools`);
+                if (res.ok) {
+                    const schools = await res.json();
+                    const filtered = schools.filter(s => s.name.toLowerCase().includes(query) || s.code.toLowerCase().includes(query));
+                    
+                    if (filtered.length === 0) {
+                        resultsBox.innerHTML = '<div style="padding: 10px; color: gray; text-align: center;">Nincs találat</div>';
+                    } else {
+                        resultsBox.innerHTML = filtered.map(s => `
+                            <div class="school-search-item" style="padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s;" 
+                                 onclick="selectKretaSchool('${s.name}', '${s.subdomain}')"
+                                 onmouseover="this.style.background='rgba(79, 70, 229, 0.2)'"
+                                 onmouseout="this.style.background=''">
+                                <strong>${s.name}</strong> <small style="color: gray; margin-left: 5px;">(${s.code})</small>
+                            </div>
+                        `).join('');
+                    }
+                    resultsBox.style.display = 'block';
+                }
+            } catch(e) {
+                console.error("Iskola keresés hiba:", e);
+            }
+        }
+
+        function selectKretaSchool(name, subdomain) {
+            document.getElementById('kreta-school-search').value = name;
+            document.getElementById('kreta-school-subdomain').value = subdomain;
+            document.getElementById('kreta-schools-results').style.display = 'none';
+        }
+
+        async function syncKretaApi() {
+            const subdomain = document.getElementById('kreta-school-subdomain').value;
+            const username = document.getElementById('kreta-username').value.trim();
+            const password = document.getElementById('kreta-password').value;
+            
+            if (!subdomain || !username || !password) {
+                alert("Kérjük, válasszon egy iskolát, és adja meg a Kréta belépési adatait!");
+                return;
+            }
+
+            const spinner = document.getElementById('spinner-kreta-api');
+            const icon = document.getElementById('icon-kreta-api');
+            const btn = document.querySelector('#panel-kreta-api button');
+            
+            if(spinner) spinner.style.display = 'inline-block';
+            if(icon) icon.style.display = 'none';
+            if(btn) btn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/import/kreta/api`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        school_subdomain: subdomain,
+                        username: username,
+                        password: password
+                    })
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.students && data.students.length > 0) {
+                        openRosterModal(data.students);
+                    } else {
+                        alert("A Kréta rendszerből sikeresen lekérve a diákok, de a saját képzőhelyéhez (partnercégéhez) tartozó diák nem található. Kérjük ellenőrizze a duális szerződéseket a Krétában!");
+                    }
+                } else {
+                    const err = await res.json();
+                    alert("Hiba: " + (err.detail || "Sikertelen hitelesítés a Kréta rendszerben. Kérjük ellenőrizze az adatokat!"));
+                }
+            } catch(e) {
+                alert("Hálózati hiba a Kréta API lekérés során.");
+            } finally {
+                if(spinner) spinner.style.display = 'none';
+                if(icon) icon.style.display = 'inline-block';
+                if(btn) btn.disabled = false;
+            }
+        }
+
+        // --- ROSTER SELECTOR MODAL LOGIKA ---
+        function openRosterModal(students) {
+            window.pendingRosterStudents = students;
+            const tbody = document.getElementById('rosterTableBody');
+            if(!tbody) return;
+
+            tbody.innerHTML = '';
+            students.forEach((s, index) => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+                tr.innerHTML = `
+                    <td style="padding: 12px; text-align: center;">
+                        <input type="checkbox" class="roster-item-check" data-index="${index}" checked>
+                    </td>
+                    <td style="padding: 12px;"><strong>${s.nev}</strong><br><small style="color: gray;">${s.email || '-'}</small></td>
+                    <td style="padding: 12px;">${s.oktatasi_azonosito || '<span style="color: gray;">-</span>'}</td>
+                    <td style="padding: 12px; color: #60a5fa;">${s.szakma || '<span style="color: gray;">-</span>'}</td>
+                    <td style="padding: 12px;"><small>${s.lakhely || '-'}</small></td>
+                    <td style="padding: 12px; color: #fbbf24;"><small>${s.krep_gyakorlati_hely || '-'}</small></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const modal = document.getElementById('rosterModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeRosterModal() {
+            const modal = document.getElementById('rosterModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function toggleAllRoster(el) {
+            document.querySelectorAll('.roster-item-check').forEach(chk => chk.checked = el.checked);
+        }
+
+        async function commitRosterImport() {
+            const checkedIndices = [];
+            document.querySelectorAll('.roster-item-check').forEach(chk => {
+                if (chk.checked) checkedIndices.push(parseInt(chk.getAttribute('data-index')));
+            });
+
+            if (checkedIndices.length === 0) {
+                alert("Kérjük, jelöljön ki legalább egy diákot az importáláshoz!");
+                return;
+            }
+
+            const selectedStudents = checkedIndices.map(idx => window.pendingRosterStudents[idx]);
+            const token = localStorage.getItem('token');
+            let partnerId = 1;
+            let schoolId = 1;
+            
+            if (token) {
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    if (payload.school_id) schoolId = payload.school_id;
+                    if (payload.partner_id) partnerId = payload.partner_id;
+                } catch(e) {}
+            }
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/import/commit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        students: selectedStudents,
+                        partner_id: partnerId,
+                        school_id: schoolId
+                    })
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    alert(`✅ Sikeres importálás!\n\n${result.message}`);
+                    closeRosterModal();
+                    fetchAndDisplayStudents();
+                    loadDashboardStats();
+                } else {
+                    alert("Hiba történt a diákok végleges mentése során.");
+                }
+            } catch(e) {
+                alert("Hálózati hiba a mentési tranzakció során.");
+            }
+        }
+
+        function setupAdvancedImportDropZone(zoneId, inputId, endpoint) {
+            const zone = document.getElementById(zoneId);
+            const input = document.getElementById(inputId);
+            if (!zone || !input) return;
+
+            zone.addEventListener('click', () => input.click());
+            input.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (file) await uploadToRosterTask(file, endpoint, zone);
+                input.value = '';
+            });
+
+            zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.style.background = 'rgba(16, 185, 129, 0.2)'; });
+            zone.addEventListener('dragleave', (e) => { e.preventDefault(); zone.style.background = ''; });
+            zone.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                zone.style.background = '';
+                const file = e.dataTransfer.files[0];
+                if (file) await uploadToRosterTask(file, endpoint, zone);
+            });
+        }
+
+        async function uploadToRosterTask(file, endpoint, zone) {
+            const span = zone.querySelector('span');
+            if (!span) return;
+            const originalText = span.innerText;
+            span.innerText = 'Fájl beolvasása...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    if (result.students && result.students.length > 0) {
+                        span.innerText = 'Beolvasva! ✅';
+                        openRosterModal(result.students);
+                    } else {
+                        alert("Nem található importálható diák a fájlban.");
+                        span.innerText = 'Üres ❌';
+                    }
+                } else {
+                    alert(`Hiba a fájl feldolgozásakor: ${result.detail || 'Formátum hiba'}`);
+                    span.innerText = 'Hiba ❌';
+                }
+            } catch (err) {
+                alert('Hálózati hiba a fájl feltöltése során.');
+                span.innerText = 'Hiba ❌';
+            }
+            setTimeout(() => { span.innerText = originalText; }, 3000);
         }
 
         // Kiegészítő hívások az Init végén

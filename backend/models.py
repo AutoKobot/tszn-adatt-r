@@ -7,6 +7,7 @@ class School(Base):
     __tablename__ = "schools"
     id = Column(Integer, primary_key=True, index=True)
     nev = Column("name", String(255), nullable=False)
+    kreta_subdomain = Column("kreta_subdomain", String(100), nullable=True)
     created_at = Column("created_at", TIMESTAMP, default=datetime.datetime.utcnow)
 
 class User(Base):
@@ -20,6 +21,7 @@ class User(Base):
     status = Column("statusz", Boolean, default=True)
     last_login = Column("utolso_bejelentkezes", TIMESTAMP)
     iskola_id = Column("iskola_id", Integer, ForeignKey("schools.id"), nullable=True)
+    partner_id = Column("partner_id", Integer, ForeignKey("partnerek.id"), nullable=True)
 
 class Student(Base):
     __tablename__ = "diakok"

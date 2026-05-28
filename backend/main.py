@@ -11,6 +11,8 @@ import shutil
 import os
 import datetime
 from . import models, schemas, database, sync_service, auth
+from .kreta_service import kreta_service
+from .far_service import far_service
 from fastapi.staticfiles import StaticFiles
 
 # --- ÜTEMEZETT FELADATOK (asyncio alapú, APScheduler nélkül) ---
@@ -56,6 +58,8 @@ async def lifespan(app: FastAPI):
             db.commit()
 
             db.execute(text("ALTER TABLE public.felhasznalok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.schools(id);"))
+            db.execute(text("ALTER TABLE public.felhasznalok ADD COLUMN IF NOT EXISTS partner_id INTEGER REFERENCES public.partnerek(id);"))
+            db.execute(text("ALTER TABLE public.schools ADD COLUMN IF NOT EXISTS kreta_subdomain VARCHAR(100);"))
             db.execute(text("ALTER TABLE public.diakok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.schools(id);"))
             db.execute(text("ALTER TABLE public.osztalyok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.schools(id);"))
             db.execute(text("ALTER TABLE public.oktatok ADD COLUMN IF NOT EXISTS iskola_id INTEGER REFERENCES public.schools(id);"))
@@ -1373,6 +1377,227 @@ async def patch_student_szakma(file: UploadFile = File(...), db: Session = Depen
     # Itt az excel_service-t hívnánk meg, de most egy gyors logikát teszek bele
     # A CSV/Excel-ben: OM azonosító + Szakma kód
     return {"status": "A tömeges szakma-hozzárendelés sikeresen lefutott!"}
+
+# --- KRÉTA / FAR INTEGRÁCIÓS ENDPOINTOK ---
+
+@app.get("/api/import/schools")
+async def get_kreta_schools():
+    """KRÉTA iskolák listájának lekérése."""
+    schools = await kreta_service.get_schools_list()
+    return schools
+
+@app.post("/api/import/kreta/api")
+async def import_kreta_api(req: schemas.KretaLoginRequest, current_user: dict = Depends(auth.get_current_user), db: Session = Depends(get_db)):
+    """Tanulók lekérése közvetlenül a KRÉTA API-ról."""
+    # 1. Bejelentkezés a Kréta IDP-be
+    token = await kreta_service.authenticate(req.school_subdomain, req.username, req.password)
+    if not token:
+        raise HTTPException(status_code=400, detail="Nem sikerült hitelesíteni a KRÉTA rendszerben. Kérjük, ellenőrizze a belépési adatokat.")
+    
+    # 2. Tanulók listájának lekérése
+    raw_students = await kreta_service.fetch_students(req.school_subdomain, token)
+    
+    # 3. Képzőhely-specifikus szűrés (ha a felhasználó egy partner képviselője)
+    db_user = db.query(models.User).filter(models.User.username == current_user["sub"]).first()
+    partner_name = None
+    if db_user and db_user.partner_id:
+        partner = db.query(models.Partner).get(db_user.partner_id)
+        if partner:
+            partner_name = partner.cegnev.lower()
+            
+    filtered_students = []
+    for s in raw_students:
+        if partner_name:
+            s_gyak_hely = str(s.get("krep_gyakorlati_hely") or "").lower()
+            if partner_name in s_gyak_hely or any(kw in s_gyak_hely for kw in partner_name.split()):
+                filtered_students.append(s)
+        else:
+            filtered_students.append(s)
+            
+    return {
+        "status": "success",
+        "count": len(filtered_students),
+        "total_fetched": len(raw_students),
+        "students": filtered_students
+    }
+
+@app.post("/api/import/kreta/file")
+async def import_kreta_file(file: UploadFile = File(...), current_user: dict = Depends(auth.get_current_user), db: Session = Depends(get_db)):
+    """Kréta Excel export feltöltése és szűrése."""
+    content = await file.read()
+    raw_students = excel_service.parse_students(content)
+    
+    # Képzőhely szűrés
+    db_user = db.query(models.User).filter(models.User.username == current_user["sub"]).first()
+    partner_name = None
+    if db_user and db_user.partner_id:
+        partner = db.query(models.Partner).get(db_user.partner_id)
+        if partner:
+            partner_name = partner.cegnev.lower()
+            
+    filtered_students = []
+    for s in raw_students:
+        if partner_name:
+            s_gyak_hely = str(s.get("krep_gyakorlati_hely") or s.get("metadata_json", {}).get("iskola") or "").lower()
+            if partner_name in s_gyak_hely or any(kw in s_gyak_hely for kw in partner_name.split()):
+                filtered_students.append(s)
+        else:
+            filtered_students.append(s)
+            
+    return {
+        "status": "success",
+        "count": len(filtered_students),
+        "students": filtered_students
+    }
+
+@app.post("/api/import/far/file")
+async def import_far_file(file: UploadFile = File(...), current_user: dict = Depends(auth.get_current_user), db: Session = Depends(get_db)):
+    """FAR XML vagy Excel export feltöltése és normalizálása."""
+    content = await file.read()
+    filename = file.filename.lower()
+    
+    raw_students = []
+    if filename.endswith(".xml"):
+        raw_students = far_service.parse_far_xml(content)
+    else:
+        raw_students = far_service.parse_far_excel(content)
+        
+    # Képzőhely szűrés
+    db_user = db.query(models.User).filter(models.User.username == current_user["sub"]).first()
+    partner_name = None
+    if db_user and db_user.partner_id:
+        partner = db.query(models.Partner).get(db_user.partner_id)
+        if partner:
+            partner_name = partner.cegnev.lower()
+            
+    filtered_students = []
+    for s in raw_students:
+        if partner_name:
+            s_gyak_hely = str(s.get("krep_gyakorlati_hely") or "").lower()
+            if not s_gyak_hely or partner_name in s_gyak_hely or any(kw in s_gyak_hely for kw in partner_name.split()):
+                filtered_students.append(s)
+        else:
+            filtered_students.append(s)
+            
+    return {
+        "status": "success",
+        "count": len(filtered_students),
+        "students": filtered_students
+    }
+
+@app.post("/api/import/commit")
+async def import_commit(req: schemas.StudentImportCommit, db: Session = Depends(get_db)):
+    """A Roster Selector jóváhagyott diákjainak végleges rögzítése az adatbázisban."""
+    saved_count = 0
+    updated_count = 0
+    
+    for s in req.students:
+        s_om = s.get("oktatasi_azonosito")
+        s_nev = s.get("nev")
+        
+        if not s_nev:
+            continue
+            
+        existing = None
+        if s_om:
+            existing = db.query(models.Student).filter(models.Student.oktatasi_azonosito == s_om).first()
+        if not existing:
+            existing = db.query(models.Student).filter(models.Student.nev == s_nev).first()
+            
+        def parse_iso_date(d_str):
+            if not d_str: return None
+            try:
+                return datetime.datetime.strptime(str(d_str).split("T")[0], "%Y-%m-%d").date()
+            except Exception:
+                return None
+        
+        if existing:
+            existing.nev = s_nev
+            if s_om: existing.oktatasi_azonosito = s_om
+            if s.get("email"): existing.email = s["email"]
+            if s.get("telefon"): existing.telefon = s["telefon"]
+            if s.get("lakhely"): existing.lakhely = s["lakhely"]
+            if s.get("diakigazolvany_szam"): existing.diakigazolvany_szam = s["diakigazolvany_szam"]
+            if s.get("szuletesi_hely"): existing.szuletesi_hely = s["szuletesi_hely"]
+            if s.get("szuletesi_datum"): existing.szuletesi_datum = parse_iso_date(s["szuletesi_datum"])
+            if s.get("anyja_neve"): existing.anyja_neve = s["anyja_neve"]
+            if s.get("tajszam"): existing.tajszam = s["tajszam"]
+            if s.get("adoazonosito"): existing.adoazonosito = s["adoazonosito"]
+            if s.get("bankszamlaszam"): existing.bankszamlaszam = s["bankszamlaszam"]
+            if s.get("szerzodes_kezdet"): existing.szerzodes_kezdet = parse_iso_date(s["szerzodes_kezdet"])
+            if s.get("szerzodes_vege"): existing.szerzodes_vege = parse_iso_date(s["szerzodes_vege"])
+            
+            if req.school_id:
+                existing.iskola_id = req.school_id
+                
+            if s.get("szakma"):
+                szakma_match = db.query(models.SzakmaTorzs).filter(models.SzakmaTorzs.megnevezes.ilike(f"%{s['szakma']}%")).first()
+                if szakma_match:
+                    existing.szakma_torzs_id = szakma_match.id
+            
+            meta = dict(existing.metadata_json or {})
+            meta.update(s.get("metadata_json", {}))
+            meta["last_imported"] = datetime.datetime.now().isoformat()
+            existing.metadata_json = meta
+            
+            from sqlalchemy.orm.attributes import flag_modified
+            flag_modified(existing, "metadata_json")
+            db_student = existing
+            updated_count += 1
+        else:
+            db_student = models.Student(
+                oktatasi_azonosito=s_om,
+                diakigazolvany_szam=s.get("diakigazolvany_szam"),
+                nev=s_nev,
+                email=s.get("email"),
+                telefon=s.get("telefon"),
+                lakhely=s.get("lakhely"),
+                szuletesi_hely=s.get("szuletesi_hely"),
+                szuletesi_datum=parse_iso_date(s.get("szuletesi_datum")),
+                anyja_neve=s.get("anyja_neve"),
+                tajszam=s.get("tajszam"),
+                adoazonosito=s.get("adoazonosito"),
+                bankszamlaszam=s.get("bankszamlaszam"),
+                szerzodes_kezdet=parse_iso_date(s.get("szerzodes_kezdet")),
+                szerzodes_vege=parse_iso_date(s.get("szerzodes_vege")),
+                tagozat="nappali" if s.get("tagozat") != "felnőtt" else "felnőtt",
+                metadata_json={**(s.get("metadata_json") or {}), "imported": True, "import_date": datetime.datetime.now().isoformat()},
+                iskola_id=req.school_id
+            )
+            
+            if s.get("szakma"):
+                szakma_match = db.query(models.SzakmaTorzs).filter(models.SzakmaTorzs.megnevezes.ilike(f"%{s['szakma']}%")).first()
+                if szakma_match:
+                    db_student.szakma_torzs_id = szakma_match.id
+                    
+            db.add(db_student)
+            db.flush()
+            saved_count += 1
+            
+        if req.partner_id and db_student.id:
+            existing_contract = db.query(models.DualisSzerzodes).filter(
+                models.DualisSzerzodes.diak_id == db_student.id,
+                models.DualisSzerzodes.partner_id == req.partner_id
+            ).first()
+            
+            if not existing_contract:
+                new_contract = models.DualisSzerzodes(
+                    diak_id=db_student.id,
+                    partner_id=req.partner_id,
+                    szerzodes_szama=f"SZERZ-{db_student.oktatasi_azonosito or 'NEW'}-{datetime.date.today().year}",
+                    kezdeti_datum=db_student.szerzodes_kezdet or datetime.date.today(),
+                    vege_datum=db_student.szerzodes_vege,
+                    statusz="aktív"
+                )
+                db.add(new_contract)
+                
+    db.commit()
+    return {
+        "status": "success",
+        "message": f"Sikeresen rögzítve: {saved_count} új diák. Frissítve: {updated_count} meglévő diák.",
+        "imported": saved_count,
+        "updated": updated_count
+    }
 
 # Minden más fájlt (CSS, JS, képek) a "static" mount szolgál ki
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
