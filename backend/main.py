@@ -334,6 +334,31 @@ def read_students(skip: int = 0, limit: int = 100, class_id: Optional[int] = Non
                         }
                     )
                     db.add(new_s)
+                else:
+                    # Ha a diák már létezik az adatbázisban, de nincs hozzárendelve az iskolához vagy osztályhoz, frissítjük!
+                    modified = False
+                    if existing.iskola_id != db_school_id:
+                        print(f"[API] Diák iskola_id szinkronizálása: {existing.nev} ({u_username}) -> {db_school_id}")
+                        existing.iskola_id = db_school_id
+                        modified = True
+                    
+                    db_class_id = None
+                    try:
+                        class_id_row = db.execute(
+                            text("SELECT class_id FROM public.users WHERE id = :user_id"),
+                            {"user_id": u_id}
+                        ).first()
+                        db_class_id = class_id_row[0] if class_id_row else None
+                    except Exception as e_class:
+                        pass
+                    
+                    if db_class_id is not None and existing.osztaly_id != db_class_id:
+                        print(f"[API] Diák osztaly_id szinkronizálása: {existing.nev} ({u_username}) -> {db_class_id}")
+                        existing.osztaly_id = db_class_id
+                        modified = True
+                    
+                    if modified:
+                        db.add(existing)
             db.commit()
         except Exception as e_sync:
             print(f"[SYNCHRONIZE WARNING] Nem sikerült a portálos diákok szinkronizálása: {e_sync}")
