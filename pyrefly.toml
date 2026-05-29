@@ -1,0 +1,16 @@
+# Pyrefly konfiguráció – iskolai adatbázis projekt
+# https://github.com/facebook/pyrefly
+
+[pyrefly]
+# A venv Python interpretere
+python_interpreter = ".venv/Scripts/python.exe"
+
+# A venv site-packages elérési útja, hogy a Pyrefly megtalálja a telepített csomagokat
+site_package_path = [
+    ".venv/Lib/site-packages"
+]
+
+# Backend mappa hozzáadása az import keresési útvonalhoz
+search_path = [
+    "backend"
+]

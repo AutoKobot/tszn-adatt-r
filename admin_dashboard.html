@@ -1781,15 +1781,22 @@
                         `;
                     }
 
+                    const atlagDisplay = stats.atlag != null ? stats.atlag : '–';
                     container.innerHTML = `
                         <div style="color: ${stipendColor}; font-weight: 600;">💰 ${stats.osztondij_javaslat.toLocaleString()} Ft</div>
                         ${complianceHtml}
                         <div style="font-size: 0.75rem; color: #94a3b8;">
-                            Átlag: ${stats.atlag} | Hiány: ${stats.hianyzas_szazalek}%
+                            Átlag: ${atlagDisplay} | Hiány: ${stats.hianyzas_szazalek}%
                         </div>
                     `;
+                } else {
+                    // HTTP hiba (pl. 404) – mutassunk semleges állapotot
+                    container.innerHTML = `<span style="opacity: 0.4; font-size: 0.8rem;">– nincs adat –</span>`;
                 }
-            } catch(e) {}
+            } catch(e) {
+                // Hálózati hiba – ne hagyjuk a Betöltés... szöveget
+                container.innerHTML = `<span style="opacity: 0.4; font-size: 0.8rem;">– –</span>`;
+            }
         }
 
         // --- MODAL KEZELÉS ---

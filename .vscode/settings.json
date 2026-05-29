@@ -5,5 +5,12 @@
   ],
   "python.analysis.diagnosticSeverityOverrides": {
     "reportMissingImports": "none"
-  }
+  },
+
+  // Pyrefly (meta's Python linter extension) beállítások
+  "pyrefly.pythonInterpreter": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "pyrefly.disableLanguageServices": false,
+
+  // Ha Pylance-t használunk (ajánlott), a Pyrefly-t ki lehet kapcsolni:
+  "pyrefly.enabled": false
 }

@@ -445,6 +445,82 @@ def delete_student(student_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "success", "message": "Diák törölve"}
 
+@app.get("/students/{student_id}/stats")
+def get_student_stats(student_id: int, db: Session = Depends(get_db)):
+    """
+    Visszaadja egy diák összefoglaló statisztikáját az admin felület Státusz oszlopához:
+    - Jelenléti adatok (hiányzás %)
+    - Jegyek átlaga
+    - Ösztöndíj javaslat
+    - Megfelelőség és kockázati riasztások
+    """
+    student = db.query(models.Student).filter(models.Student.id == student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Diák nem található")
+
+    # --- Jelenléti adatok ---
+    attendances = db.query(models.Attendance).filter(models.Attendance.diak_id == student_id).all()
+    osszesen_ora = sum(a.oraszam or 1 for a in attendances)
+    hianyzas_ora = sum(
+        (a.oraszam or 1) for a in attendances
+        if a.statusz in ("igazolt_hianyzas", "igazolatlan_hianyzas", "hiányzás")
+    )
+    hianyzas_szazalek = round((hianyzas_ora / osszesen_ora * 100), 1) if osszesen_ora > 0 else 0.0
+
+    # --- Jegyek átlaga ---
+    grades = db.query(models.ExternalGrade).filter(models.ExternalGrade.diak_id == student_id).all()
+    if grades:
+        # Súlyozott átlag
+        sulyozott_osszeg = sum((g.ertek or 0) * (g.suly or 100) for g in grades)
+        suly_osszeg = sum(g.suly or 100 for g in grades)
+        atlag = round(sulyozott_osszeg / suly_osszeg, 2) if suly_osszeg > 0 else 0.0
+    else:
+        atlag = 0.0
+
+    # --- Megfelelőség ellenőrzése ---
+    meta = student.metadata_json or {}
+    szakma_ok = bool(meta.get("szakma") or meta.get("Szakma"))
+    alapadatok_ok = all([
+        student.szuletesi_datum,
+        student.anyja_neve,
+        student.tajszam,
+    ])
+    megfeleloseg_ok = szakma_ok and alapadatok_ok and hianyzas_szazalek < 25.0
+
+    # --- Kockázati riasztások ---
+    risks = []
+    if hianyzas_szazalek >= 25.0:
+        risks.append(f"Magas hiányzás: {hianyzas_szazalek}%")
+    if hianyzas_szazalek >= 15.0 and hianyzas_szazalek < 25.0:
+        risks.append(f"Hiányzás közelít a határhoz: {hianyzas_szazalek}%")
+    if atlag > 0 and atlag < 2.5:
+        risks.append(f"Gyenge tanulmányi eredmény: {atlag:.1f}")
+    if not szakma_ok:
+        risks.append("Nincs beállított szakma")
+
+    # --- Ösztöndíj javaslat ---
+    # Alap: ha megfelelő és van jegy, számolunk; egyébként 0
+    if megfeleloseg_ok and atlag >= 2.0:
+        # Egyszerű skála: 2.0 → minimális, 5.0 → maximális
+        alap = 25000  # Ft
+        szorzo = (atlag - 1.0) / 4.0  # 0.25 → 1.0
+        osztondij_javaslat = int(alap * szorzo * 4)
+    elif megfeleloseg_ok:
+        osztondij_javaslat = 10000  # Minimális: van szakma, rendben van, de nincs jegy
+    else:
+        osztondij_javaslat = 0
+
+    return {
+        "student_id": student_id,
+        "hianyzas_szazalek": hianyzas_szazalek,
+        "osszes_jelenlet_ora": osszesen_ora,
+        "atlag": atlag if atlag > 0 else None,
+        "osztondij_javaslat": osztondij_javaslat,
+        "megfeleloseg_ok": megfeleloseg_ok,
+        "risks": risks,
+    }
+
+
 # --- OSZTÁLYOK / KÉPZÉSI PARAMÉTEREK ---
 @app.get("/classes/", response_model=list[schemas.ClassRoom])
 def read_classes(db: Session = Depends(get_db), current_user: dict = Depends(auth.get_current_user)):
